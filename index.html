@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="克苏鲁的呼唤第七版 TRPG 引擎 — 沉浸式跑团体验，AI 守秘人驱动">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="apple-touch-icon" href="./favicon.svg">
+    <link rel="manifest" href="./manifest.json">
+    <title>🌑 克苏鲁的呼唤 · CoC 7th 引擎 — 沉浸式 TRPG 跑团助手</title>
+    <link href="./vendor/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" onerror="this.remove()">
+    <script src="./vendor/vue.global.prod.js"></script>
+<script>window.Vue || document.write('<script src="https://unpkg.com/vue@3/dist/vue.global.js"><\/script>')</script>
+    <script src="./vendor/chart.min.js"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>')</script>
+    <link rel="stylesheet" href="./css/style.css">
+    <noscript><style>#app::before{content:"⚠️ 请启用 JavaScript 以运行 CoC 引擎";display:block;color:#ffcc00;text-align:center;padding:2rem;font-size:1.2rem;}</style></noscript>
+    <link rel="modulepreload" href="./js/coc.js">
+    <link rel="modulepreload" href="./js/ai_logic.js">
+    <link rel="modulepreload" href="./js/state/state.js">
+
+    <script>
+        function showFatalError(type, msg, file, line, stack) {
+            // 如果已经有报错框了，就不重复弹
+            if (document.getElementById('fatal-error-screen')) return; 
+
+            // 错误信息可能来自异常 message/stack，必须先转义再进入 innerHTML，避免错误页自身形成 XSS 注入面。
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+            const safeType = escapeHtml(type);
+            const safeMsg = escapeHtml(msg);
+            const safeFile = escapeHtml(file);
+            const safeLine = escapeHtml(line);
+            const safeStack = escapeHtml(stack || '无堆栈信息');
+            
+            const div = document.createElement('div');
+            div.id = 'fatal-error-screen';
+            div.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(150,0,0,0.95); color:white; z-index:999999; padding:20px; overflow-y:auto; font-family:monospace; box-sizing: border-box;';
+            div.innerHTML = `
+                <h2 style="color:#ffcc00; border-bottom: 1px solid #ffcc00; padding-bottom: 10px;">🚨 致命崩溃拦截 (${safeType})</h2>
+                <p style="font-size: 1.1rem; margin-top: 15px;"><strong>报错信息：</strong><br><span style="color:#ffcccc;">${safeMsg}</span></p>
+                ${safeFile ? `<p><strong>文件位置：</strong><br>${safeFile} (第 <strong style="color:#ffcc00;">${safeLine}</strong> 行)</p>` : ''}
+                <p><strong>错误堆栈：</strong></p>
+                <pre style="background:#000; color:#0f0; padding:10px; border-radius: 4px; white-space:pre-wrap; font-size: 0.8rem; overflow-x: auto;">${safeStack}</pre>
+                <button onclick="location.reload()" style="padding:10px 20px; font-size:16px; margin-top:20px; font-weight: bold; background: #ffcc00; border: none; border-radius: 4px; cursor:pointer;">刷新重试</button>
+            `;
+            // 等待 body 加载完毕后插入
+            if (document.body) document.body.appendChild(div);
+            else window.addEventListener('DOMContentLoaded', () => document.body.appendChild(div));
+        }
+
+        // 1. 捕获常规 JS 语法/运行错误
+        window.addEventListener('error', function(e) {
+            showFatalError('JavaScript 全局错误', e.message, e.filename, e.lineno, e.error?.stack);
+        });
+
+        // 2. 捕获异步 Promise 崩溃
+        window.addEventListener('unhandledrejection', function(e) {
+            showFatalError('异步调用崩溃', e.reason?.message || e.reason, '', '', e.reason?.stack);
+        });
+
+        // 3. 劫持 Vue 的渲染错误 (Vue 错误常常走 console.error)
+        const originalError = console.error;
+        console.error = function(...args) {
+            const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+            if (msg.includes('Vue')) {
+                showFatalError('Vue 渲染/组件错误', msg, '', '', new Error().stack);
+            }
+            originalError.apply(console, args);
+        };
+
+        // 4. 劫持 Vue 找不到组件的警告 (非常容易导致黑屏)
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            const msg = args.join(' ');
+            if (msg.includes('Failed to resolve component')) {
+                showFatalError('组件挂载失败', msg, '通常是 index.html 里忘记引入 script 标签，或者文件名拼写错误。', '', '');
+            }
+            originalWarn.apply(console, args);
+        };
+    </script>
+    <style>
+        .dice-pulse { animation: dicePulse 0.35s ease-out; }
+        @keyframes dicePulse { 0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)} }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="container-fluid p-3">
+        <view-lobby v-if="['lobby', 'settings', 'character', 'saves', 'modules'].includes(gameState?.currentScreen)"></view-lobby>
+        <view-creator v-if="gameState?.currentScreen === 'creator'"></view-creator>
+        <view-story v-if="gameState?.currentScreen === 'story' || gameState?.activeModal"></view-story>
+        <view-dev-log v-if="gameState?.currentScreen === 'devlog'"></view-dev-log>
+        <coc-toast-layer :toasts="gameState?.ui?.toasts"></coc-toast-layer>
+        <coc-confirm-dialog :dialog="gameState?.ui?.confirmDialog"></coc-confirm-dialog>
+    </div>
+
+    <script src="./js/data/jobs.js"></script>
+    <script src="./js/data/experiences.js"></script>
+    <script src="./js/data/items.js"></script>
+    <script src="./js/data/dev_logs.js"></script>
+    <script src="./js/data/skills.js"></script>
+    
+        <script src="./js/data/mythos_tomes.js"></script>
+    <script src="./js/data/spells.js"></script>
+    <script src="./js/data/injury_tables.js"></script>
+    <script src="./js/data/npc_templates.js"></script>
+    <script src="./js/data/insanity_tables.js"></script>
+    <script src="./js/coc.js"></script>
+    <!-- P0-2: 引擎模块 (从coc.js拆分, 均挂载到 window.CoCEngine) -->
+    <script src="./js/engines/dice.js"></script>
+    <script src="./js/engines/attributes.js"></script>
+    <script src="./js/engines/skills.js"></script>
+    <script src="./js/engines/combat.js"></script>
+    <script src="./js/engines/healing.js"></script>
+    <script src="./js/engines/sanity.js"></script>
+    <script src="./js/engines/wound.js"></script>
+    <script src="./js/engines/mythos.js"></script>
+    <script src="./js/engines/environmental.js"></script>
+    <script src="./js/engines/poison.js"></script>
+    <script src="./js/core/context_manager.js"></script>
+    <script src="./js/tools/definitions.js"></script>
+    <script src="./js/data/logger.js"></script>
+    <script src="./js/data/utils.js"></script>
+    <script src="./js/state/core.js"></script>
+    <script src="./js/state/ui.js"></script>
+    <script src="./js/state/gameplay.js"></script>
+    <script src="./js/state/persistence.js"></script>
+    <script src="./js/state.js"></script>
+    <!-- V18.1: CoCState 访问器 (解耦层) -->
+    <script src="./js/state/accessor.js"></script>
+    <script src="./js/tools/handlers/character.js"></script>
+    <script src="./js/tools/handlers/inventory.js"></script>
+    <script src="./js/tools/handlers/dice.js"></script>
+    <script src="./js/tools/handlers/clues.js"></script>
+    <script src="./js/tools/handlers/map.js"></script>
+    <script src="./js/tools/handlers/combat.js"></script>
+    <script src="./js/tools/handlers/mythos.js"></script>
+    <script src="./js/tools/handlers/npc.js"></script>
+    <script src="./js/tools/handlers/system.js"></script>
+    <script src="./js/tools/handlers/index.js"></script>
+    <script src="./js/components/char_creator.js"></script>
+    <script src="./js/ai/network.js"></script>
+    <script src="./js/ai/tool_dispatch.js"></script>
+    <script src="./js/data/ai_prompt_config.js"></script>
+    <script src="./js/ai_logic.js"></script>
+    
+    <script src="./js/components/story_chat.js"></script>
+    <script src="./js/components/story_char.js"></script>
+    <script src="./js/components/story_inv.js"></script>
+    <script src="./js/components/story_equip.js"></script>
+    <script src="./js/components/canvas_chat.js"></script>
+    <script src="./js/components/story_store.js"></script>
+
+    <script src="./js/views/lobby_view.js"></script>
+    <script src="./js/views/creator_view.js"></script>
+    <script src="./js/components/story_journal.js"></script>
+    <script src="./js/components/story_npc.js"></script>
+    <script src="./js/components/story_combat.js"></script>
+    <script src="./js/components/story_growth.js"></script>
+    <script src="./js/components/story_map.js"></script>
+    <script src="./js/components/story_clues.js"></script>
+        <script src="./js/audio/sfx.js"></script>
+    <script src="./js/components/dice_canvas.js"></script>
+    <script src="./js/components/story_dice.js"></script>
+    <script src="./js/chat_export.js"></script>
+    <script src="./js/views/story_view.js"></script>
+    <script src="./js/views/dev_log_view.js"></script>
+    <script src="./js/components/sanity_effects.js"></script>
+    <script src="./js/components/ui_feedback.js"></script>
+    
+    <script src="./js/app.js"></script>
+    <!-- Testing suites are packaged under ./tests/ and run manually; release UI should not auto-run tests. -->
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+    </script>
+
+    <!-- V18.1 Integrated · CoC 7th Engine -->
+    <div style="position:fixed;bottom:4px;right:8px;z-index:9999;pointer-events:none;opacity:0.25;font-size:0.6rem;color:#888;font-family:monospace;">V18.1 · CoC 7th Engine · Modular</div>
+</body>

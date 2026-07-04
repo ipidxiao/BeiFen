@@ -1,0 +1,36 @@
+{
+  "name": "CoC 7th Engine — 克苏鲁的呼唤",
+  "short_name": "CoC引擎",
+  "description": "沉浸式TRPG跑团助手，AI守秘人驱动",
+  "id": "coc-7th-engine",
+  "scope": "./",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "256x256",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "./favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "zh-CN"
+}

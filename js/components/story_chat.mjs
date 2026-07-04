@@ -1,0 +1,129 @@
+export const StoryChat = {
+    data() {
+        return {
+            _vStart: 0,
+            _vSize: 30,
+            _vHeights: [],
+            _avgHeight: 120
+        };
+    },
+    template: `
+        <div class="d-flex flex-column flex-grow-1 overflow-hidden p-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="text-warning m-0">📍 {{ gameState.currentLocation }}</h6>
+                <div><button class="btn btn-outline-info btn-sm" @click="showModal('map')">🗺️ 地图</button></div>
+            </div>
+            
+            <div class="chat-box mb-2 flex-grow-1 border border-secondary" ref="chatBox" @scroll="onChatScroll" id="chatContainer" aria-live="polite" aria-atomic="false">
+                <div :style="{ height: topSpacer + 'px' }"></div>
+                <div v-for="msg in visibleMessages" :key="msg._vid || 0" class="chat-msg">
+                    <div v-if="msg.role === 'system' && !msg.isHidden" :class="{'madness-msg': msg.isMadness, 'alert-msg': msg.isAlert, 'sys-msg': !msg.isMadness && !msg.isAlert}">
+                        <strong v-if="!msg.isAlert">[系统]</strong> <span class="chat-content">{{ msg.content }}</span>
+                    </div>
+                    <div v-else-if="msg.role === 'user' && !msg.isHidden" class="user-msg"><strong>[玩家]</strong> {{ msg.content }}</div>
+                    <div v-else-if="msg.role === 'assistant' && msg.content" class="kp-msg"><strong>[守秘人]</strong> <span class="chat-content">{{ msg.content }}</span></div>
+                    
+                    <div v-if="msg.tool_calls && !msg.isResolved" class="p-3 mt-2 border-start border-warning bg-dark rounded shadow-sm">
+                        <strong class="text-warning fs-6">【系统判定待处理】</strong><br>
+                        <div v-for="tool in msg.tool_calls" :key="tool.id">
+                            <div v-if="tool && tool.function && tool.function.name === 'request_skill_check' && !tool.isResolved" class="mt-2 text-light">
+                                👉 命运时刻：<b>{{ tool.target_name || '调查员' }}</b> 请进行 <b>{{ getSafeSkillName(tool) }}</b> 检定。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div :style="{ height: bottomSpacer + 'px' }"></div>
+                <div v-if="gameState.isLoading" style="color: #f0ad4e; font-size: 13px;">守秘人正在推演中...</div>
+            </div>
+            
+            <div v-if="getPendingCheck()" class="d-grid mb-1">
+                <button class="btn btn-warning fw-bold py-3 fs-5" style="box-shadow: 0 0 15px rgba(240, 173, 78, 0.4); border: 2px solid #ffda6a;" @click="executeSkillCheck(getPendingCheck().tool, getPendingCheck().msg, getSafeSkillName(getPendingCheck().tool), getPendingCheck().tool.target_name)">
+                    🎲 {{ getPendingCheck().tool.target_name || '调查员' }} 掷骰：【{{ getSafeSkillName(getPendingCheck().tool) }}】
+                </button>
+            </div>
+            <div v-else class="input-group mb-1">
+                <button class="btn btn-outline-secondary fw-bold" @click="$emit('switch-tab', 'character')">👥</button>
+                <input type="text" class="form-control bg-dark text-light border-secondary" v-model="playerInput" @keyup.enter="handlePlayerAction" :disabled="gameState.isLoading" placeholder="你要做什么？">
+                <button class="btn btn-warning fw-bold" @click="handlePlayerAction" :disabled="gameState.isLoading">发送</button>
+            </div>
+        </div>
+    `,
+    computed: {
+        totalMsgs() {
+            const h = this.gameState?.chatHistory;
+            return h ? h.length : 0;
+        },
+        visibleMessages() {
+            const h = this.gameState?.chatHistory;
+            if (!h || h.length === 0) return [];
+            const end = Math.min(this._vStart + this._vSize, h.length);
+            return h.slice(this._vStart, end);
+        },
+        topSpacer() {
+            return this._vStart * this._avgHeight;
+        },
+        bottomSpacer() {
+            const total = this.totalMsgs;
+            const visible = this._vStart + this._vSize;
+            return Math.max(0, (total - visible) * this._avgHeight);
+        }
+    },
+    methods: {
+        onChatScroll() {
+            const box = this.$refs.chatBox;
+            if (!box) return;
+            const scrollTop = box.scrollTop;
+            const newStart = Math.max(0, Math.floor(scrollTop / this._avgHeight) - 5);
+            if (Math.abs(newStart - this._vStart) > 3) {
+                this._vStart = newStart;
+            }
+        },
+        scrollChatToBottom() {
+            this.$nextTick(() => {
+                const box = this.$refs.chatBox;
+                if (!box) return;
+                const h = this.gameState?.chatHistory;
+                if (h) {
+                    this._vStart = Math.max(0, h.length - this._vSize);
+                }
+                this.$nextTick(() => {
+                    if (box) box.scrollTop = box.scrollHeight;
+                });
+            });
+        }
+    },
+    mounted() {
+        this.scrollChatToBottom();
+    },
+    setup(props, context) {
+        const state = window.CoCState;
+        const ai = window.CoCAI;
+        const gameState = state.gameState;
+
+        // Override the global scrollToBottom to use virtual scroll
+        const origScroll = state.scrollToBottom;
+        state.scrollToBottom = () => {
+            // This is called after AI responses. Use nextTick to let Vue render first.
+            setTimeout(() => {
+                const instance = context?.exposed || {};
+                if (instance.scrollChatToBottom) instance.scrollChatToBottom();
+            }, 50);
+        };
+        
+        const getPendingCheck = () => {
+            const history = gameState.chatHistory;
+            for (let i = history.length - 1; i >= 0; i--) {
+                const msg = history[i];
+                if (msg.role === 'user') break;
+                if (msg.role === 'assistant' && msg.tool_calls && !msg.isResolved) {
+                    const tool = msg.tool_calls.find(t => t && t.function && t.function.name === 'request_skill_check' && !t.isResolved);
+                    if (tool) return { tool, msg };
+                }
+            }
+            return null;
+        };
+        
+        return Object.assign({ getPendingCheck, gameState }, state, ai);
+    }
+};
+window.StoryChat = StoryChat;

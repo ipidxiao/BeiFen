@@ -1,0 +1,131 @@
+// GENERATED from js/components/story_combat.mjs — do not edit; run: npm run build:js
+// ===============================================
+// 归属：【程序】 引擎核心 / AI调度 / 状态管理
+// 美术/策划/QA 请勿直接修改此文件
+// 修改后放入 roles/programmer/ 运行 merge.py 合并
+// ===============================================
+
+window.StoryCombat = {
+      data() { return { expandInitiative: false }; },
+      template: `
+          <div class="modal-overlay" style="z-index:50;">
+              <div class="combat-panel">
+                  
+                  <!-- Header -->
+                  <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom combat-header">
+                      <div>
+                          <span class="text-danger fw-bold">⚔️ 战斗中</span>
+                          <span class="badge bg-danger ms-2">第 {{ gameState.combat.round }} 回合</span>
+                      </div>
+                      <div class="text-muted small">{{ gameState.combat.location }}</div>
+                  </div>
+
+                  <!-- Current Turn Banner -->
+                  <div class="px-3 py-2 text-center combat-turn-banner">
+                      <div class="text-warning fw-bold combat-turn-label">现在行动：{{ currentTurnName }}</div>
+                      <div v-if="currentTurnIsEnemy" class="text-danger small">敌人回合 — 等待守秘人裁定</div>
+                      <div v-else class="text-light small">输入行动指令，或选择快速行动</div>
+                  </div>
+
+                  <!-- Initiative Order (collapsible) -->
+                  <div class="px-3 py-1 border-bottom border-secondary combat-initiative-bar">
+                      <div class="d-flex justify-content-between align-items-center combat-initiative-toggle" tabindex="0" role="button" aria-label="切换先攻排序" @click="expandInitiative=!expandInitiative" @keydown.enter="expandInitiative=!expandInitiative" @keydown.space.prevent="expandInitiative=!expandInitiative">
+                          <span class="text-muted combat-initiative-text">先攻顺序</span>
+                          <span class="text-muted combat-initiative-text">{{ expandInitiative ? '▲' : '▼' }}</span>
+                      </div>
+                      <div v-if="expandInitiative" class="d-flex flex-wrap gap-1 mt-1 pb-1">
+                          <span v-for="(t, i) in activeOrder" :key="t.id"
+                              class="badge"
+                              :style="'font-size:0.65rem; background:' + (i===activeTurnIdx ? (t.isEnemy?'#cc2200':'#c9a227') : '#1a1a1a') + '; color:' + (t.isEnemy?'#ff9999':'#ffe070') + '; border:1px solid ' + (i===activeTurnIdx?'#ff6600':'#333')">
+                              {{ i===activeTurnIdx ? '▶ ' : '' }}{{ t.name }}
+                          </span>
+                      </div>
+                  </div>
+
+                  <!-- Enemies Section -->
+                  <div class="px-3 pt-2 pb-1" style="flex-shrink:0;">
+                      <div class="text-danger fw-bold mb-2 combat-section-title">敌 方</div>
+                      <div v-for="enemy in gameState.combat.enemies" :key="enemy.id"
+                          class="mb-2 p-2 rounded"
+                          :class="enemy.isDefeated ? 'defeated' : ''"
+                          :style="!enemy.isDefeated ? 'background:#1a0808;border:1px solid #5a1a1a' : 'background:#0a0a0a;border:1px solid #222'">
+                          <div class="d-flex justify-content-between align-items-start mb-1">
+                              <div>
+                                  <span class="fw-bold combat-enemy-name" :class="enemy.isDefeated ? 'defeated' : ''">{{ enemy.name }}</span>
+                                  <span v-if="enemy.armor" class="badge ms-1 combat-armor-badge">护甲 {{ enemy.armor }}</span>
+                                  <span v-if="enemy.isDefeated" class="badge bg-secondary ms-1 combat-defeated-badge">💀 击败</span>
+                              </div>
+                              <span v-if="!enemy.isDefeated" class="text-danger fw-bold combat-enemy-hp">{{ enemy.hp }}/{{ enemy.maxHp }}</span>
+                          </div>
+                          <div v-if="!enemy.isDefeated" class="progress combat-hp-progress">
+                              <div class="progress-bar bg-danger" :style="'width:' + Math.max(0, enemy.hp/enemy.maxHp*100) + '%; transition:width 0.4s;'"></div>
+                          </div>
+                          <div v-if="enemy.description" class="text-muted mt-1 combat-enemy-desc">{{ enemy.description }}</div>
+                      </div>
+                  </div>
+
+                  <!-- Investigators Section -->
+                  <div class="px-3 pt-1 pb-2 border-top border-secondary">
+                      <div class="text-warning fw-bold mb-2 combat-section-title">调查员</div>
+                      <div class="d-flex flex-wrap gap-2">
+                          <div v-for="char in activeChars" :key="char.name" class="p-2 rounded flex-grow-1 combat-char-card">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                  <span class="text-warning fw-bold combat-char-name">{{ char.name }}</span>
+                                  <span v-if="char.isInsane" class="badge bg-danger combat-char-insane">疯狂</span>
+                              </div>
+                              <div class="progress mb-1 combat-hp-progress-inv">
+                                  <div class="progress-bar bg-danger" :style="'width:' + Math.max(0, char.hp/(char.derived?.hp||1)*100) + '%;'"></div>
+                              </div>
+                              <div class="d-flex justify-content-between combat-char-stats">
+                                  <span>HP {{ char.hp }}/{{ char.derived?.hp }}</span>
+                                  <span>SAN {{ char.sanity }}</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Quick Actions -->
+                  <div class="px-3 pb-2 border-top border-secondary pt-2 combat-actions-bar">
+                      <div class="text-muted mb-2 combat-actions-label">快速指令（点击后发送）</div>
+                      <div class="d-flex flex-wrap gap-1">
+                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我向最近的敌人发起攻击！')">🗡️ 近战攻击</button>
+                          <button class="btn btn-sm btn-outline-warning py-0 px-2 combat-quick-btn" @click="quickAction('我开枪射击！')">🔫 开枪</button>
+                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn" @click="quickAction('我尝试躲避并寻找掩体。')">🛡️ 规避</button>
+                          <button class="btn btn-sm btn-outline-success py-0 px-2 combat-quick-btn" @click="quickAction('我对' + firstWoundedChar + '进行急救。')">💊 急救</button>
+                          <button class="btn btn-sm btn-outline-secondary py-0 px-2 combat-quick-btn" @click="quickAction('我们撤退！')">🏃 撤退</button>
+                      </div>
+                  </div>
+
+                  <!-- Close only if combat inactive -->
+                  <div v-if="!gameState.combat.active" class="px-3 pb-3 text-center">
+                      <button class="btn btn-secondary" @click="closeModal">关闭战斗面板</button>
+                  </div>
+
+              </div>
+          </div>
+      `,
+      computed: {
+          activeChars() { return this.gameState.roster.filter(c => c.isActive); },
+          activeOrder() {
+              return this.gameState.combat.initiativeOrder.filter(t => {
+                  if (t.isEnemy) { const e = this.gameState.combat.enemies.find(en => en.id === t.id); return e && !e.isDefeated; }
+                  return this.gameState.roster.find(c => c.name === t.name && c.isActive && c.hp > 0);
+              });
+          },
+          activeTurnIdx() { return this.gameState.combat.currentTurnIdx % Math.max(1, this.activeOrder.length); },
+          currentTurn() { return this.activeOrder[this.activeTurnIdx] || null; },
+          currentTurnName() { return this.currentTurn ? this.currentTurn.name : '—'; },
+          currentTurnIsEnemy() { return this.currentTurn ? this.currentTurn.isEnemy : false; },
+          firstWoundedChar() {
+              const c = this.gameState.roster.find(r => r.isActive && r.hp < (r.derived?.hp || 10));
+              return c ? c.name : (this.activeChars[0]?.name || '队友');
+          }
+      },
+      methods: {
+          quickAction(text) {
+              window.CoCState.playerInput.value = text;
+              if (window.CoCAI && window.CoCAI.handlePlayerAction) window.CoCAI.handlePlayerAction();
+          }
+      },
+      setup() { return Object.assign({}, window.CoCState); }
+  };

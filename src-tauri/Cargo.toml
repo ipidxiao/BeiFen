@@ -1,0 +1,10 @@
+[package]
+name = "coc-7th-engine"
+version = "16.5.0"
+edition = "2021"
+
+[dependencies]
+tauri = { version = "1", features = ["dialog-open", "dialog-save", "shell-open"] }
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }

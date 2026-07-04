@@ -1,0 +1,136 @@
+# ═══════════════════════════════════════════════════════
+# CoC 7th Engine V18.1 — 文件归属清单
+# ═══════════════════════════════════════════════════════
+# 
+# 合并规则 (merge.py):
+#   1. 角色只能覆盖归属自己的文件
+#   2. shared 文件合并时警告，需人工确认
+#   3. 非归属文件的修改 → 阻止 + 报告冲突
+#   4. 文件哈希无变化 → 跳过
+#
+# 角色:
+#   programmer  程序 — 引擎核心 / AI调度 / 状态管理
+#   designer    策划 — 游戏数据 / CoC规则表
+#   artist      美术 — CSS样式 / 图标 / 纸娃娃
+#   qa          测试 — 测试用例 / 覆盖分析
+#   shared      共享 — 所有角色都可能修改
+# ═══════════════════════════════════════════════════════
+
+roles:
+  # ─────────────── 程序 (51 文件) ───────────────
+  programmer:
+    desc: 引擎核心、AI调度、状态管理、规则引擎
+    files:
+      - js/coc.js
+      - js/coc.mjs
+      - js/engines/combat.js
+      - js/engines/healing.js
+      - js/engines/sanity.js
+      - js/engines/wound.js
+      - js/engines/mythos.js
+      - js/engines/environmental.js
+      - js/engines/poison.js
+      - js/state/accessor.js
+      - js/components/char_creator.js
+      - js/components/char_creator.mjs
+      - build.py
+      - js/core/context_manager.js
+      - js/core/context_manager.mjs
+      - js/tools/definitions.js
+      - js/tools/definitions.mjs
+      - js/tools/handlers/index.js
+      - js/tools/handlers/index.mjs
+      - js/tools/handlers/character.js
+      - js/tools/handlers/character.mjs
+      - js/tools/handlers/inventory.js
+      - js/tools/handlers/inventory.mjs
+      - js/tools/handlers/dice.js
+      - js/tools/handlers/dice.mjs
+      - js/tools/handlers/clues.js
+      - js/tools/handlers/clues.mjs
+      - js/tools/handlers/map.js
+      - js/tools/handlers/map.mjs
+      - js/tools/handlers/combat.js
+      - js/tools/handlers/combat.mjs
+      - js/tools/handlers/mythos.js
+      - js/tools/handlers/npc.js
+      - js/tools/handlers/npc.mjs
+      - js/tools/handlers/system.js
+      - js/tools/handlers/system.mjs
+      - js/state/core.js
+      - js/state/core.mjs
+      - js/state/ui.js
+      - js/state/ui.mjs
+      - js/state/gameplay.js
+      - js/state/gameplay.mjs
+      - js/state/persistence.js
+      - js/state/persistence.mjs
+      - js/state/state.mjs
+      - js/state.js
+      - js/ai/network.js
+      - js/ai/network.mjs
+      - js/ai/tool_dispatch.js
+      - js/ai/tool_dispatch.mjs
+      - js/ai/worker.js
+      - js/ai/worker_client.js
+      - js/ai_logic.js
+      - js/ai_logic.mjs
+      - js/data/logger.js
+      - js/data/logger.mjs
+      - js/data/utils.js
+      - js/data/utils.mjs
+      - js/char_creator.js
+      - js/char_creator.mjs
+      - js/app.js
+      - js/app.mjs
+      - js/chat_export.js
+      - js/chat_export.mjs
+      - sw.js
+      - src-tauri/
+
+  # ─────────────── 美术 (6 文件) ───────────────
+  artist:
+    desc: CSS样式、UI皮肤、图标、装备纸娃娃、Canvas原型
+    files:
+      - css/style.css
+      - vendor/
+      - js/components/story_equip.js
+      - js/components/story_equip.mjs
+      - js/components/canvas_chat.js
+      - js/components/canvas_chat.mjs
+      - icons/
+
+  # ─────────────── QA (目录) ───────────────
+  qa:
+    desc: 测试用例、smoke tests、bug报告、覆盖分析
+    files:
+      - tests/
+
+  # ─────────────── 策划 (16 文件) ───────────────
+  designer:
+    desc: 游戏数据、CoC规则表、物品DB、职业/技能/经历/典籍/法术/疯狂/伤害表
+    files:
+      - js/data/jobs.js
+      - js/data/jobs.mjs
+      - js/data/skills.js
+      - js/data/skills.mjs
+      - js/data/items.js
+      - js/data/items.mjs
+      - js/data/items_db.js
+      - js/data/items_db.mjs
+      - js/data/experiences.js
+      - js/data/experiences.mjs
+      - js/data/dev_logs.js
+      - js/data/dev_logs.mjs
+      - js/data/mythos_tomes.js
+      - js/data/spells.js
+      - js/data/insanity_tables.js
+      - js/data/injury_tables.js
+
+  # ─────────────── 共享 (3 文件) ───────────────
+  shared:
+    desc: 所有角色都可能修改的公共文件（合并时需人工确认）
+    files:
+      - index.html
+      - package.json
+      - docs/ground_truth_canvas.md

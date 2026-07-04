@@ -1,0 +1,48 @@
+# CoC 7th Engine — CI Pipeline
+
+name: CoC Engine Smoke Tests
+
+on:
+  push:
+    branches: [main, master, v*]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run smoke tests
+        run: node tests/run_all_smoke.js
+
+      - name: Syntax check all JS files
+        run: |
+          find js tests \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node --check
+
+      - name: Verify no nested zips
+        run: |
+          nested=$(find . -name '*.zip' | wc -l)
+          if [ "$nested" -gt 0 ]; then
+            echo "ERROR: Found $nested nested zip files in release package"
+            find . -name '*.zip'
+            exit 1
+          fi
+          echo "OK: No nested zips"
+
+      - name: Verify no internal docs
+        run: |
+          if [ -d "docs/internal" ]; then
+            echo "ERROR: docs/internal/ directory found in release"
+            exit 1
+          fi
+          echo "OK: No internal docs"

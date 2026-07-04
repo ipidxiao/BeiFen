@@ -1,0 +1,13 @@
+node_modules/
+*.zip
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.env
+.env.*
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
