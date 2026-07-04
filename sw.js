@@ -16,7 +16,7 @@
 
  */
 
-const CACHE_NAME = 'coc-engine-v17.1';
+const CACHE_NAME = 'coc-engine-v18.1';
 
 const ASSETS = [
 

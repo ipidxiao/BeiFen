@@ -38,6 +38,7 @@ const SUITES = [
   // Phase 1 — 文件完整性与加载链
   { phase: 'Phase 1: 文件完整性与加载链', tests: [
     'auditfix8_file_integrity_smoke.js',
+    'sw_cache_smoke.js',
   ]},
 
   // Phase 2 — 核心引擎与规则

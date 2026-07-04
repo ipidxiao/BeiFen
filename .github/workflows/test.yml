@@ -22,8 +22,11 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Verify generated JS matches .mjs sources
+        run: npm run build:js:check
+
       - name: Run smoke tests
-        run: node tests/run_all_smoke.js
+        run: npm test
 
       - name: Syntax check all JS files
         run: |

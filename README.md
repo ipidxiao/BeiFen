@@ -23,6 +23,14 @@ npm run build     # 打包 ZIP
 npm run serve     # 本地开发服务器
 ```
 
+## 如何开发
+
+- **只改 `.mjs`**：`.mjs` 为权威源码；对应 `.js` 由构建脚本生成，勿手改
+- **改完 `.mjs` 后执行** `npm run build:js`，再提交生成的 `.js`
+- **提交前跑** `npm test`（含 `build:js:check` 可单独用于校验 drift）
+- **浏览器专用、不参与生成的文件**：`js/coc.js`、`js/ai/worker.js`、`js/ai/worker_client.js`、`js/audio/sfx.js`、`js/components/dice_canvas.js`、`js/components/sanity_effects.js`、`js/state/accessor.js`（详见 `scripts/BROWSER_ONLY.md`）
+- **发布打包**：`python build.py`（内部会自动执行 `build:js`）
+
 ## 🏗 架构
 
 ```
