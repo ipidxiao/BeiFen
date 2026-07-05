@@ -1,11 +1,13 @@
 # CoC Engine — Audit Round 6 批次追踪
 
 > 2026-07-05 六轮审计修复（AUDIT6-P1~P3）。  
-> 五轮追踪见 [AUDIT5_BATCHES.md](AUDIT5_BATCHES.md) · 四轮见 [AUDIT4_BATCHES.md](AUDIT4_BATCHES.md)。
+> 四轮追踪见 [AUDIT4_BATCHES.md](AUDIT4_BATCHES.md) · 三轮见 [AUDIT3_BATCHES.md](AUDIT3_BATCHES.md)。
 
 **状态图例：** `[ ]` pending · `[~]` in_progress · `[x]` done · `[-]` skipped/wontfix
 
 **版本源：** `package.json` → `18.1.0` · 门禁 **35/35** smoke（`npm test`）
+
+**轮次状态：** **CLOSED** — 7/7 done · 0 pending · 0 wontfix · 提交 `4cc76af`
 
 ---
 
@@ -22,7 +24,7 @@
 
 | 状态 | ID | 标题 | 验证 |
 |:----:|----|------|------|
-| [x] | AUDIT6-P2-02 | Commit untracked `.mjs` / `css` source for reproducible build | git status clean ✓ |
+| [x] | AUDIT6-P2-02 | Commit untracked `.mjs` / `css` source for reproducible build | `scripts/_inject_icons.mjs` tracked; `icon_sprite.mjs` / `story_dice.mjs` synced; `css/icons.svg` + `css/style.css` in repo; `git status` clean ✓ |
 | [x] | AUDIT6-P3-01 | iOS PWA meta tags in `index.html` | apple-mobile-web-app-* + mobile-web-app-capable ✓ |
 
 ---
@@ -41,8 +43,5 @@
 
 | 日期 | 批次 | 说明 |
 |------|------|------|
-| 2026-07-05 | R6-A–C | 六轮审计 7/7 完成；35/35 smoke；`4cc76af` |
-| 2026-07-05 | R6-B | P2-02 源文件入库：`icon_sprite.mjs`、`story_dice.mjs`、`_inject_icons.mjs`、`asset_manifest.mjs` 已跟踪 |
+| 2026-07-05 | R6-A–C | 六轮审计 7/7 完成；35/35 smoke；`4cc76af` — modulepreload 404、SW scope paths、源文件入库、iOS PWA meta、pushReason journal、crash overlay、inline icons |
 | 2026-07-05 | — | 创建 AUDIT6 批次追踪 |
-
-*Last updated: 2026-07-05 — AUDIT6 全部 7 项完成（`4cc76af`）。*
