@@ -37,4 +37,12 @@
 
 ---
 
-*Last updated: 2026-07-05 — AUDIT6 全部 7 项完成。*
+## 变更日志
+
+| 日期 | 批次 | 说明 |
+|------|------|------|
+| 2026-07-05 | R6-A–C | 六轮审计 7/7 完成；35/35 smoke；`4cc76af` |
+| 2026-07-05 | R6-B | P2-02 源文件入库：`icon_sprite.mjs`、`story_dice.mjs`、`_inject_icons.mjs`、`asset_manifest.mjs` 已跟踪 |
+| 2026-07-05 | — | 创建 AUDIT6 批次追踪 |
+
+*Last updated: 2026-07-05 — AUDIT6 全部 7 项完成（`4cc76af`）。*
