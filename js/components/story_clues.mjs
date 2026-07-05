@@ -128,7 +128,7 @@ export const StoryClues = {
                       <div class="empty-state-title">尚未发现任何线索</div>
                       <div class="empty-state-hint">调查员发现证据时，AI 会自动记录到此处</div>
                   </div>
-                  <svg v-if="gameState.clueBoard.clues.length > 0" :width="webW" :height="webH" :viewBox="'0 0 '+webW+' '+webH" style="width:100%;height:auto;display:block;background:#07070e;">
+                  <svg v-if="gameState.clueBoard.clues.length > 0" :width="webW" :height="webH" :viewBox="'0 0 '+webW+' '+webH" class="bg-surface-canvas" style="width:100%;height:auto;display:block;">
                       <g v-for="(link, i) in gameState.clueBoard.links" :key="'lk'+i">
                           <line v-if="nodePos(link.from) && nodePos(link.to)"
                               :x1="nodePos(link.from).x" :y1="nodePos(link.from).y"
@@ -185,7 +185,7 @@ export const StoryClues = {
           },
           cardStyle(clue) {
               const glow = clue.status==='key' ? 'box-shadow:0 0 8px #8a6a00;' : '';
-              const bg = {new:'background:#0d0d18;border:1px solid #2a2a4a;',investigating:'background:#0d0d10;border:1px solid #3a3a2a;',key:'background:#100d00;border:1px solid #5a4a00;',solved:'background:#0a0a0a;border:1px solid #222;'}[clue.status]||'background:#0d0d18;border:1px solid #2a2a4a;';
+              const bg = {new:'background:var(--bg-surface-detail);border:1px solid var(--purple-border);',investigating:'background:var(--bg-panel);border:1px solid #3a3a2a;',key:'background:#100d00;border:1px solid #5a4a00;',solved:'background:var(--bg-input);border:1px solid var(--border-dim);'}[clue.status]||'background:var(--bg-surface-detail);border:1px solid var(--purple-border);';
               return bg + glow;
           },
           nodeColor(c) { return {new:'#141428',investigating:'#141408',key:'#1a1400',solved:'#0d0d0d'}[c.status]||'#141428'; },

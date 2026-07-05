@@ -10,7 +10,7 @@ export const StoryJournal = {
       data() { return { noteInput: '', showNoteInput: false }; },
       template: `
           <div class="d-flex flex-column h-100" style="overflow:hidden;">
-              <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom border-secondary" style="background:#111; flex-shrink:0;">
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom border-secondary bg-panel-input journal-toolbar" style="flex-shrink:0;">
                   <span class="text-warning fw-bold small">📖 调查员记录本</span>
                   <div class="d-flex gap-2">
                       <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:0.75rem;" @click="showNoteInput = !showNoteInput">✏️ 记笔记</button>
@@ -19,7 +19,7 @@ export const StoryJournal = {
               </div>
 
               <!-- 添加笔记 -->
-              <div v-if="showNoteInput" class="px-3 py-2 border-bottom border-secondary" style="background:#0a0a0a; flex-shrink:0;">
+              <div v-if="showNoteInput" class="px-3 py-2 border-bottom border-secondary bg-panel-deep" style="flex-shrink:0;">
                   <div class="d-flex gap-2">
                       <input class="form-control form-control-sm bg-dark text-light border-secondary flex-grow-1" v-model="noteInput" placeholder="记录线索、想法、备忘…" @keyup.enter="addNote">
                       <button class="btn btn-sm btn-warning" @click="addNote" :disabled="!noteInput.trim()">记录</button>

@@ -74,7 +74,9 @@ window.StoryEquip = {
                     <div class="slot-icon"><coc-icon :name="slot.iconId" :size="22" :title="slot.label"></coc-icon></div>
                     <div class="slot-label">{{ slot.label }}</div>
                     <div v-if="getEquipped(slot)" class="slot-item">
-                        <div class="slot-item-icon">{{ getEquippedTierIcon(slot) }}</div>
+                        <span v-if="getItemTierKey(getEquipped(slot))" class="slot-item-icon tier-badge" :class="'tier-badge-' + getItemTierKey(getEquipped(slot))">
+                            <coc-icon :name="getItemTierIconName(getEquipped(slot))" :size="14"></coc-icon>
+                        </span>
                         <div class="slot-item-name">{{ getEquippedName(slot) }}</div>
                         <div class="slot-tier" :style="'color:' + getEquippedTierColor(slot)">{{ getEquippedTierLabel(slot) }}</div>
                     </div>
@@ -105,7 +107,9 @@ window.StoryEquip = {
                             :class="{ 'picker-selected': isEquipped(item, pickerSlot) }"
                             :style="getPickerItemStyle(item)"
                             @click="equipToSlot(pickerSlot, item, idx)">
-                            <span class="picker-item-icon">{{ getItemTierIcon(item) }}</span>
+                            <span v-if="getItemTierKey(item)" class="picker-item-icon tier-badge" :class="'tier-badge-' + getItemTierKey(item)">
+                                <coc-icon :name="getItemTierIconName(item)" :size="14"></coc-icon>
+                            </span>
                             <div class="picker-item-info">
                                 <strong>{{ getItemName(item) }}</strong>
                                 <small class="text-muted">{{ getItemSubtitle(item) }}</small>
@@ -172,12 +176,21 @@ window.StoryEquip = {
             return tier ? tier.color : '#666';
         };
 
+        const getItemTierKey = (item) => {
+            const r = resolve(item);
+            return r.tier || '';
+        };
+
+        const getItemTierIconName = (item) => {
+            const key = getItemTierKey(item);
+            if (!key) return '';
+            return 'tier-' + key.toLowerCase();
+        };
+
         const getEquippedTierIcon = (slot) => {
             const item = getEquipped(slot);
-            if (!item) return '⬜';
-            const r = resolve(item);
-            const tier = acc.getItemTier(r.tier);
-            return tier ? tier.icon : '📦';
+            if (!item) return '';
+            return getItemTierIconName(item);
         };
 
         const getSlotClass = (slot) => {
@@ -215,11 +228,7 @@ window.StoryEquip = {
             return tier ? tier.color : '#666';
         };
 
-        const getItemTierIcon = (item) => {
-            const r = resolve(item);
-            const tier = acc.getItemTier(r.tier);
-            return tier ? tier.icon : '📦';
-        };
+        const getItemTierIcon = (item) => getItemTierIconName(item);
 
         const getItemSubtitle = (item) => {
             const r = resolve(item);
@@ -315,7 +324,7 @@ window.StoryEquip = {
         return {
             slots, pickerSlot, compatibleItems,
             getEquipped, getEquippedName, getEquippedTierLabel, getEquippedTierColor, getEquippedTierIcon,
-            getSlotClass, getItemName, getItemTierLabel, getItemTierColor, getItemTierIcon,
+            getSlotClass, getItemName, getItemTierLabel, getItemTierColor, getItemTierIcon, getItemTierKey, getItemTierIconName,
             getItemSubtitle, getPickerItemStyle, isEquipped,
             openSlotPicker, equipToSlot, unequipSlot, dropEquipped, onDrop
         };

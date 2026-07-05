@@ -46,20 +46,23 @@ window.StoryDice = {
               <!-- Last Roll Result -->
               <div v-if="lastRollEntry" class="mx-3 mb-2 p-2 rounded dice-result-panel" :class="animating?'dice-pulse':''">
                   <div class="text-muted mb-1 dice-result-label">{{ lastRollEntry.label }}</div>
-                  <!-- Dice faces for d6 -->
-                  <div v-if="lastRollEntry.sides===6" class="d-flex justify-content-center gap-1 mb-1">
-                      <span v-for="(v,i) in lastRollEntry.kept" :key="i"
-                          style="font-size:2rem;line-height:1;">{{ ['⚀','⚁','⚂','⚃','⚄','⚅'][v-1] }}</span>
-                  </div>
-                  <!-- Other dice: show boxes -->
-                  <div v-else class="d-flex justify-content-center flex-wrap gap-1 mb-1">
-                      <div v-for="(v,i) in lastRollEntry.kept" :key="i"
-                          class="d-flex align-items-center justify-content-center fw-bold dice-face-box">{{ v }}</div>
+                  <!-- Dice faces — SVG silhouette + value overlay -->
+                  <div class="d-flex justify-content-center flex-wrap gap-1 mb-1">
+                      <span v-for="(v,i) in lastRollEntry.kept" :key="i" class="dice-face-svg">
+                          <svg class="dice-shape" viewBox="0 0 24 24" aria-hidden="true">
+                              <use :href="'./css/icons.svg#icon-' + diceShapeId(lastRollEntry.sides)"></use>
+                          </svg>
+                          <span class="dice-value">{{ v }}</span>
+                      </span>
                   </div>
                   <!-- Dropped dice (grayed) -->
                   <div v-if="lastRollEntry.rolls.length > lastRollEntry.kept.length" class="d-flex justify-content-center gap-1 mb-1">
-                      <div v-for="(v,i) in droppedDice" :key="'d'+i"
-                          class="d-flex align-items-center justify-content-center dice-dropped-box">{{ v }}</div>
+                      <span v-for="(v,i) in droppedDice" :key="'d'+i" class="dice-face-svg dice-dropped-face">
+                          <svg class="dice-shape" viewBox="0 0 24 24" aria-hidden="true">
+                              <use :href="'./css/icons.svg#icon-' + diceShapeId(lastRollEntry.sides)"></use>
+                          </svg>
+                          <span class="dice-value">{{ v }}</span>
+                      </span>
                   </div>
                   <!-- Total -->
                   <div class="dice-total">
@@ -136,6 +139,11 @@ window.StoryDice = {
           }
       },
       methods: {
+          diceShapeId(sides) {
+              if (sides === 6) return 'd6';
+              if (sides === 20) return 'd20';
+              return 'd20';
+          },
           doPush() {
               if (!this.pushSkill.trim()) return;
               const active = this.gameState.roster.filter(r => r.isActive);

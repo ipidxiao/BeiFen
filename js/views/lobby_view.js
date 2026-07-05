@@ -67,6 +67,10 @@ window.ViewLobby = {
 
               <!-- ===== 大厅界面 ===== -->
               <div v-if="gameState.currentScreen === 'lobby'" class="card card-custom p-3 shadow-sm text-center">
+                  <div class="lobby-hero">
+                      <coc-icon name="elder" :size="72" class="lobby-hero-logo" title="CoC Engine"></coc-icon>
+                      <div class="lobby-hero-tagline">克苏鲁的呼唤 · 第七版守秘人引擎</div>
+                  </div>
                   <h3 class="coc-section-title mb-1">模组大厅</h3>
                   <div class="coc-section-subtitle mb-4" v-if="currentModName">📚 {{ currentModName }}</div>
 

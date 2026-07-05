@@ -14,7 +14,7 @@ window.StoryGrowth = {
           };
       },
       template: `
-          <div class="d-flex flex-column h-100 overflow-auto" style="background:#0a0a14; padding:10px; gap:10px;">
+          <div class="d-flex flex-column h-100 overflow-auto growth-panel" style="padding:10px; gap:10px;">
 
               <!-- Header -->
               <div class="p-2 rounded text-center" style="background:#0d1a0d; border:1px solid #2a4a2a;">
@@ -26,7 +26,7 @@ window.StoryGrowth = {
               <div v-if="activeChars.length === 0" class="text-center text-muted py-4" style="font-size:0.85rem;">无在场调查员</div>
 
               <!-- Each character -->
-              <div v-for="char in activeChars" :key="char.name" class="rounded p-2" style="background:#0e0e18; border:1px solid #2a2a4a;">
+              <div v-for="char in activeChars" :key="char.name" class="rounded p-2 bg-surface-detail" style="border:1px solid var(--purple-border);">
 
                   <!-- Char header -->
                   <div class="d-flex justify-content-between align-items-center mb-2">

@@ -3,7 +3,7 @@ export const StoryNpc = {
       template: `
           <div class="d-flex flex-column h-100" style="overflow:hidden;">
               <!-- Toolbar -->
-              <div class="d-flex align-items-center gap-2 px-2 py-2 border-bottom border-secondary" style="background:#111; flex-shrink:0; flex-wrap:wrap;">
+              <div class="d-flex align-items-center gap-2 px-2 py-2 border-bottom border-secondary bg-panel-input npc-toolbar" style="flex-shrink:0; flex-wrap:wrap;">
                   <span class="text-warning fw-bold small flex-shrink-0">🕵️ NPC 关系网络</span>
                   <div class="d-flex gap-1 ms-auto">
                       <button class="btn btn-sm py-0 px-2" :class="viewMode==='cards'?'btn-secondary':'btn-outline-secondary'" style="font-size:0.75rem;" @click="viewMode='cards'">☰ 卡片</button>
@@ -29,7 +29,7 @@ export const StoryNpc = {
               <div v-else-if="viewMode === 'cards'" class="flex-grow-1 overflow-auto p-2">
                   <div class="row g-2">
                       <div v-for="npc in filteredNpcs" :key="npc.id" class="col-6">
-                          <div class="p-2 rounded h-100" :style="'background:#111; border:1px solid ' + relationColor(npc.relation) + '44; cursor:pointer;'" @click="selectNpc(npc)">
+                          <div class="p-2 rounded h-100 bg-panel-input npc-card" :style="'border:1px solid ' + relationColor(npc.relation) + '44; cursor:pointer;'" @click="selectNpc(npc)">
                               <div class="d-flex justify-content-between align-items-start mb-1">
                                   <span class="fw-bold text-light" style="font-size:0.82rem; line-height:1.2;">{{ npc.name }}</span>
                                   <span class="badge ms-1 flex-shrink-0" :style="'background:' + statusBg(npc.status) + '; color:' + statusColor(npc.status) + '; font-size:0.6rem;'">{{ statusLabel(npc.status) }}</span>
@@ -43,7 +43,7 @@ export const StoryNpc = {
               </div>
 
               <!-- Constellation / Map view -->
-              <div v-else-if="viewMode === 'map'" class="flex-grow-1 overflow-auto d-flex align-items-center justify-content-center" style="background:#0a0a12;">
+              <div v-else-if="viewMode === 'map'" class="flex-grow-1 overflow-auto d-flex align-items-center justify-content-center bg-surface-canvas">
                   <svg :width="mapW" :height="mapH" :viewBox="'0 0 ' + mapW + ' ' + mapH" style="max-width:100%; max-height:100%;">
                       <!-- Rings -->
                       <circle v-for="r in [85,130,170]" :key="r" :cx="cx" :cy="cy" :r="r" fill="none" stroke="#222" stroke-width="1" stroke-dasharray="4,6"/>
@@ -70,7 +70,7 @@ export const StoryNpc = {
 
               <!-- NPC Detail Panel -->
               <transition name="slide-up">
-              <div v-if="selectedNpc" class="border-top border-secondary p-3" style="background:#0d0d0d; max-height:55%; overflow-y:auto; flex-shrink:0;">
+              <div v-if="selectedNpc" class="border-top border-secondary p-3 bg-surface-detail" style="max-height:55%; overflow-y:auto; flex-shrink:0;">
                   <div class="d-flex justify-content-between align-items-start mb-2">
                       <div>
                           <span class="fw-bold text-warning" style="font-size:0.95rem;">{{ selectedNpc.name }}</span>

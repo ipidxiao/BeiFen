@@ -28,7 +28,7 @@ export const StoryMap = {
 
               <!-- Scene SVG Map tab -->
               <div v-if="mapTab === 'scene' && gameState.sceneMap.rooms.length > 0" class="p-2">
-                  <svg :width="svgW" :height="svgH" :viewBox="'0 0 ' + svgW + ' ' + svgH" style="width:100%; height:auto; display:block; background:#070710; border-radius:6px; border:1px solid #1a1a2a;">
+                  <svg :width="svgW" :height="svgH" :viewBox="'0 0 ' + svgW + ' ' + svgH" class="bg-surface-map" style="width:100%; height:auto; display:block; border-radius:6px; border:1px solid var(--purple-border);">
                       <!-- Connection lines -->
                       <line v-for="(line, i) in connectionLines" :key="'l'+i"
                           :x1="line.x1" :y1="line.y1" :x2="line.x2" :y2="line.y2"
@@ -62,7 +62,7 @@ export const StoryMap = {
                   </div>
 
                   <!-- Selected room detail -->
-                  <div v-if="selectedRoom" class="mt-2 p-2 rounded" style="background:#0d0d1a; border:1px solid #3a3a6a; font-size:0.8rem;">
+                  <div v-if="selectedRoom" class="mt-2 p-2 rounded bg-surface-detail" style="border:1px solid var(--purple-border-light); font-size:0.8rem;">
                       <div class="d-flex justify-content-between align-items-start">
                           <span class="text-info fw-bold">{{ roomIcon(selectedRoom) }} {{ selectedRoom.name }}</span>
                           <span class="badge" :style="'background:' + roomFill(selectedRoom) + ';border:1px solid ' + roomStroke(selectedRoom)" style="font-size:0.62rem; color:#eee;">{{ statusLabel(selectedRoom.status) }}</span>

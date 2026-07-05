@@ -13,9 +13,12 @@ export const StoryInv = {
                     <div class="empty-state-title">背包空空如也</div>
                     <div class="empty-state-hint">探索与战斗获得的物品会显示在这里</div>
                 </li>
-                <li v-for="(item, idx) in inventory" :key="idx" class="list-group-item coc-panel-card text-light border-secondary d-flex justify-content-between align-items-center inv-item" @click.stop="toggleTooltip($event, item, idx)">
+                <li v-for="(item, idx) in inventory" :key="idx" class="list-group-item coc-panel-card text-light border-secondary d-flex justify-content-between align-items-center inv-item" :data-tier="getItemTierKey(item) || undefined" @click.stop="toggleTooltip($event, item, idx)">
                     <div class="d-flex align-items-center gap-2">
-                        <span class="item-icon">{{ getItemIcon(item) }}</span>
+                        <span v-if="getItemTierKey(item)" class="tier-badge" :class="'tier-badge-' + getItemTierKey(item)">
+                            <coc-icon :name="getItemTierIconName(item)" :size="14"></coc-icon>
+                        </span>
+                        <span v-else class="item-icon">{{ getItemIcon(item) }}</span>
                         <div>
                             <span class="item-name" style="cursor:pointer;">{{ getItemDisplayName(item) }}</span>
                             <small v-if="getItemSubtitle(item)" class="text-muted d-block" style="font-size:0.65rem;">{{ getItemSubtitle(item) }}</small>
@@ -142,13 +145,16 @@ export const StoryInv = {
             }
             return null;
         };
-        const getItemTierIcon = (item) => {
+        const getItemTierKey = (item) => {
             const r = resolveItem(item);
-            if (r.tier && window.CoCItemDB && window.CoCItemDB.TIERS && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].icon;
-            }
-            return '';
+            return r.tier || '';
         };
+        const getItemTierIconName = (item) => {
+            const key = getItemTierKey(item);
+            if (!key) return '';
+            return 'tier-' + key.toLowerCase();
+        };
+        const getItemTierIcon = (item) => getItemTierIconName(item);
         const isEquippable = (item) => {
             const r = resolveItem(item);
             return r.category === '武器' || r.category === '护甲' || r.armor || r.damage;
@@ -207,7 +213,7 @@ export const StoryInv = {
             return map[type] || '杂物';
         };
 
-        return { gameState, inventory, activeRoster, selectedCharName, tooltipItem, tooltipItemId, tooltipX, tooltipY, getItemDisplayName, getItemCategory, getItemIcon, getCategoryColor, getItemSubtitle, getItemDamage, getItemRange, getItemAmmo, getItemArmor, getItemNotes, getItemTierLabel, getItemTierIcon, isEquippable, isAmmo, smartEquipItem, loadAmmo, moveToStorage, getItemTypeName, toggleTooltip };
+        return { gameState, inventory, activeRoster, selectedCharName, tooltipItem, tooltipItemId, tooltipX, tooltipY, getItemDisplayName, getItemCategory, getItemIcon, getCategoryColor, getItemSubtitle, getItemDamage, getItemRange, getItemAmmo, getItemArmor, getItemNotes, getItemTierLabel, getItemTierIcon, getItemTierKey, getItemTierIconName, isEquippable, isAmmo, smartEquipItem, loadAmmo, moveToStorage, getItemTypeName, toggleTooltip };
     }
 };
 window.StoryInv = StoryInv;

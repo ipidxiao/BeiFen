@@ -11,6 +11,19 @@
   --bg-panel: #0d0d14;
   --bg-input: #111118;
   --bg-elevated: #222228;
+  /* Panel variants — story sub-panels (tokenized from hardcoded hex) */
+  --bg-panel-header: #0d0d1a;
+  --bg-panel-deep: #080b12;
+  --bg-panel-clue: #0b0818;
+  --bg-panel-dice: #0a0a12;
+  --bg-panel-combat: #0d0808;
+  --bg-panel-npc: #080b12;
+  --bg-panel-map: #080c10;
+  --bg-panel-growth: #0d0b08;
+  --bg-panel-journal: #080b12;
+  --bg-surface-canvas: #07070e;
+  --bg-surface-map: #070710;
+  --bg-surface-detail: #0d0d1a;
   /* Typography — readable on dark, WCAG-ish contrast (DESIGN.md §3) */
   --text-primary: #e8e8ec;
   --text-muted: #b0b0b8;
@@ -79,10 +92,19 @@ body::after {
     content: '';
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: 0;
+    transform-origin: center center;
     background:
         radial-gradient(ellipse at 20% 20%, rgba(80, 20, 120, 0.08) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 80%, rgba(20, 60, 40, 0.06) 0%, transparent 50%),
         radial-gradient(ellipse at 50% 10%, rgba(120, 100, 20, 0.04) 0%, transparent 60%);
+    animation: ambient-breathe 18s ease-in-out infinite;
+}
+@keyframes ambient-breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.04); }
+}
+@media (prefers-reduced-motion: reduce) {
+    body::after { animation: none; }
 }
 
 /* 针对按钮和可点击元素优化，防止快速点击时的默认行为干扰 */
@@ -399,7 +421,7 @@ body .border-secondary { border-color: var(--border-default); }
    ═══════════════════════════════════════════════════════ */
 .combat-panel {
     width: 100%; max-width: 480px; max-height: 92vh;
-    overflow-y: auto; background: #0d0808;
+    overflow-y: auto; background: var(--bg-panel-combat);
     border: 1px solid var(--combat-red); border-radius: 8px;
     display: flex; flex-direction: column;
 }
@@ -464,11 +486,11 @@ body .border-secondary { border-color: var(--border-default); }
    骰子台 (story_dice.js)
    ═══════════════════════════════════════════════════════ */
 .dice-panel {
-    width: 100%; max-width: 420px; background: #0a0a12;
+    width: 100%; max-width: 420px; background: var(--bg-panel-dice);
     border-radius: 10px; border: 1px solid #3a3a6a; overflow: hidden;
 }
 .dice-header {
-    border-color: #2a2a4a !important; background: #0d0d1a;
+    border-color: #2a2a4a !important; background: var(--bg-panel-header);
 }
 .dice-close-btn {
     background: #1a0a0a; border: 1px solid #4a2a2a;
@@ -503,14 +525,39 @@ body .border-secondary { border-color: var(--border-default); }
 }
 .dice-result-label { font-size: 0.75rem; }
 .dice-face-box {
-  width: 36px; height: 36px; background: #1a1a3a;
-  border: 2px solid #5a5aaa; border-radius: 6px;
-  font-size: 1rem; color: #ccccff;
+  width: 36px; height: 36px; background: var(--purple-bg);
+  border: 2px solid var(--purple-border-bright); border-radius: 6px;
+  font-size: 1rem; color: var(--purple-text-light);
 }
+.dice-face-svg {
+  position: relative;
+  width: 40px; height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dice-face-svg .dice-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  color: var(--purple-text-light);
+  opacity: 0.8;
+}
+.dice-face-svg .dice-value {
+  position: relative;
+  z-index: 1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.dice-dropped-face { opacity: 0.45; }
+.dice-dropped-face .dice-value { text-decoration: line-through; color: var(--text-dim); }
 .dice-dropped-box {
-  width: 26px; height: 26px; background: #111;
-  border: 1px solid #333; border-radius: 4px;
-  font-size: 0.75rem; color: #444; text-decoration: line-through;
+  width: 26px; height: 26px; background: var(--bg-input);
+  border: 1px solid var(--border-dim); border-radius: 4px;
+  font-size: 0.75rem; color: var(--text-dim); text-decoration: line-through;
 }
 .dice-mod { font-size: 0.85rem; color: #aaa; }
 .dice-notation { font-size: 0.75rem; }
@@ -523,14 +570,14 @@ body .border-secondary { border-color: var(--border-default); }
     color: #aaaaff; font-size: 0.75rem; flex-shrink: 0;
 }
 .dice-history-area {
-    max-height: 180px; overflow-y: auto; background: #080d0a;
+    max-height: 180px; overflow-y: auto; background: var(--bg-panel-deep);
 }
 .dice-history-header {
     font-size: 0.75rem; letter-spacing: .04em;
-    position: sticky; top: 0; background: #080b12;
+    position: sticky; top: 0; background: var(--bg-panel-deep);
 }
 .dice-history-item {
-    border-bottom: 1px solid #111; font-size: 0.75rem; cursor: pointer;
+    border-bottom: 1px solid var(--border-dim); font-size: 0.75rem; cursor: pointer;
 }
 .dice-history-name { max-width: 55%; }
 .dice-history-notation { color: #555; font-size: 0.75rem; }
@@ -538,8 +585,8 @@ body .border-secondary { border-color: var(--border-default); }
 /* ═══════════════════════════════════════════════════════
    线索板 (story_clues.js)
    ═══════════════════════════════════════════════════════ */
-.clue-panel { background: #0b0818; overflow: hidden; }
-.clue-toolbar { background: #0d0d1a; flex-wrap: wrap; }
+.clue-panel { background: var(--bg-panel-clue); overflow: hidden; }
+.clue-toolbar { background: var(--bg-panel-header); flex-wrap: wrap; }
 .clue-btn-sm { font-size: 0.75rem; }
 .clue-btn-xs { font-size: 0.75rem; }
 .clue-count-badge {
@@ -607,8 +654,8 @@ body .border-secondary { border-color: var(--border-default); }
 /* ═══════════════════════════════════════════════════════
    成长面板 (story_growth.js)
    ═══════════════════════════════════════════════════════ */
-.growth-panel { background: #0d0b08; }
-.growth-header { background: #0d0d1a; border-color: #2a2a5a !important; }
+.growth-panel { background: var(--bg-panel-growth); }
+.growth-header { background: var(--bg-panel-header); border-color: #2a2a5a !important; }
 .growth-char-select { font-size: 0.78rem; color: #ccccff; min-width: 130px; }
 .growth-char-btn {
     background: #0d0d1a; border: 1px solid #2a2a4a;
@@ -638,8 +685,8 @@ body .border-secondary { border-color: var(--border-default); }
 /* ═══════════════════════════════════════════════════════
    NPC 面板 (story_npc.js)
    ═══════════════════════════════════════════════════════ */
-.npc-panel { background: #080b12; }
-.npc-toolbar { background: #0d0d1a; border-color: #2a2a5a !important; }
+.npc-panel { background: var(--bg-panel-npc); }
+.npc-toolbar { background: var(--bg-panel-header); border-color: #2a2a5a !important; }
 .npc-card {
     background: #0d0d18; border: 1px solid #2a2a4a;
 }
@@ -655,8 +702,8 @@ body .border-secondary { border-color: var(--border-default); }
 /* ═══════════════════════════════════════════════════════
    地图面板 (story_map.js)
    ═══════════════════════════════════════════════════════ */
-.map-panel { background: #080c10; }
-.map-header { background: #0d0d1a; border-color: #2a2a5a !important; }
+.map-panel { background: var(--bg-panel-map); }
+.map-header { background: var(--bg-panel-header); border-color: #2a2a5a !important; }
 .map-room-btn {
     font-size: 0.75rem; background: #0d0d1a;
     border: 1px solid #2a2a4a; color: #8888cc;
@@ -733,6 +780,40 @@ body .border-secondary { border-color: var(--border-default); }
 }
 .lobby-scenario-card:hover { border-color: var(--accent-gold); }
 
+/* Lobby hero — enlarged Elder Sign + tagline */
+.lobby-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-lg) var(--space-md) var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+.lobby-hero-logo {
+  color: var(--accent-gold);
+  filter: drop-shadow(0 0 14px rgba(200, 100, 255, 0.3));
+  margin-bottom: var(--space-sm);
+  line-height: 0;
+}
+.lobby-hero-tagline {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+/* Panel surface utilities — replace inline hex in story_*.mjs */
+.bg-panel-header { background: var(--bg-panel-header) !important; }
+.bg-panel-deep { background: var(--bg-panel-deep) !important; }
+.bg-panel-input { background: var(--bg-input) !important; }
+.bg-panel-card { background: var(--bg-card) !important; }
+.bg-panel-elevated { background: var(--bg-elevated) !important; }
+.bg-surface-canvas { background: var(--bg-surface-canvas) !important; }
+.bg-surface-map { background: var(--bg-surface-map) !important; }
+.bg-surface-detail { background: var(--bg-surface-detail) !important; }
+.bg-panel-dice { background: var(--bg-panel-dice) !important; }
+.bg-panel-clue { background: var(--bg-panel-clue) !important; }
+
 /* Settings panel — difficulty preset hierarchy */
 .settings-panel .form-label {
   color: var(--text-muted-light);
@@ -790,7 +871,7 @@ body .border-secondary { border-color: var(--border-default); }
    日志面板 (story_journal.js)
    ═══════════════════════════════════════════════════════ */
 .journal-panel { background: #0b0c14; }
-.journal-toolbar { background: #0d0d1a; border-color: #2a2a5a !important; }
+.journal-toolbar { background: var(--bg-panel-header); border-color: #2a2a5a !important; }
 .journal-entry { font-size: 0.75rem; border-bottom: 1px solid #141428; }
 .journal-type { font-size: 0.75rem; }
 .journal-summary { font-size: 0.78rem; }
@@ -800,7 +881,7 @@ body .border-secondary { border-color: var(--border-default); }
    角色面板 (story_char.js)
    ═══════════════════════════════════════════════════════ */
 .char-panel { background: #080a0d; }
-.char-header { background: #0d0d1a; border-color: #2a2a5a !important; }
+.char-header { background: var(--bg-panel-header); border-color: #2a2a5a !important; }
 
 /* ═══ APEX-style item tooltip ═══ */
 .item-tooltip {
@@ -887,6 +968,27 @@ body .border-secondary { border-color: var(--border-default); }
 .badge-tier-B { background: linear-gradient(135deg, #4da6ff, #0066cc); color: #fff; }
 .badge-tier-C { background: linear-gradient(135deg, #5cb85c, #2d7d2d); color: #fff; }
 .badge-tier-MYTHIC { background: linear-gradient(135deg, var(--danger), #cc0000); color: #fff; font-weight: bold; animation: mythicPulse 1.5s ease-in-out infinite; }
+
+/* Tier SVG badge rings (inventory / equip) */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1.5px solid currentColor;
+  background: rgba(255, 255, 255, 0.04);
+}
+.tier-badge-S { color: #ffd700; }
+.tier-badge-A { color: #c864ff; }
+.tier-badge-B { color: #4da6ff; }
+.tier-badge-C { color: #5cb85c; }
+.tier-badge-MYTHIC {
+  color: var(--danger);
+  animation: mythicGlow 2s ease-in-out infinite;
+}
 @keyframes mythicPulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
