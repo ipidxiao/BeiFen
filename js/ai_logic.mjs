@@ -9,7 +9,6 @@ import { buildAiToolDefinitions, validateToolArguments, hasValidToolCallId, sani
 import { CoCAIPromptConfig } from './data/ai_prompt_config.mjs';
 import { CoCLog } from './data/logger.mjs';
 import { CoCLanguageFilter } from './ai/language_filter.mjs';
-import { KpExecutionEngine } from './campaign/kp_execution_engine.mjs';
 import { restructureOrReject } from './ai/output_protocol.mjs';
 
 const _getLanguageFilter = () => {
@@ -17,8 +16,8 @@ const _getLanguageFilter = () => {
     if (typeof window !== 'undefined' && window.CoCLanguageFilter) return window.CoCLanguageFilter;
     return null;
 };
+/** Prefer CoCKpConfig.getKpEngine() — single accessor in browser; fall back to window globals in VM tests. */
 const _getKpEngine = () => {
-    if (typeof KpExecutionEngine !== 'undefined') return KpExecutionEngine;
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
     if (cfg && typeof cfg.getKpEngine === 'function') {
         const eng = cfg.getKpEngine();

@@ -21,10 +21,19 @@ export function getPackageVersion() {
 /** Short hash of bundled asset sources — busts SW cache when content changes without version bump. */
 export function getManifestContentHash() {
     const hash = crypto.createHash('sha256');
-    for (const [mjs] of GENERATE_PAIRS) {
-        const full = path.join(ROOT, mjs);
-        if (fs.existsSync(full) && fs.statSync(full).isFile()) hash.update(fs.readFileSync(full));
-        hash.update('\0');
+    const addFile = (rel) => {
+        const full = path.join(ROOT, rel.replace(/^\//, ''));
+        if (fs.existsSync(full) && fs.statSync(full).isFile()) {
+            hash.update(fs.readFileSync(full));
+            hash.update('\0');
+        }
+    };
+    for (const [mjs] of GENERATE_PAIRS) addFile(mjs);
+    for (const script of BROWSER_ONLY_SCRIPTS) addFile(script);
+    addFile('css/style.css');
+    addFile('index.html');
+    for (const url of SW_STATIC_EXTRAS) {
+        if (url.startsWith('/vendor/')) addFile(url.slice(1));
     }
     return hash.digest('hex').slice(0, 8);
 }

@@ -36,14 +36,40 @@ function countHandlerModules() {
     return fs.readdirSync(dir).filter((f) => f.endsWith('.mjs') && f !== 'index.mjs').length;
 }
 
+const UI_HELPER_MODULES = new Set([
+    'combat_ui_helpers.mjs',
+    'chat_format_helpers.mjs',
+    'ui_feedback.mjs',
+]);
+
 function countComponentModules() {
     const dir = path.join(ROOT, 'js', 'components');
-    return fs.readdirSync(dir).filter((f) => f.endsWith('.mjs')).length;
+    return fs.readdirSync(dir).filter((f) => f.endsWith('.mjs') && !UI_HELPER_MODULES.has(f)).length;
+}
+
+function countUiHelperModules() {
+    const dir = path.join(ROOT, 'js', 'components');
+    return fs.readdirSync(dir).filter((f) => UI_HELPER_MODULES.has(f)).length;
 }
 
 function countDataRootFiles() {
     const dir = path.join(ROOT, 'js', 'data');
-    return fs.readdirSync(dir).filter((f) => /\.(js|mjs)$/.test(f)).length;
+    return fs.readdirSync(dir).filter((f) => f.endsWith('.mjs')).length;
+}
+
+function countAssetFiles() {
+    let n = 0;
+    for (const rel of ['favicon.svg', 'manifest.json', 'sw.js', 'css/icons.svg']) {
+        if (fs.existsSync(path.join(ROOT, rel))) n++;
+    }
+    const audioDir = path.join(ROOT, 'js', 'audio');
+    if (fs.existsSync(audioDir)) {
+        n += fs.readdirSync(audioDir).filter((f) => f.endsWith('.js') || f.endsWith('.mjs')).length;
+    }
+    for (const f of ['dice_canvas.mjs', 'sanity_effects.mjs']) {
+        if (fs.existsSync(path.join(ROOT, 'js', 'components', f))) n++;
+    }
+    return n;
 }
 
 function countScenarios() {
@@ -91,7 +117,8 @@ async function gatherStats() {
         aiTools: tools,
         handlerModules: countHandlerModules(),
         componentModules: countComponentModules(),
-        assets: 6,
+        uiHelperModules: countUiHelperModules(),
+        assets: countAssetFiles(),
     };
 }
 
@@ -103,11 +130,11 @@ function formatStatsBlock(stats) {
         `| ESM 模块 | ${stats.esmModules} | \`js/\` 下 \`.mjs\` 权威源码 → \`npm run build:js\` 生成 \`.js\` |`,
         `| 游戏数据 | ${stats.gameData} | 技能/物品/职业/经历/典籍/法术/理智/重伤/NPC/AI提示词等（\`js/data/\` 根级） |`,
         `| 剧本 | ${stats.scenarios} | ${stats.scenariosBuiltIn} 内置 + ${stats.scenariosDownloadable} 可下载（含 CC 社区改编模组） |`,
-        `| CSS | ~${stats.cssLines} 行 | 21 变量 + 8 面板唯一色 + 13 keyframes + 暗黑主题 |`,
+        `| CSS | ~${stats.cssLines} 行 | style.css 行数（变量/面板色/keyframes/暗黑主题） |`,
         `| 测试 | ${stats.smokeSuites} suites | VM smoke + ESM + deep_verify（\`npm test\`） |`,
         `| AI 工具 | ${stats.aiTools} | \`js/tools/definitions.mjs\` 工具目录 + ${stats.handlerModules} Handler 模块 |`,
-        `| 组件 | ${stats.componentModules} | \`js/components/*.mjs\` Vue 面板组件 |`,
-        `| 资产 | ${stats.assets} | favicon/SVG 精灵/Web Audio SFX/Canvas 骰子/PWA |`,
+        `| 组件 | ${stats.componentModules} | \`js/components/*.mjs\` Vue 面板（不含 ${stats.uiHelperModules} 个 UI helper） |`,
+        `| 资产 | ${stats.assets} | favicon/SVG 精灵/Web Audio SFX/Canvas/PWA 等（动态统计） |`,
     ].join('\n');
 }
 
@@ -143,7 +170,7 @@ async function main() {
         '',
         block,
         '',
-        `handlers: ${stats.handlerModules} · components: ${stats.componentModules} · smoke suites: ${stats.smokeSuites}`,
+        `handlers: ${stats.handlerModules} · components: ${stats.componentModules} · ui_helpers: ${stats.uiHelperModules} · smoke suites: ${stats.smokeSuites}`,
     ].join('\n');
 
     if (process.argv.includes('--write')) {

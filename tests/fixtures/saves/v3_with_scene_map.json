@@ -43,7 +43,12 @@
     },
     "kpEngine": {
       "enabled": false,
-      "scenePaths": [{ "from": "r1", "to": "r2", "label": "走廊" }]
+      "scenePaths": {
+        "currentSceneId": "r1",
+        "paths": [{ "id": "path_fixture_v3", "type": "environment", "clueId": null, "verified": true, "from": "r1", "to": "r2", "label": "走廊" }],
+        "truePathCount": 1,
+        "falsePathCount": 0
+      }
     },
     "selectedCharIndex": 0
   }

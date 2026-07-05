@@ -14,16 +14,26 @@ const args = process.argv.slice(2);
 const sinceIdx = args.indexOf('--since');
 const limitIdx = args.indexOf('--limit');
 const since = sinceIdx >= 0 ? args[sinceIdx + 1] : null;
-const limit = limitIdx >= 0 ? Number(args[limitIdx + 1]) || 30 : 30;
+const limitRaw = limitIdx >= 0 ? args[limitIdx + 1] : null;
+const limit = limitRaw !== null && limitRaw !== undefined ? Number(limitRaw) : 30;
 
-let cmd = `git log --oneline --no-decorate -n ${limit}`;
-if (since) cmd += ` ${since}..HEAD`;
+let cmd = 'git log --oneline --no-decorate';
+if (Number.isFinite(limit) && limit > 0) cmd += ` -n ${limit}`;
+if (since) {
+    try {
+        execSync(`git rev-parse --verify ${since}^{commit}`, { encoding: 'utf8', stdio: 'pipe' });
+        cmd += ` ${since}..HEAD`;
+    } catch (_) {
+        cmd += ` --since=${since}`;
+    }
+}
 
 let log;
 try {
     log = execSync(cmd, { encoding: 'utf8' }).trim();
 } catch (err) {
     console.error('git log failed — ensure you are inside a git repository.');
+    if (since) console.error(`Hint: --since "${since}" must be a valid ref or ISO date.`);
     process.exit(1);
 }
 

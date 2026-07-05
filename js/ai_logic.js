@@ -11,14 +11,13 @@
 
 
 
-
 const _getLanguageFilter = () => {
     if (typeof CoCLanguageFilter !== 'undefined') return CoCLanguageFilter;
     if (typeof window !== 'undefined' && window.CoCLanguageFilter) return window.CoCLanguageFilter;
     return null;
 };
+/** Prefer CoCKpConfig.getKpEngine() — single accessor in browser; fall back to window globals in VM tests. */
 const _getKpEngine = () => {
-    if (typeof KpExecutionEngine !== 'undefined') return KpExecutionEngine;
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
     if (cfg && typeof cfg.getKpEngine === 'function') {
         const eng = cfg.getKpEngine();

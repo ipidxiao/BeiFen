@@ -78,11 +78,11 @@ export const COC_LONDON_KP_RULES = {
         DOOM_CLOCK: 0,
         /** Engine-driven doom escalation (cap 24); mirrored to kpEngine.global.doomClock */
         DOOM_CLOCK_DRIVERS: {
-            attention_positive: '+1 per positive ATTENTION delta (updateAttention)',
+            attention_positive: '+1 per positive ATTENTION delta (updateAttention; skipped when antagonist tick owns doom)',
             time_passage: '+1 when advanceGameTime / KpGameLoop advances clock',
             key_clue: '+1 when mark_clue_status sets status=key',
-            mythos_contact: '+1 on mythos antagonist tick (study_tome / cast_spell)',
-            combat_victory: '+1 on combat_win antagonist tick',
+            mythos_contact: '+2 on mythos antagonist tick (study_tome / cast_spell); not stacked with attention_positive',
+            combat_victory: '+1 on combat_win antagonist tick; not stacked with attention_positive',
             antagonist_ambush: '+1 when ambush roll succeeds on investigate',
             cap: 24
         },

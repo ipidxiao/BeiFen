@@ -296,6 +296,50 @@ function defaultScenePaths() {
     };
 }
 
+/**
+ * Coerce legacy or malformed scenePaths (e.g. array of {from,to,label}) into canonical object shape.
+ * @param {*} raw
+ * @returns {{ currentSceneId: string, paths: object[], truePathCount: number, falsePathCount: number }}
+ */
+function normalizeScenePaths(raw) {
+    const def = defaultScenePaths();
+    if (raw == null) return { ...def };
+    if (Array.isArray(raw)) {
+        const paths = raw.map((item, idx) => {
+            if (!item || typeof item !== 'object') return null;
+            return {
+                id: `path_migrated_${idx}`,
+                type: 'environment',
+                clueId: null,
+                verified: true,
+                from: item.from,
+                to: item.to,
+                label: item.label
+            };
+        }).filter(Boolean);
+        return {
+            currentSceneId: '',
+            paths,
+            truePathCount: paths.length,
+            falsePathCount: 0
+        };
+    }
+    if (typeof raw !== 'object') return { ...def };
+    const paths = Array.isArray(raw.paths) ? raw.paths.filter((p) => p && typeof p === 'object') : [];
+    const truePathCount = Number.isFinite(Number(raw.truePathCount))
+        ? Math.max(0, Number(raw.truePathCount))
+        : paths.filter((p) => p.verified !== false && p.type !== 'false').length;
+    const falsePathCount = Number.isFinite(Number(raw.falsePathCount))
+        ? Math.max(0, Number(raw.falsePathCount))
+        : paths.filter((p) => p.type === 'false' || p.verified === false).length;
+    return {
+        currentSceneId: String(raw.currentSceneId ?? ''),
+        paths,
+        truePathCount,
+        falsePathCount
+    };
+}
+
 function _kpDefaultEnabled() {
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
     return (cfg && cfg.KP_ENGINE_DEFAULT_ENABLED !== undefined) ? cfg.KP_ENGINE_DEFAULT_ENABLED : true;
@@ -357,7 +401,7 @@ function ensureKpEngine(gameState) {
     }
     const kp = gameState.kpEngine;
     if (!kp.global) kp.global = defaultKpEngine().global;
-    if (!kp.scenePaths) kp.scenePaths = defaultScenePaths();
+    kp.scenePaths = normalizeScenePaths(kp.scenePaths);
     if (!gameState.londonKpState) {
         gameState.londonKpState = {
             ...DEFAULT_KP,
@@ -551,7 +595,7 @@ const KpExecutionEngine = {
         return st.TIME;
     },
 
-    updateAttention(gameState, delta, reason) {
+    updateAttention(gameState, delta, reason, opts = {}) {
         if (!this.isEnabled(gameState)) return 0;
         const st = this.getGlobalState(gameState);
         const kp = ensureKpEngine(gameState);
@@ -561,7 +605,7 @@ const KpExecutionEngine = {
         const adjusted = d > 0 ? d + envInc : d;
         st.ATTENTION_LEVEL = clamp((st.ATTENTION_LEVEL || 0) + adjusted, 0, 10);
         kp.global.attention = st.ATTENTION_LEVEL;
-        if (adjusted > 0) {
+        if (adjusted > 0 && !opts.skipDoomTick) {
             this.tickDoomClock(gameState, reason || 'attention', 1);
         }
         if (st.ATTENTION_LEVEL >= 7) st.hunt.active = true;
@@ -779,7 +823,8 @@ const KpExecutionEngine = {
         if (!this.isEnabled(gameState)) return null;
         const kp = ensureKpEngine(gameState);
         const sid = String(sceneId || gameState.currentLocation || 'unknown');
-        if (kp.scenePaths && kp.scenePaths.currentSceneId === sid) return kp.scenePaths;
+        kp.scenePaths = normalizeScenePaths(kp.scenePaths);
+        if (kp.scenePaths.currentSceneId === sid) return kp.scenePaths;
         kp.scenePaths = defaultScenePaths();
         kp.scenePaths.currentSceneId = sid;
         return kp.scenePaths;
@@ -842,7 +887,8 @@ const KpExecutionEngine = {
     registerPath(gameState, pathType, clueId, isFalse) {
         if (!this.isEnabled(gameState)) return null;
         const kp = ensureKpEngine(gameState);
-        if (!kp.scenePaths) this.initScenePaths(gameState);
+        kp.scenePaths = normalizeScenePaths(kp.scenePaths);
+        if (!kp.scenePaths.currentSceneId) this.initScenePaths(gameState);
         const falsePath = isFalse || pathType === 'false';
         const resolvedType = falsePath ? 'false' : pathType;
         if (!falsePath && !TRUE_PATH_TYPES.includes(resolvedType)) return null;
@@ -978,12 +1024,13 @@ const KpExecutionEngine = {
         if (ev.type === 'combat_win') {
             const alertBoost = (weights.combatCounter || 0) >= 0.6 ? 1 : 0;
             ant.ALERT_LEVEL = clamp(ant.ALERT_LEVEL + 1 + alertBoost, 0, 10);
-            this.updateAttention(gameState, 1, '战斗胜利');
+            // skipDoomTick: combat_victory driver applies doom once (avoids attention_positive double-tick)
+            this.updateAttention(gameState, 1, '战斗胜利', { skipDoomTick: true });
             this.tickDoomClock(gameState, 'combat_victory');
         }
         if (ev.type === 'mythos') {
-            this.updateAttention(gameState, 2, '神话接触');
-            this.tickDoomClock(gameState, 'mythos_contact');
+            this.updateAttention(gameState, 2, '神话接触', { skipDoomTick: true });
+            this.tickDoomClock(gameState, 'mythos_contact', 2);
         }
 
         let ambushChance = 0;

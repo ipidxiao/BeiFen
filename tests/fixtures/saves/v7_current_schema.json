@@ -62,7 +62,12 @@
       "enabled": true,
       "systemName": "COC_LONDON_KP_ENGINE_V2",
       "global": { "attention": 2, "playerPower": 1, "phase": "TENSE", "doomClock": 1 },
-      "scenePaths": [{ "from": "alley", "to": "tunnel", "label": "下水道" }],
+      "scenePaths": {
+        "currentSceneId": "alley",
+        "paths": [{ "id": "path_fixture_v7", "type": "environment", "clueId": null, "verified": true, "from": "alley", "to": "tunnel", "label": "下水道" }],
+        "truePathCount": 1,
+        "falsePathCount": 0
+      },
       "keyClueBlockedAttempts": 0
     },
     "selectedCharIndex": 0,

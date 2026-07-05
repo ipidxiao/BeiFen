@@ -86,16 +86,13 @@
 | 存档 fixture 迁移 | `tests/save_migration_smoke.js` + `tests/fixtures/saves/v1–v7` | migrateSaveData / loadGame 全版本 |
 | 大厅→战斗→存读 flow | `tests/flow_lobby_combat_smoke.js` | enterModule → start_combat → save → load（Node VM） |
 | UI 纯函数 | `tests/ui/component_helpers_smoke.mjs` | combat_ui_helpers + chat_format_helpers |
+| jsdom DOM 解析 | `tests/ui/dom_parse_smoke.mjs` | 最小 jsdom 依赖验证（AUDIT4-P3-08） |
 
 运行：`npm test` 或单独 `npm run test:e2e`。
 
 ## 四、工具建议
 
-```
-npm install --save-dev jsdom
-```
-
-创建 `tests/helpers/browser-mock.mjs`:
+`jsdom` 已安装；最小套件见 `tests/ui/dom_parse_smoke.mjs`。扩展浏览器 mock 可参考：
 ```js
 import { JSDOM } from 'jsdom';
 const dom = new JSDOM('<!DOCTYPE html><div id="app"></div>', { url: 'http://localhost' });

@@ -7,6 +7,45 @@
 import { safeJsonParse, safeJsonClone } from '../data/utils.mjs';
 import { clampSelectedCharIndex } from './selection.mjs';
 
+function _defaultScenePaths() {
+    return { currentSceneId: '', paths: [], truePathCount: 0, falsePathCount: 0 };
+}
+
+/** Inline for save migration — build_browser strips cross-module imports from generated .js */
+function _normalizeScenePaths(raw) {
+    const def = _defaultScenePaths();
+    if (raw == null) return { ...def };
+    if (Array.isArray(raw)) {
+        const paths = raw.map((item, idx) => {
+            if (!item || typeof item !== 'object') return null;
+            return {
+                id: `path_migrated_${idx}`,
+                type: 'environment',
+                clueId: null,
+                verified: true,
+                from: item.from,
+                to: item.to,
+                label: item.label
+            };
+        }).filter(Boolean);
+        return { currentSceneId: '', paths, truePathCount: paths.length, falsePathCount: 0 };
+    }
+    if (typeof raw !== 'object') return { ...def };
+    const paths = Array.isArray(raw.paths) ? raw.paths.filter((p) => p && typeof p === 'object') : [];
+    const truePathCount = Number.isFinite(Number(raw.truePathCount))
+        ? Math.max(0, Number(raw.truePathCount))
+        : paths.filter((p) => p.verified !== false && p.type !== 'false').length;
+    const falsePathCount = Number.isFinite(Number(raw.falsePathCount))
+        ? Math.max(0, Number(raw.falsePathCount))
+        : paths.filter((p) => p.type === 'false' || p.verified === false).length;
+    return {
+        currentSceneId: String(raw.currentSceneId ?? ''),
+        paths,
+        truePathCount,
+        falsePathCount
+    };
+}
+
 function _applyKpPreferenceToGameState(gameState) {
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
     if (cfg && cfg.applyKpPreferenceToGameState) cfg.applyKpPreferenceToGameState(gameState);
@@ -165,12 +204,10 @@ export const CoCStatePersistence = (function() {
         /**
          * Normalize kpEngine on load: legacy saves without the field stay off;
          * explicit enabled true/false is preserved.
-         * @param {object} rawSave
+         * @param {boolean} hadKey - whether kpEngine existed on the raw input before migration
          * @param {object} d migrated.data
          */
-        const migrateKpEngineField = (rawSave, d) => {
-            const hadKey = rawSave.kpEngine !== undefined
-                || (rawSave.data && rawSave.data.kpEngine !== undefined);
+        const migrateKpEngineField = (hadKey, d) => {
             if (!hadKey) {
                 d.kpEngine = { enabled: false };
                 return;
@@ -194,6 +231,8 @@ export const CoCStatePersistence = (function() {
          */
         const migrateSaveData = (save) => {
             if (!save || typeof save !== 'object') return null;
+            const hadKpEngineKey = save.kpEngine !== undefined
+                || (save.data && save.data.kpEngine !== undefined);
             const migrated = save;
             const sourceVersion = Number(migrated.version || 1);
             if (!migrated.data && (migrated.roster || migrated.chatHistory || migrated.inventory)) {
@@ -267,7 +306,10 @@ export const CoCStatePersistence = (function() {
             d.activeCampaign = d.activeCampaign || null;
             d.campaignArchive = d.campaignArchive || null;
             d.londonKpState = d.londonKpState || null;
-            migrateKpEngineField(save, d);
+            migrateKpEngineField(hadKpEngineKey, d);
+            if (d.kpEngine && typeof d.kpEngine === 'object' && d.kpEngine.scenePaths !== undefined) {
+                d.kpEngine.scenePaths = _normalizeScenePaths(d.kpEngine.scenePaths);
+            }
             d.selectedCharIndex = Number.isFinite(Number(d.selectedCharIndex)) ? Math.max(0, Math.floor(Number(d.selectedCharIndex))) : 0;
             migrated.location = migrated.location || d.currentLocation || '未知的房间';
             migrated.charNames = migrated.charNames || d.roster.map(r => r && r.name).filter(Boolean).join('、');
@@ -276,11 +318,25 @@ export const CoCStatePersistence = (function() {
             return migrated;
         };
 
+        const _stripTransientFields = (value) => {
+            if (!value || typeof value !== 'object') return value;
+            if (Array.isArray(value)) return value.map(_stripTransientFields);
+            const out = {};
+            for (const [key, val] of Object.entries(value)) {
+                if (key.startsWith('_')) continue;
+                out[key] = _stripTransientFields(val);
+            }
+            return out;
+        };
+
         const _buildSaveData = (slotName) => {
             const rawChatToSave = gameState.chatHistory.filter(m => !m.isLocalOnly && !m.isLocalError);
             const chatToSave = (window.CoCContextManager && window.CoCContextManager.trimForSave)
                 ? window.CoCContextManager.trimForSave(rawChatToSave).messages
                 : rawChatToSave;
+            const combatToSave = _stripTransientFields(safeJsonClone(gameState.combat, {
+                active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: ''
+            }));
             return {
                 version: SAVE_SCHEMA_VERSION,
                 savedAt: new Date().toISOString(),
@@ -297,7 +353,7 @@ export const CoCStatePersistence = (function() {
                     chatHistory: safeJsonClone(chatToSave, []),
                     journalLog: safeJsonClone(gameState.journalLog, []),
                     npcRegistry: safeJsonClone(gameState.npcRegistry, []),
-                    combat: safeJsonClone(gameState.combat, { active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: '' }),
+                    combat: combatToSave,
                     sceneMap: safeJsonClone(gameState.sceneMap, { title: '', rooms: [], currentRoomId: null }),
                     clueBoard: safeJsonClone(gameState.clueBoard, { clues: [], links: [] }),
                     diceHistory: safeJsonClone(gameState.diceHistory, []),

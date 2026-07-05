@@ -61,6 +61,7 @@ const SUITES = [
     'coverage_gap_smoke.js',
     'test_v18_engines.mjs',
     'ui/component_helpers_smoke.mjs',
+    'ui/dom_parse_smoke.mjs',
   ]},
 
   // Phase 3 — 重构验证（迁移 + Handler + 浏览器模拟）
