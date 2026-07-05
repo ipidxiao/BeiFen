@@ -32,13 +32,15 @@ Aesthetic reference: **ElevenLabs** (dark cinematic) + **VoltAgent** (void-black
 
 ## Icon system (`css/icons.svg`)
 
-Stroke-based SVG sprite with semantic symbol ids (`icon-dice`, `icon-character`, `icon-inventory`, …). Loaded via `<link rel="preload" href="./css/icons.svg">` and referenced by the global `<coc-icon>` Vue component (`js/components/icon_sprite.mjs`).
+Stroke-based SVG sprite with semantic symbol ids (`icon-dice`, `icon-character`, `icon-inventory`, …). **Inline copy** is injected at the top of `index.html` `<body>` (hidden) so `<use href="#icon-*">` works offline — including `file://` opens where external sprite fetches are blocked. The standalone `css/icons.svg` file remains for SW cache / preload over HTTP.
 
 ```html
 <coc-icon name="dice" :size="18" title="掷骰"></coc-icon>
 ```
 
-Renders `<use href="./css/icons.svg#icon-dice">`. Additional symbols: `elder`, `d6`, `d20`, `tier-s` … `tier-mythic`. Equipment slots map through `EQUIP_SLOT_ICON_IDS`; journal log types use `journalIconId(type)`. Chat system messages keep emoji where inline SVG is awkward.
+Renders `<use href="#icon-dice">` (same-document fragment). Additional symbols: `elder`, `d6`, `d20`, `tier-s` … `tier-mythic`. Equipment slots map through `EQUIP_SLOT_ICON_IDS`; journal log types use `journalIconId(type)`. Chat system messages keep emoji where inline SVG is awkward.
+
+**`file://` note:** Service workers and some fetches do not run on `file://`; icons still render via the inline sprite. For full PWA/offline, serve over HTTP (`npx serve .` or any static host).
 
 Regenerate PWA raster icons: `npm run icons:pwa` (requires `sharp` or ImageMagick). Outputs `icon-180.png` (iOS `apple-touch-icon` in `index.html`), `icon-192.png`, `icon-512.png`, and maskable 512.
 
@@ -66,7 +68,7 @@ Centered Elder Sign via `<coc-icon name="elder" :size="72">` (sprite derived fro
 
 ## Dice silhouettes (`icon-d6`, `icon-d20`)
 
-`story_dice.mjs` renders roll results as `.dice-face-svg`: SVG silhouette from `css/icons.svg` with numeric overlay. d6 uses `icon-d6`; all other polyhedral types fall back to `icon-d20`. Dropped dice use `.dice-dropped-face` (dimmed + strikethrough).
+`story_dice.mjs` renders roll results as `.dice-face-svg`: SVG silhouette from the inline `#icon-d6` / `#icon-d20` symbols with numeric overlay. d6 uses `icon-d6`; all other polyhedral types fall back to `icon-d20`. Dropped dice use `.dice-dropped-face` (dimmed + strikethrough).
 
 ## Item tier badges (`.tier-badge`)
 

@@ -33,7 +33,7 @@ export function getManifestContentHash() {
     addFile('css/style.css');
     addFile('index.html');
     for (const url of SW_STATIC_EXTRAS) {
-        if (url.startsWith('/vendor/')) addFile(url.slice(1));
+        if (url.startsWith('vendor/')) addFile(url);
     }
     return hash.digest('hex').slice(0, 8);
 }
@@ -258,32 +258,31 @@ export const INDEX_SCRIPT_PATHS = [
     'js/app.js',
 ];
 
-/** Static paths cached by SW but not emitted as index.html script tags. */
+/** Static paths cached by SW but not emitted as index.html script tags (scope-relative, no leading slash). */
 export const SW_STATIC_EXTRAS = [
-    '/',
-    '/index.html',
-    '/manifest.json',
-    '/favicon.svg',
-    '/css/icons.svg',
-    '/icons/icon-180.png',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png',
-    '/icons/icon-512-maskable.png',
-    '/sw.js',
-    '/css/style.css',
-    '/vendor/vue.global.prod.js',
-    '/vendor/bootstrap.min.css',
-    '/vendor/chart.min.js',
-    '/vendor/pdf.min.js',
-    '/vendor/pdf.worker.min.js',
-    '/js/data/scenarios/packages/isolated_lab.json',
-    '/js/data/scenarios/packages/haunted_inheritance.json',
-    '/js/data/scenarios/packages/cc_asylum_whispers.json',
-    '/js/data/scenarios/packages/cc_lighthouse_log.json',
-    '/js/data/scenarios/packages/cc_museum_night.json',
-    '/js/data/scenarios/packages/cc_green_vicar.json',
-    '/js/data/scenarios/packages/cc_white_widow_reef.json',
-    '/js/data/scenarios/packages/cc_mayvale_blizzard.json',
+    'index.html',
+    'manifest.json',
+    'favicon.svg',
+    'css/icons.svg',
+    'icons/icon-180.png',
+    'icons/icon-192.png',
+    'icons/icon-512.png',
+    'icons/icon-512-maskable.png',
+    'sw.js',
+    'css/style.css',
+    'vendor/vue.global.prod.js',
+    'vendor/bootstrap.min.css',
+    'vendor/chart.min.js',
+    'vendor/pdf.min.js',
+    'vendor/pdf.worker.min.js',
+    'js/data/scenarios/packages/isolated_lab.json',
+    'js/data/scenarios/packages/haunted_inheritance.json',
+    'js/data/scenarios/packages/cc_asylum_whispers.json',
+    'js/data/scenarios/packages/cc_lighthouse_log.json',
+    'js/data/scenarios/packages/cc_museum_night.json',
+    'js/data/scenarios/packages/cc_green_vicar.json',
+    'js/data/scenarios/packages/cc_white_widow_reef.json',
+    'js/data/scenarios/packages/cc_mayvale_blizzard.json',
 ];
 
 /** Files kept hand-maintained — never overwrite from build_browser generator. */
@@ -301,7 +300,7 @@ export const BROWSER_ONLY_GENERATE = new Set([
 
 /** Build ordered SW ASSETS list (deduped, stable order). */
 export function getSwAssets() {
-    const fromIndex = INDEX_SCRIPT_PATHS.map((p) => `/${p.replace(/\\/g, '/')}`);
+    const fromIndex = INDEX_SCRIPT_PATHS.map((p) => p.replace(/\\/g, '/'));
     const seen = new Set();
     const out = [];
     for (const url of [...SW_STATIC_EXTRAS, ...fromIndex]) {

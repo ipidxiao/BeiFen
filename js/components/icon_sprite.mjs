@@ -41,7 +41,7 @@ export const CocIcon = {
             :aria-label="title || undefined"
             :aria-hidden="title ? undefined : 'true'"
             role="img">
-            <use :href="'./css/icons.svg#icon-' + name"></use>
+            <use :href="'#icon-' + name"></use>
         </svg>
     `,
 };

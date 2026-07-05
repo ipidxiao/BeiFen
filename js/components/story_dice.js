@@ -50,7 +50,7 @@ window.StoryDice = {
                   <div class="d-flex justify-content-center flex-wrap gap-1 mb-1">
                       <span v-for="(v,i) in lastRollEntry.kept" :key="i" class="dice-face-svg">
                           <svg class="dice-shape" viewBox="0 0 24 24" aria-hidden="true">
-                              <use :href="'./css/icons.svg#icon-' + diceShapeId(lastRollEntry.sides)"></use>
+                              <use :href="'#icon-' + diceShapeId(lastRollEntry.sides)"></use>
                           </svg>
                           <span class="dice-value">{{ v }}</span>
                       </span>
@@ -59,7 +59,7 @@ window.StoryDice = {
                   <div v-if="lastRollEntry.rolls.length > lastRollEntry.kept.length" class="d-flex justify-content-center gap-1 mb-1">
                       <span v-for="(v,i) in droppedDice" :key="'d'+i" class="dice-face-svg dice-dropped-face">
                           <svg class="dice-shape" viewBox="0 0 24 24" aria-hidden="true">
-                              <use :href="'./css/icons.svg#icon-' + diceShapeId(lastRollEntry.sides)"></use>
+                              <use :href="'#icon-' + diceShapeId(lastRollEntry.sides)"></use>
                           </svg>
                           <span class="dice-value">{{ v }}</span>
                       </span>
@@ -149,13 +149,25 @@ window.StoryDice = {
               const active = this.gameState.roster.filter(r => r.isActive);
               if (!active.length) { this.pushResult = { success: false, msg: '没有活跃调查员' }; return; }
               const ch = active[0];
-              const result = CoCStateAccessor.executePushedRoll(this.pushSkill.trim(), ch);
+              const skillName = this.pushSkill.trim();
+              const reason = this.pushReason.trim();
+              const result = CoCStateAccessor.executePushedRoll(skillName, ch);
+              const summary = reason
+                  ? `${skillName} 推动检定 ${result.level}（${result.rolledValue}/${result.targetValue}）— ${reason}`
+                  : `${skillName} 推动检定 ${result.level}（${result.rolledValue}/${result.targetValue}）`;
+              window.CoCState.addJournalEntry({
+                  type: 'skill_check',
+                  charName: ch.name,
+                  summary,
+                  isSuccess: result.rolledValue <= result.targetValue
+              });
               if (result.success) {
                   this.pushResult = { success: true, msg: '推动成功！' + result.rolledValue + '/' + result.targetValue + ' → ' + result.level };
-                  if (ch.skills) ch.skills[this.pushSkill.trim()] = result.skillValue;
+                  if (ch.skills) ch.skills[skillName] = result.skillValue;
               } else {
                   this.pushResult = { success: false, msg: result.level === '大失败' ? '推动大失败！后果严重！' : '推动失败 (' + result.rolledValue + '/' + result.targetValue + ')' };
               }
+              this.pushReason = '';
               setTimeout(() => { this.pushResult = null; }, 5000);
           },
           quickRoll(sides) {
