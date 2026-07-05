@@ -175,11 +175,11 @@ window.ViewStory = {
       mounted() {
           // Register slot refresh hook
           window._refreshStorySaveSlots = () => {
-              this.saveSlots = window.CoCState.getSaveSlots();
-              window.CoCState.getStorageStatus && window.CoCState.getStorageStatus('slot1', '预估存档');
+              this.saveSlots = CoCStateAccessor.getSaveSlots();
+              CoCStateAccessor.getStorageStatus('slot1', '预估存档');
           };
-          this.saveSlots = window.CoCState.getSaveSlots();
-          window.CoCState.getStorageStatus && window.CoCState.getStorageStatus('slot1', '预估存档');
+          this.saveSlots = CoCStateAccessor.getSaveSlots();
+          CoCStateAccessor.getStorageStatus('slot1', '预估存档');
       },
       unmounted() { window._refreshStorySaveSlots = null; }
   };

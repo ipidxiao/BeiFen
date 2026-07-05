@@ -224,6 +224,14 @@ export const ViewLobby = {
                   <div class="mb-3"><label class="form-label" style="color:#cccccc;">接口地址</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl"></div>
                   <div class="mb-3"><label class="form-label" style="color:#cccccc;">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey"></div>
                   <div class="mb-3"><label class="form-label" style="color:#cccccc;">模型名称</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model"></div>
+                  <div class="mb-3">
+                      <label class="form-label" style="color:#cccccc;">守秘人难度</label>
+                      <select class="form-select bg-dark text-light border-secondary" v-model="gameState.aiSettings.difficultyPreset">
+                          <option value="merciful">仁慈 — 宽容线索与判定</option>
+                          <option value="standard">标准 — CoC 7e 默认</option>
+                          <option value="brutal">致命 — 残酷后果</option>
+                      </select>
+                  </div>
                   <div class="mb-3 form-check">
                         <input class="form-check-input" type="checkbox" id="rememberKey" v-model="rememberKey" style="background:#111;border-color:#555;">
                         <label class="form-check-label" for="rememberKey" style="font-size:0.7rem;color:#aaa;">记住密钥（跨会话保存；取消则关闭浏览器后自动清除）</label>
@@ -342,34 +350,34 @@ export const ViewLobby = {
       },
       methods: {
           refreshData() {
-              this.autoSave = window.CoCState.getAutoSave();
-              this.saveSlots = window.CoCState.getSaveSlots();
-              this.modules = window.CoCState.getModules();
-              window.CoCState.getStorageStatus && window.CoCState.getStorageStatus('slot1', '预估存档');
+              this.autoSave = CoCStateAccessor.getAutoSave();
+              this.saveSlots = CoCStateAccessor.getSaveSlots();
+              this.modules = CoCStateAccessor.getModules();
+              CoCStateAccessor.getStorageStatus('slot1', '预估存档');
           },
           backToModules() {
               this.refreshData();
               CoCStateAccessor.switchScreen('modules');
           },
           doEnterModule(id) {
-              window.CoCState.enterModule(id);
-              this.autoSave = window.CoCState.getAutoSave();
-              this.saveSlots = window.CoCState.getSaveSlots();
+              CoCStateAccessor.enterModule(id);
+              this.autoSave = CoCStateAccessor.getAutoSave();
+              this.saveSlots = CoCStateAccessor.getSaveSlots();
           },
           doCreateModule() {
               const name = this.newModName.trim();
               if (!name) return;
-              const id = window.CoCState.createModule(name);
+              const id = CoCStateAccessor.createModule(name);
               this.newModName = '';
-              this.modules = window.CoCState.getModules();
-              window.CoCState.enterModule(id);
+              this.modules = CoCStateAccessor.getModules();
+              CoCStateAccessor.enterModule(id);
           },
           async doDeleteModule(id) {
-              const ok = await window.CoCState.confirmAction('删除模组将永久清除其所有存档，确认吗？', { title: '删除模组', danger: true, okText: '删除' });
+              const ok = await CoCStateAccessor.confirmAction('删除模组将永久清除其所有存档，确认吗？', { title: '删除模组', danger: true, okText: '删除' });
               if (!ok) return;
-              window.CoCState.deleteModule(id);
+              CoCStateAccessor.deleteModule(id);
               CoCStateAccessor.showToast('模组已删除。', 'success');
-              this.modules = window.CoCState.getModules();
+              this.modules = CoCStateAccessor.getModules();
           },
           startRename(mod) {
               this.editingModId = mod.id;
@@ -377,8 +385,8 @@ export const ViewLobby = {
           },
           confirmRename(id) {
               if (this.editingModName.trim()) {
-                  window.CoCState.renameModule(id, this.editingModName.trim());
-                  this.modules = window.CoCState.getModules();
+                  CoCStateAccessor.renameModule(id, this.editingModName.trim());
+                  this.modules = CoCStateAccessor.getModules();
               }
               this.editingModId = null;
           },
@@ -492,11 +500,11 @@ export const ViewLobby = {
       mounted() { this.refreshData(); },
       watch: {
           'gameState.currentScreen'(newScreen) {
-              if (newScreen === 'modules') this.modules = window.CoCState.getModules();
-              if (newScreen === 'lobby') this.autoSave = window.CoCState.getAutoSave();
+              if (newScreen === 'modules') this.modules = CoCStateAccessor.getModules();
+              if (newScreen === 'lobby') this.autoSave = CoCStateAccessor.getAutoSave();
               if (newScreen === 'scenarios') this.refreshScenariosList();
               if (newScreen === 'scenario_store') this.refreshScenarioStore();
-              if (newScreen === 'saves') { this.saveSlots = window.CoCState.getSaveSlots(); window.CoCState.getStorageStatus && window.CoCState.getStorageStatus('slot1', '预估存档'); }
+              if (newScreen === 'saves') { this.saveSlots = CoCStateAccessor.getSaveSlots(); CoCStateAccessor.getStorageStatus('slot1', '预估存档'); }
           }
       }
   };

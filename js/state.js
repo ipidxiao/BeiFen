@@ -138,7 +138,10 @@ window.CoCState = (function(Vue) {
             SAVE_SCHEMA_VERSION: 7,
             migrateSaveData: (save) => persistMod.migrateSaveData(safeJsonClone(save, null)),
             buildSaveData: persistMod._buildSaveData,
-            restoreFromData: persistMod._restoreFromData
+            restoreFromData: persistMod._restoreFromData,
+            shouldArchiveToIdb: persistMod._shouldArchiveToIdb,
+            SAVE_IDB_THRESHOLD_BYTES: persistMod.SAVE_IDB_THRESHOLD_BYTES,
+            SAVE_IDB_QUOTA_RATIO: persistMod.SAVE_IDB_QUOTA_RATIO
         }
     };
 })(window.Vue);

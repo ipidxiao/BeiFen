@@ -75,8 +75,27 @@ const CoCAIPromptConfig = (function() {
         }
     ];
 
-    function buildSystemInjection(teamDetails) {
-        return '\n\n\n[【当前行动小队状态】：\n\n' + teamDetails + SYSTEM_RULES_BLOCK;
+    var DIFFICULTY_PRESETS = {
+        merciful: {
+            id: 'merciful',
+            label: '仁慈',
+            injection: '\n\n【守秘人难度：仁慈】倾向给予额外线索、宽容判定、降低即死惩罚，但仍保持恐怖氛围。'
+        },
+        standard: {
+            id: 'standard',
+            label: '标准',
+            injection: ''
+        },
+        brutal: {
+            id: 'brutal',
+            label: '致命',
+            injection: '\n\n【守秘人难度：致命】严格执行 CoC 残酷规则，不轻易施舍线索，失败后果严重，调查员与 NPC 均可能迅速死亡。'
+        }
+    };
+
+    function buildSystemInjection(teamDetails, difficultyPreset) {
+        var preset = DIFFICULTY_PRESETS[difficultyPreset] || DIFFICULTY_PRESETS.standard;
+        return '\n\n\n[【当前行动小队状态】：\n\n' + teamDetails + (preset.injection || '') + SYSTEM_RULES_BLOCK;
     }
 
     function matchKeywordIntercept(content) {
@@ -93,6 +112,7 @@ const CoCAIPromptConfig = (function() {
     return {
         SYSTEM_RULES_BLOCK,
         KEYWORD_INTERCEPTS,
+        DIFFICULTY_PRESETS,
         buildSystemInjection,
         matchKeywordIntercept
     };

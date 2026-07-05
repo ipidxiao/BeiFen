@@ -81,9 +81,9 @@ window.StoryChar = {
     `,
     setup() {
         const { ref, computed } = window.Vue;
-        const state = window.CoCState;
-        const engine = window.CoCEngine;
-        const gameState = state.gameState;
+        const acc = window.CoCStateAccessor;
+        const state = acc ? acc.getState() : window.CoCState;
+        const gameState = acc ? acc.getGameState() : state.gameState;
         
 	        const selectedCharIndex = computed({
             get: () => { state.clampSelectedCharIndex(gameState); return gameState.selectedCharIndex; },
@@ -97,10 +97,15 @@ window.StoryChar = {
 
         const isNotableSkill = (char, skillName, val) => {
             if (!skillName || val === undefined) return false;
-            if (engine.isVisibleSkillName && !engine.isVisibleSkillName(skillName)) return false;
+            const visible = acc
+                ? acc.isVisibleSkillName(skillName)
+                : !(window.CoCEngine && window.CoCEngine.isVisibleSkillName && !window.CoCEngine.isVisibleSkillName(skillName));
+            if (!visible) return false;
             if (skillName === "闪避") return val > Math.floor(char.attrs.DEX / 2);
             
-            const skillDef = engine.BaseSkills[skillName];
+            const skillDef = acc
+                ? acc.getSkillDef(skillName)
+                : (window.CoCEngine && window.CoCEngine.BaseSkills ? window.CoCEngine.BaseSkills[skillName] : undefined);
             let base = 0;
             if (skillDef !== undefined) {
                 base = (typeof skillDef === 'number') ? skillDef : (skillDef.base !== undefined ? skillDef.base : 0);

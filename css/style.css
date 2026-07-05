@@ -113,6 +113,10 @@ body .border-secondary { border-color: #444444; }
 
 /* 💡 Form 控件深色主题 */
 .form-control:focus, .form-select:focus { background-color: #333; color: #fff; border-color: var(--accent-gold); box-shadow: 0 0 0 0.2rem rgba(240, 173, 78, 0.25); }
+.btn:focus-visible, button:focus-visible, .apex-slot:focus-visible, .dice-quick-btn:focus-visible {
+    outline: 2px solid var(--accent-gold);
+    outline-offset: 2px;
+}
 .form-control::placeholder { color: #777; }
 
 /* 💡 状态警报动画 */

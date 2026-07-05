@@ -197,7 +197,7 @@ window.CoCAI = (function(State, Engine) {
                     return `【${c.name}】(HP:${c.hp}/${c.derived.hp}, SAN:${c.sanity}, 装备:${eStr})`;
                 }).join("\n");
                 
-                cleanMsg.content += CoCAIPromptConfig.buildSystemInjection(teamDetails);
+                cleanMsg.content += CoCAIPromptConfig.buildSystemInjection(teamDetails, gameState.aiSettings.difficultyPreset || 'standard');
                 const intercept = CoCAIPromptConfig.matchKeywordIntercept(m.content);
                 if (intercept) cleanMsg.content += intercept;
             }

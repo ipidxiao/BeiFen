@@ -37,7 +37,7 @@ export const StoryDice = {
                       <div class="d-flex flex-wrap gap-1 flex-grow-1">
                           <button v-for="sides in [4,6,8,10,12,20,100]" :key="sides"
                               class="btn btn-sm py-0 px-2 fw-bold dice-quick-btn"
-                              :aria-label="'掷 d' + sides" @click="quickRoll(sides)">d{{ sides }}</button>
+                              :aria-label="'掷 ' + diceCount + 'd' + sides" @click="quickRoll(sides)">d{{ sides }}</button>
                       </div>
                   </div>
               </div>
@@ -89,7 +89,7 @@ export const StoryDice = {
                           @keyup.enter="customRoll()" />
                       <input v-model="customLabel" class="form-control form-control-sm dice-input dice-input-label" placeholder="名称"
                           @keyup.enter="customRoll()" />
-                      <button class="btn btn-sm px-2 dice-roll-btn" @click="customRoll()">掷</button>
+                      <button class="btn btn-sm px-2 dice-roll-btn" aria-label="掷自定义骰子" @click="customRoll()">掷</button>
                   </div>
                   <div class="text-muted mt-1" style="font-size:0.62rem;">kN=取最高N个　lN=取最低N个</div>
               </div>
@@ -100,7 +100,7 @@ export const StoryDice = {
                   <div class="d-flex gap-1">
                       <input v-model="pushSkill" class="form-control form-control-sm dice-input" placeholder="技能名" />
                       <input v-model="pushReason" class="form-control form-control-sm dice-input dice-input-label" placeholder="推动理由" />
-                      <button class="btn btn-sm px-2" style="background:#2a0000;border:1px solid #6a0000;color:#ff8888;" @click="doPush()">⚡推动</button>
+                      <button class="btn btn-sm px-2" style="background:#2a0000;border:1px solid #6a0000;color:#ff8888;" aria-label="推动检定" @click="doPush()">⚡推动</button>
                   </div>
                   <div v-if="pushResult" class="mt-1" :class="pushResult.success ? 'text-success' : 'text-danger'" style="font-size:0.72rem;">
                       {{ pushResult.msg }}
@@ -140,7 +140,7 @@ export const StoryDice = {
               const active = this.gameState.roster.filter(r => r.isActive);
               if (!active.length) { this.pushResult = { success: false, msg: '没有活跃调查员' }; return; }
               const ch = active[0];
-              const result = window.CoCEngine.executePushedRoll(this.pushSkill.trim(), ch);
+              const result = CoCStateAccessor.executePushedRoll(this.pushSkill.trim(), ch);
               if (result.success) {
                   this.pushResult = { success: true, msg: '推动成功！' + result.rolledValue + '/' + result.targetValue + ' → ' + result.level };
                   if (ch.skills) ch.skills[this.pushSkill.trim()] = result.skillValue;
@@ -151,12 +151,12 @@ export const StoryDice = {
           },
           quickRoll(sides) {
               const notation = `${this.diceCount}d${sides}`;
-              const entry = window.CoCState.rollCustomDice(notation, `${this.diceCount}d${sides}`, '玩家');
+              const entry = CoCStateAccessor.rollCustomDice(notation, `${this.diceCount}d${sides}`, '玩家');
               if (entry) { this.lastRollEntry = entry; this.flash(); }
           },
           customRoll() {
               if (!this.customNotation.trim()) return;
-              const entry = window.CoCState.rollCustomDice(this.customNotation.trim(), this.customLabel||this.customNotation.trim(), '玩家');
+              const entry = CoCStateAccessor.rollCustomDice(this.customNotation.trim(), this.customLabel||this.customNotation.trim(), '玩家');
               if (!entry) { CoCStateAccessor.showToast('无效的骰子表示法，请使用如 2d6+3 的格式', 'warning'); return; }
               this.lastRollEntry = entry; this.flash();
           },

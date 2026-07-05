@@ -64,6 +64,9 @@ export const StoryEquip = {
                 <div v-for="slot in slots" :key="slot.id" 
                     class="apex-slot" 
                     :class="getSlotClass(slot)"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="slot.label + '装备槽'"
                     @click="openSlotPicker(slot)"
                     @dragover.prevent
                     @drop="onDrop($event, slot)">
@@ -121,11 +124,12 @@ export const StoryEquip = {
     `,
     setup() {
         const { computed, ref } = window.Vue;
-        const state = window.CoCState;
-        const gameState = state.gameState;
-        const notify = (msg, type='info') => state.showToast && state.showToast(msg, type);
+        const acc = window.CoCStateAccessor;
+        const state = acc.getState();
+        const gameState = acc.getGameState();
+        const notify = (msg, type='info') => acc.showToast(msg, type);
         
-        const slots = Object.values(window.CoCItemDB.EQUIP_SLOTS);
+        const slots = Object.values(acc.getEquipSlots());
         const pickerSlot = ref(null);
         const activeRoster = computed(() => gameState.roster.filter(c => c.isActive));
         const selectedChar = computed(() => {
@@ -134,12 +138,7 @@ export const StoryEquip = {
         });
         if (!gameState.equipment) gameState.equipment = {};
 
-        const resolve = (item) => {
-            if (!item) return {};
-            if (typeof item === 'object' && item.name) return item;
-            if (window.CoCItemDB && window.CoCItemDB.resolve) return window.CoCItemDB.resolve(item);
-            return { name: String(item), category:'杂物', tier:'C' };
-        };
+        const resolve = (item) => acc.resolveItem(item);
 
         const getEquipped = (slot) => {
             if (!selectedChar.value) return null;
@@ -157,8 +156,9 @@ export const StoryEquip = {
             const item = getEquipped(slot);
             if (!item) return '';
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].label.split('·')[0].trim();
+            const tier = acc.getItemTier(r.tier);
+            if (tier) {
+                return tier.label.split('·')[0].trim();
             }
             return '';
         };
@@ -167,20 +167,16 @@ export const StoryEquip = {
             const item = getEquipped(slot);
             if (!item) return '#666';
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].color;
-            }
-            return '#666';
+            const tier = acc.getItemTier(r.tier);
+            return tier ? tier.color : '#666';
         };
 
         const getEquippedTierIcon = (slot) => {
             const item = getEquipped(slot);
             if (!item) return '⬜';
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].icon;
-            }
-            return '📦';
+            const tier = acc.getItemTier(r.tier);
+            return tier ? tier.icon : '📦';
         };
 
         const getSlotClass = (slot) => {
@@ -196,7 +192,7 @@ export const StoryEquip = {
             return gameState.inventory
                 .map((item, idx) => ({ item: resolve(item), idx }))
                 .filter(({ item }) => {
-                    const slotForItem = window.CoCItemDB.getSlotForItem(item);
+                    const slotForItem = acc.getSlotForItem(item);
                     return slotForItem === slot.id.toUpperCase() || slotForItem === 'PRIMARY' && slot.id === 'primary' || slotForItem === 'SECONDARY' && slot.id === 'secondary' || slotForItem === 'MELEE' && slot.id === 'melee';
                 });
         });
@@ -208,26 +204,20 @@ export const StoryEquip = {
 
         const getItemTierLabel = (item) => {
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].label;
-            }
-            return '';
+            const tier = acc.getItemTier(r.tier);
+            return tier ? tier.label : '';
         };
 
         const getItemTierColor = (item) => {
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].color;
-            }
-            return '#666';
+            const tier = acc.getItemTier(r.tier);
+            return tier ? tier.color : '#666';
         };
 
         const getItemTierIcon = (item) => {
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return window.CoCItemDB.TIERS[r.tier].icon;
-            }
-            return '📦';
+            const tier = acc.getItemTier(r.tier);
+            return tier ? tier.icon : '📦';
         };
 
         const getItemSubtitle = (item) => {
@@ -242,10 +232,8 @@ export const StoryEquip = {
 
         const getPickerItemStyle = (item) => {
             const r = resolve(item);
-            if (r.tier && window.CoCItemDB.TIERS[r.tier]) {
-                return 'border-left: 3px solid ' + window.CoCItemDB.TIERS[r.tier].color;
-            }
-            return '';
+            const tier = acc.getItemTier(r.tier);
+            return tier ? 'border-left: 3px solid ' + tier.color : '';
         };
 
         const isEquipped = (item, slot) => {
@@ -274,7 +262,7 @@ export const StoryEquip = {
             }
             
             // Check if can replace based on tier
-            if (equipped && !window.CoCItemDB.canReplace(equipped, r)) {
+            if (equipped && !acc.canReplaceItem(equipped, r)) {
                 notify('需要更高等级或同等级的' + slot.label + '才能替换！', 'warning');
                 return;
             }

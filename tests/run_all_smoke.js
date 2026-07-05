@@ -39,6 +39,7 @@ const SUITES = [
   { phase: 'Phase 1: 文件完整性与加载链', tests: [
     'auditfix8_file_integrity_smoke.js',
     'build_export_smoke.js',
+    'idb_backup_smoke.mjs',
     'sw_cache_smoke.js',
     'scenario_smoke.js',
     'scenario_store_smoke.js',

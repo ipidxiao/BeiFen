@@ -5,6 +5,8 @@
 // ===============================================
 
 const SAVE_SCHEMA_VERSION = 7;
+    const SAVE_IDB_THRESHOLD_BYTES = 512 * 1024;
+    const SAVE_IDB_QUOTA_RATIO = 0.85;
 /**
  * CoC State Persistence — save/load, migration, module management, storage estimation.
  *
@@ -373,6 +375,41 @@ export const CoCStatePersistence = (function() {
                 });
             } catch(e) { return null; }
         };
+        const _idbDelete = async (slotKey) => {
+            try {
+                const db = await _openIDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction('saves', 'readwrite');
+                    tx.objectStore('saves').delete(slotKey);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => reject(tx.error);
+                });
+            } catch(e) { return false; }
+        };
+
+        const _idbCache = {};
+        let _idbCachePrimed = false;
+        const _primeIdbCache = () => {
+            if (_idbCachePrimed) return;
+            _idbCachePrimed = true;
+            _openIDB().then((db) => {
+                const tx = db.transaction('saves', 'readonly');
+                const req = tx.objectStore('saves').openCursor();
+                req.onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (!cursor) return;
+                    _idbCache[cursor.value.slotKey] = cursor.value.payload;
+                    cursor.continue();
+                };
+            }).catch(() => {});
+        };
+        _primeIdbCache();
+
+        const _shouldArchiveToIdb = (payloadBytes, projectedRatio) => {
+            const bytes = Number(payloadBytes) || 0;
+            const ratio = Number(projectedRatio) || 0;
+            return bytes >= SAVE_IDB_THRESHOLD_BYTES || ratio >= SAVE_IDB_QUOTA_RATIO;
+        };
 
         const saveGame = (slotKey, slotName) => {
             try {
@@ -381,7 +418,13 @@ export const CoCStatePersistence = (function() {
                 const storageReport = getStorageStatus(slotKey, slotName, payload);
                 if (storageReport.warning) showToast(storageReport.warning, 'warning', { timeout: 7000 });
                 const ok = _safeLocalStorageSetItem(_getModSavePrefix() + slotKey, payload, '存档');
-                _idbSave(_getModSavePrefix() + slotKey, payload).catch((e) => { try { showToast('IndexedDB 持久化失败（不影响游戏）：' + (e && e.message ? e.message : '未知错误'), 'warning', { timeout: 5000 }); } catch(_) {} }); // fire-and-forget
+                const archiveToIdb = _shouldArchiveToIdb(storageReport.currentSaveBytes, storageReport.projectedRatio);
+                if (archiveToIdb || !ok) {
+                    const fullKey = _getModSavePrefix() + slotKey;
+                    _idbSave(fullKey, payload).then((saved) => {
+                        if (saved) _idbCache[fullKey] = payload;
+                    }).catch((e) => { try { showToast('IndexedDB 备份失败（不影响游戏）：' + (e && e.message ? e.message : '未知错误'), 'warning', { timeout: 5000 }); } catch(_) {} });
+                }
                 getStorageStatus(slotKey, slotName, payload);
                 return ok;
             } catch(e) {
@@ -400,14 +443,31 @@ export const CoCStatePersistence = (function() {
          */
         const loadGame = (slotKey) => {
             try {
-                const raw = localStorage.getItem(_getModSavePrefix() + slotKey);
-                if (!raw) return false;
-                return _restoreFromData(safeJsonParse(raw, null));
+                const fullKey = _getModSavePrefix() + slotKey;
+                const raw = localStorage.getItem(fullKey);
+                if (raw) return _restoreFromData(safeJsonParse(raw, null));
+                const cached = _idbCache[fullKey];
+                if (cached) {
+                    const ok = _restoreFromData(safeJsonParse(cached, null));
+                    if (ok) showToast('已从 IndexedDB 备份恢复存档。', 'info');
+                    return ok;
+                }
+                _idbLoad(fullKey).then((payload) => {
+                    if (payload) _idbCache[fullKey] = payload;
+                }).catch(() => {});
+                return false;
             } catch(e) { return false; }
         };
 
         const deleteSave = (slotKey) => {
-            try { localStorage.removeItem(_getModSavePrefix() + slotKey); getStorageStatus(slotKey, '预估存档'); return true; } catch(e) { return false; }
+            try {
+                const fullKey = _getModSavePrefix() + slotKey;
+                localStorage.removeItem(fullKey);
+                delete _idbCache[fullKey];
+                _idbDelete(fullKey).catch(() => {});
+                getStorageStatus(slotKey, '预估存档');
+                return true;
+            } catch(e) { return false; }
         };
 
         const getSaveSlots = () => {
@@ -467,7 +527,8 @@ export const CoCStatePersistence = (function() {
         return { formatStorageBytes, getStorageStatus, saveGame, loadGame, deleteSave,
                  getSaveSlots, getAutoSave, exportGame, importGame,
                  getModules, createModule, renameModule, deleteModule, enterModule,
-                 migrateSaveData, _buildSaveData, _restoreFromData };
+                 migrateSaveData, _buildSaveData, _restoreFromData,
+                 _shouldArchiveToIdb, SAVE_IDB_THRESHOLD_BYTES, SAVE_IDB_QUOTA_RATIO };
     };
     return { create };
 })();
