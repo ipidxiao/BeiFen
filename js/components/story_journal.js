@@ -5,6 +5,7 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+
 window.StoryJournal = {
       data() { return { noteInput: '', showNoteInput: false }; },
       template: `
@@ -27,18 +28,18 @@ window.StoryJournal = {
 
               <!-- 日志内容 -->
               <div class="flex-grow-1 overflow-auto px-2 py-2">
-                  <div v-if="groupedEntries.length === 0" class="text-center text-secondary py-5" style="font-size:0.85rem;">
-                      <div style="font-size:2rem;">📜</div>
-                      <div>尚无记录</div>
-                      <div class="mt-1" style="font-size:0.75rem;">技能检定、伤亡、物品等事件将自动记录于此</div>
+                  <div v-if="groupedEntries.length === 0" class="empty-state">
+                      <coc-icon name="journal" :size="40" class="empty-state-icon"></coc-icon>
+                      <div class="empty-state-title">尚无记录</div>
+                      <div class="empty-state-hint">技能检定、伤亡、物品等事件将自动记录于此</div>
                   </div>
 
                   <div v-for="[date, entries] in groupedEntries" :key="date" class="mb-3">
-                      <div class="text-muted fw-bold mb-2 px-1" style="font-size:0.72rem; letter-spacing:0.08em; border-bottom:1px solid #333; padding-bottom:4px;">
-                          📅 {{ date }}
+                      <div class="text-muted fw-bold mb-2 px-1 coc-section-title" style="font-size:0.72rem; letter-spacing:0.08em; border-bottom:1px solid var(--border-dim); padding-bottom:4px;">
+                          {{ date }}
                       </div>
                       <div v-for="entry in entries" :key="entry.id" class="mb-1 d-flex align-items-start gap-2 px-1 py-1 rounded" :style="getRowStyle(entry.type)">
-                          <span style="flex-shrink:0; font-size:0.9rem; margin-top:1px;">{{ getIcon(entry.type) }}</span>
+                          <coc-icon :name="journalIconId(entry.type)" :size="16" class="flex-shrink-0 journal-type-icon" :style="'color:' + getColor(entry.type)"></coc-icon>
                           <div class="flex-grow-1" style="min-width:0;">
                               <div class="d-flex justify-content-between align-items-start gap-1" style="flex-wrap:wrap;">
                                   <span :style="'font-size:0.8rem; color:' + getColor(entry.type)">{{ entry.summary }}</span>
@@ -68,9 +69,7 @@ window.StoryJournal = {
           }
       },
       methods: {
-          getIcon(type) {
-              return { skill_check:'🎲', san_loss:'🌀', hp_loss:'🩸', item_found:'🎒', item_lost:'📤', combat:'⚔️', note:'✏️', heal:'💖', san_recover:'💚' }[type] || '📌';
-          },
+          journalIconId,
           getColor(type) {
               return { skill_check:'#c9a227', san_loss:'#9c6bb5', hp_loss:'#e53935', item_found:'#43a047', item_lost:'#888', combat:'#ef6c00', note:'#5b9bd5', heal:'#43a047', san_recover:'#43a047' }[type] || '#aaa';
           },

@@ -27,6 +27,7 @@
     <script>cocLoadCdnFallback(function () { return window.pdfjsLib; }, 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');</script>
     <script>if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js'; }</script>
     <link rel="stylesheet" href="./css/style.css">
+    <link rel="preload" href="./css/icons.svg" as="image" type="image/svg+xml">
     <noscript><style>#app::before{content:"⚠️ 请启用 JavaScript 以运行 CoC 引擎";display:block;color:#ffcc00;text-align:center;padding:2rem;font-size:1.2rem;}</style></noscript>
     <link rel="modulepreload" href="./js/coc.js">
     <link rel="modulepreload" href="./js/ai_logic.js">
@@ -186,6 +187,7 @@
     <script src="./js/scenario/runner.js"></script>
     <script src="./js/components/combat_ui_helpers.js"></script>
     <script src="./js/components/chat_format_helpers.js"></script>
+    <script src="./js/components/icon_sprite.js"></script>
     <script src="./js/components/story_chat.js"></script>
     <script src="./js/components/story_char.js"></script>
     <script src="./js/components/story_inv.js"></script>

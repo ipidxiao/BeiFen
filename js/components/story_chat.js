@@ -20,6 +20,15 @@ window.StoryChat = {
             </div>
             
             <div class="chat-box mb-2 flex-grow-1 border border-secondary" ref="chatBox" @scroll="onChatScroll" id="chatContainer" aria-live="polite" aria-atomic="false">
+                <div v-if="totalMsgs === 0 && !gameState.isLoading" class="empty-state empty-state-chat">
+                    <coc-icon name="scroll" :size="40" class="empty-state-icon"></coc-icon>
+                    <div class="empty-state-title">故事尚未开始</div>
+                    <div class="empty-state-hint">在下方输入行动，或从大厅选择本地剧本</div>
+                    <div v-if="needsApiKey" class="empty-state-hint empty-state-api-hint">
+                        <coc-icon name="settings" :size="14" class="me-1"></coc-icon>
+                        联网 AI 需先在设置中配置 API 密钥
+                    </div>
+                </div>
                 <div :style="{ height: topSpacer + 'px' }"></div>
                 <div v-for="msg in visibleMessages" :key="msg._vid || 0" class="chat-msg">
                     <div v-if="msg.role === 'system' && !msg.isHidden" :class="{'madness-msg': msg.isMadness, 'alert-msg': msg.isAlert, 'sys-msg': !msg.isMadness && !msg.isAlert}">
@@ -82,6 +91,12 @@ window.StoryChat = {
         scenarioModeLabel() {
             const r = window.CoCScenarioRunner;
             return r && r.getModeLabel ? r.getModeLabel() : null;
+        },
+        needsApiKey() {
+            const gs = this.gameState;
+            if (!gs || gs.scenarioRunner?.active) return false;
+            const key = (gs.aiSettings && gs.aiSettings.apiKey || '').trim();
+            return !key;
         }
     },
     methods: {

@@ -46,6 +46,11 @@ window.StoryCombat = {
                   <!-- Enemies Section -->
                   <div class="px-3 pt-2 pb-1" style="flex-shrink:0;">
                       <div class="text-danger fw-bold mb-2 combat-section-title">敌 方</div>
+                      <div v-if="!gameState.combat.enemies || gameState.combat.enemies.length === 0" class="empty-state empty-state-compact">
+                          <coc-icon name="combat" :size="32" class="empty-state-icon"></coc-icon>
+                          <div class="empty-state-title">暂无敌方单位</div>
+                          <div class="empty-state-hint">守秘人宣告战斗后，敌人将显示于此</div>
+                      </div>
                       <div v-for="enemy in gameState.combat.enemies" :key="enemy.id"
                           class="mb-2 p-2 rounded combat-enemy-card"
                           :class="enemy.isDefeated ? 'defeated' : ''">
@@ -88,15 +93,15 @@ window.StoryCombat = {
                   <div class="px-3 pb-2 border-top border-secondary pt-2 combat-actions-bar">
                       <div class="text-muted mb-2 combat-actions-label" title="离线主互动；联网时可自由描述，菜单为可选参考">快速指令（CoC 7e · 离线主互动 / 联网可自由描述）</div>
                       <div class="d-flex flex-wrap gap-1">
-                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我向最近的敌人发起近战攻击！')">🗡️ 近战</button>
-                          <button class="btn btn-sm btn-outline-warning py-0 px-2 combat-quick-btn" @click="quickAction('我开枪射击！')">🔫 射击</button>
-                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我放弃闪避，对攻击者进行反击！')">⚔️ 反击</button>
-                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn" @click="quickAction('我尝试闪避并寻找掩体。')">🛡️ 生存</button>
+                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn d-inline-flex align-items-center gap-1" @click="quickAction('我向最近的敌人发起近战攻击！')"><coc-icon name="equip" :size="13"></coc-icon> 近战</button>
+                          <button class="btn btn-sm btn-outline-warning py-0 px-2 combat-quick-btn d-inline-flex align-items-center gap-1" @click="quickAction('我开枪射击！')"><coc-icon name="rifle" :size="13"></coc-icon> 射击</button>
+                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn d-inline-flex align-items-center gap-1" @click="quickAction('我放弃闪避，对攻击者进行反击！')"><coc-icon name="combat" :size="13"></coc-icon> 反击</button>
+                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn d-inline-flex align-items-center gap-1" @click="quickAction('我尝试闪避并寻找掩体。')"><coc-icon name="shield" :size="13"></coc-icon> 生存</button>
                           <button class="btn btn-sm btn-outline-secondary py-0 px-2 combat-quick-btn" @click="quickAction('我们撤退！')">🏃 逃脱</button>
                           <button class="btn btn-sm btn-outline-light py-0 px-2 combat-quick-btn" @click="quickAction('我尝试擒抱最近的敌人！')">🤼 擒抱</button>
                           <button class="btn btn-sm btn-outline-success py-0 px-2 combat-quick-btn" @click="quickAction('我对' + firstWoundedChar + '进行急救。')">💊 技能</button>
-                          <button class="btn btn-sm btn-outline-primary py-0 px-2 combat-quick-btn" @click="quickAction('我尝试威吓敌人！')">🗣️ 交涉</button>
-                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn" @click="quickAction('我利用周围的环境（家具/障碍物）获取掩护！')">🏚️ 环境</button>
+                          <button class="btn btn-sm btn-outline-primary py-0 px-2 combat-quick-btn d-inline-flex align-items-center gap-1" @click="quickAction('我尝试威吓敌人！')"><coc-icon name="npc" :size="13"></coc-icon> 交涉</button>
+                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn d-inline-flex align-items-center gap-1" @click="quickAction('我利用周围的环境（家具/障碍物）获取掩护！')"><coc-icon name="eye" :size="13"></coc-icon> 环境</button>
                       </div>
                   </div>
 

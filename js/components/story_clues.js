@@ -60,14 +60,14 @@ window.StoryClues = {
               <div v-if="viewMode==='cards'" class="flex-grow-1 overflow-auto p-2 clue-card-area">
 
                   <!-- Empty state -->
-                  <div v-if="gameState.clueBoard.clues.length===0" class="text-center py-5 text-muted">
-                      <div class="clue-empty-icon">🔍</div>
-                      <div class="clue-empty-title">尚未发现任何线索</div>
-                      <div class="clue-empty-sub">调查员发现证据时，AI 会自动记录到此处</div>
+                  <div v-if="gameState.clueBoard.clues.length===0" class="empty-state">
+                      <coc-icon name="clues" :size="40" class="empty-state-icon"></coc-icon>
+                      <div class="empty-state-title">尚未发现任何线索</div>
+                      <div class="empty-state-hint">调查员发现证据时，AI 会自动记录到此处</div>
                   </div>
 
                   <!-- Clue cards -->
-                  <div v-for="clue in filteredClues" :key="clue.id" class="mb-2 p-2 rounded clue-card"
+                  <div v-for="clue in filteredClues" :key="clue.id" class="mb-2 p-2 rounded clue-card coc-panel-card"
                       :style="cardStyle(clue)"
                       @click="selectedClue = (selectedClue && selectedClue.id===clue.id) ? null : clue">
 

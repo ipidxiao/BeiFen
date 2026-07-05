@@ -118,6 +118,98 @@ body .border-secondary { border-color: var(--border-default); }
   line-height: 1.45;
 }
 
+/* Icon sprite usage — stroke icons inherit currentColor */
+.coc-icon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  flex-shrink: 0;
+  color: currentColor;
+  fill: none;
+}
+.story-tab-btn .coc-icon { opacity: 0.9; }
+
+/* Unified sub-panel cards (story inv / equip / clues / map) */
+.coc-panel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+.story-inv-panel .coc-panel-card.list-group-item {
+  background: var(--bg-card);
+}
+.story-equip-panel .apex-slot {
+  background: var(--bg-card);
+  border-color: var(--border-default);
+}
+.story-map-panel {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-panel);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--purple-border);
+  overflow: hidden;
+}
+.clue-card.coc-panel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+}
+
+/* Empty states — lobby, chat, combat, panels */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg);
+  color: var(--text-muted);
+}
+.empty-state-compact {
+  padding: var(--space-lg) var(--space-md);
+}
+.empty-state-inline {
+  flex-direction: row;
+  text-align: left;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+.empty-state-chat {
+  min-height: 40%;
+}
+.empty-state-icon {
+  color: var(--text-dim);
+  opacity: 0.45;
+  margin-bottom: var(--space-sm);
+}
+.empty-state-pulse {
+  animation: empty-pulse 1.4s ease-in-out infinite;
+}
+@keyframes empty-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.75; }
+}
+.empty-state-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-muted-light);
+  margin-bottom: var(--space-xs);
+}
+.empty-state-hint {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  line-height: 1.45;
+  max-width: 280px;
+}
+.empty-state-api-hint {
+  margin-top: var(--space-md);
+  color: var(--accent-gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+.journal-type-icon { margin-top: 2px; }
+
 /* Chat panel — typography & message hierarchy */
 .chat-box {
   height: 60vh;

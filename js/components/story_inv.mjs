@@ -1,15 +1,19 @@
 export const StoryInv = {
     template: `
-        <div class="flex-grow-1 overflow-auto p-3 bg-dark" @click="tooltipItem = null">
-            <h5 class="text-success text-center mb-3">🎒 随身行囊</h5>
+        <div class="flex-grow-1 overflow-auto p-3 bg-dark story-inv-panel" @click="tooltipItem = null">
+            <h5 class="coc-section-title text-center mb-3 d-inline-flex align-items-center justify-content-center gap-2 w-100"><coc-icon name="inventory" :size="20"></coc-icon> 随身行囊</h5>
             
-            <div v-if="activeRoster.length > 1" class="alert alert-dark border-secondary p-2 mb-3 small">
+            <div v-if="activeRoster.length > 1" class="alert alert-dark border-secondary p-2 mb-3 small coc-panel-card">
                 <i class="text-info">当前正为调查员 <b>{{ selectedCharName }}</b> 进行操作</i>
             </div>
 
             <ul class="list-group">
-                <li v-if="inventory.length === 0" class="list-group-item bg-dark text-muted text-center border-secondary">背包空空如也</li>
-                <li v-for="(item, idx) in inventory" :key="idx" class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center inv-item" @click.stop="toggleTooltip($event, item, idx)">
+                <li v-if="inventory.length === 0" class="list-group-item coc-panel-card empty-state empty-state-compact border-secondary">
+                    <coc-icon name="inventory" :size="32" class="empty-state-icon"></coc-icon>
+                    <div class="empty-state-title">背包空空如也</div>
+                    <div class="empty-state-hint">探索与战斗获得的物品会显示在这里</div>
+                </li>
+                <li v-for="(item, idx) in inventory" :key="idx" class="list-group-item coc-panel-card text-light border-secondary d-flex justify-content-between align-items-center inv-item" @click.stop="toggleTooltip($event, item, idx)">
                     <div class="d-flex align-items-center gap-2">
                         <span class="item-icon">{{ getItemIcon(item) }}</span>
                         <div>

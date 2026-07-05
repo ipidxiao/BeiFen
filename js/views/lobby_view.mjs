@@ -6,7 +6,7 @@
 // ===============================================
 
 export const ViewLobby = {
-      data() { return { autoSave: null, saveSlots: [], modules: [], newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', storeLoading: false, storeError: '', publicCatalogBase: '', storeImportStep: '', storeImportDetail: '' }; },
+      data() { return { autoSave: null, saveSlots: [], modules: [], modulesLoading: true, newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', storeLoading: false, storeError: '', publicCatalogBase: '', storeImportStep: '', storeImportDetail: '' }; },
       template: `
           <div>
               <!-- ===== 模组选择界面 ===== -->
@@ -16,7 +16,18 @@ export const ViewLobby = {
                       <div class="coc-section-subtitle">每个模组拥有独立的角色队伍与剧情存档</div>
                   </div>
 
-                  <div v-for="mod in modules" :key="mod.id" class="mb-3 p-3 border rounded lobby-mod-card" :class="mod.id === gameState.activeModuleId ? 'active' : ''">
+                  <div v-if="modulesLoading" class="empty-state">
+                      <coc-icon name="storage" :size="36" class="empty-state-icon empty-state-pulse"></coc-icon>
+                      <div class="empty-state-title">正在加载模组…</div>
+                  </div>
+
+                  <div v-else-if="modules.length === 0" class="empty-state">
+                      <coc-icon name="storage" :size="40" class="empty-state-icon"></coc-icon>
+                      <div class="empty-state-title">尚无模组</div>
+                      <div class="empty-state-hint">在下方创建你的第一个调查模组</div>
+                  </div>
+
+                  <div v-for="mod in modules" :key="mod.id" class="mb-3 p-3 border rounded lobby-mod-card coc-panel-card" :class="mod.id === gameState.activeModuleId ? 'active' : ''">
                       <!-- 重命名输入态 -->
                       <div v-if="editingModId === mod.id" class="d-flex gap-2 mb-1">
                           <input class="form-control form-control-sm bg-dark text-light border-secondary flex-grow-1" v-model="editingModName" @keyup.enter="confirmRename(mod.id)" placeholder="模组名称">
@@ -270,7 +281,12 @@ export const ViewLobby = {
               <div v-if="gameState.currentScreen === 'settings'" class="card card-custom p-3 shadow-sm settings-panel">
                   <h3 class="coc-section-title mb-3">AI 引擎设置</h3>
                   <div class="mb-3"><label class="form-label">接口地址</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl"></div>
-                  <div class="mb-3"><label class="form-label">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey"></div>
+                  <div class="mb-3"><label class="form-label">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey" placeholder="DeepSeek / OpenAI 兼容密钥"></div>
+                  <div v-if="!(gameState.aiSettings.apiKey || '').trim()" class="empty-state empty-state-compact empty-state-inline mb-3">
+                      <coc-icon name="settings" :size="28" class="empty-state-icon"></coc-icon>
+                      <div class="empty-state-title">未配置 API 密钥</div>
+                      <div class="empty-state-hint">联网 AI 守秘人需要密钥；本地剧本模式无需配置</div>
+                  </div>
                   <div class="mb-3"><label class="form-label">模型名称</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model"></div>
                   <div class="mb-3">
                       <label class="form-label">守秘人难度</label>
@@ -405,6 +421,7 @@ export const ViewLobby = {
               this.autoSave = CoCStateAccessor.getAutoSave();
               this.saveSlots = CoCStateAccessor.getSaveSlots();
               this.modules = CoCStateAccessor.getModules();
+              this.modulesLoading = false;
               CoCStateAccessor.getStorageStatus('slot1', '预估存档');
           },
           backToModules() {

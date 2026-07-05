@@ -12,12 +12,12 @@
  * 每个槽位有等级限制，高等级装备可替换低等级
  */
 window.CoCItemDB.EQUIP_SLOTS = {
-    HELMET:  { id:'helmet',  label:'头盔', icon:'🪖', desc:'头部防护', acceptTypes:['头盔','护甲'] },
-    ARMOR:   { id:'armor',   label:'护甲', icon:'🛡️', desc:'身体防护', acceptTypes:['护甲','防具'] },
-    BACKPACK:{ id:'backpack',label:'背包', icon:'🎒', desc:'携带容量', acceptTypes:['背包','工具'] },
-    PRIMARY: { id:'primary', label:'主武器', icon:'🔫', desc:'步枪/霰弹/冲锋', acceptTypes:['步枪','霰弹枪','冲锋枪','弓','弩'] },
-    SECONDARY:{ id:'secondary',label:'副武器', icon:'🔧', desc:'手枪/投掷', acceptTypes:['手枪','投掷','特殊'] },
-    MELEE:   { id:'melee',   label:'近战', icon:'⚔️', desc:'近身武器', acceptTypes:['徒手','刀具','剑','斧','棍棒','长柄','鞭','指虎','电锯','电棍','锤'] },
+    HELMET:  { id:'helmet',  label:'头盔', iconId:'helmet', desc:'头部防护', acceptTypes:['头盔','护甲'] },
+    ARMOR:   { id:'armor',   label:'护甲', iconId:'shield', desc:'身体防护', acceptTypes:['护甲','防具'] },
+    BACKPACK:{ id:'backpack',label:'背包', iconId:'inventory', desc:'携带容量', acceptTypes:['背包','工具'] },
+    PRIMARY: { id:'primary', label:'主武器', iconId:'rifle', desc:'步枪/霰弹/冲锋', acceptTypes:['步枪','霰弹枪','冲锋枪','弓','弩'] },
+    SECONDARY:{ id:'secondary',label:'副武器', iconId:'pistol', desc:'手枪/投掷', acceptTypes:['手枪','投掷','特殊'] },
+    MELEE:   { id:'melee',   label:'近战', iconId:'equip', desc:'近身武器', acceptTypes:['徒手','刀具','剑','斧','棍棒','长柄','鞭','指虎','电锯','电棍','锤'] },
 };
 
 // ═══════════════════════════════════════════════════════
@@ -59,7 +59,7 @@ window.CoCItemDB.canReplace = function(existing, newcomer) {
 // ═══════════════════════════════════════════════════════
 window.StoryEquip = {
     template: `
-        <div class="apex-equip-panel">
+        <div class="apex-equip-panel story-equip-panel">
             <!-- 装备槽 HUD -->
             <div class="apex-slots">
                 <div v-for="slot in slots" :key="slot.id" 
@@ -71,7 +71,7 @@ window.StoryEquip = {
                     @click="openSlotPicker(slot)"
                     @dragover.prevent
                     @drop="onDrop($event, slot)">
-                    <div class="slot-icon">{{ slot.icon }}</div>
+                    <div class="slot-icon"><coc-icon :name="slot.iconId" :size="22" :title="slot.label"></coc-icon></div>
                     <div class="slot-label">{{ slot.label }}</div>
                     <div v-if="getEquipped(slot)" class="slot-item">
                         <div class="slot-item-icon">{{ getEquippedTierIcon(slot) }}</div>
@@ -93,7 +93,7 @@ window.StoryEquip = {
             <div v-if="pickerSlot" class="apex-picker-overlay" @click="pickerSlot = null">
                 <div class="apex-picker" @click.stop>
                     <div class="picker-header">
-                        <span>{{ pickerSlot.icon }} {{ pickerSlot.label }}</span>
+                        <span class="d-inline-flex align-items-center gap-1"><coc-icon :name="pickerSlot.iconId" :size="16"></coc-icon> {{ pickerSlot.label }}</span>
                         <button class="btn btn-sm btn-outline-light" @click="pickerSlot = null">✕</button>
                     </div>
                     <div class="picker-body">

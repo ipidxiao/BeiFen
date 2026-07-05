@@ -65,6 +65,8 @@ if (window.CocToastLayer) app.component('coc-toast-layer', window.CocToastLayer)
 else throw new Error("找不到 Toast 组件！");
 if (window.CocConfirmDialog) app.component('coc-confirm-dialog', window.CocConfirmDialog);
 else throw new Error("找不到确认对话框组件！");
+if (window.CocIcon) app.component('coc-icon', window.CocIcon);
+else throw new Error("找不到图标组件！");
 
 app.mount('#app');
 `;
@@ -210,7 +212,7 @@ function mjsToBrowserJs(src, relPath) {
         code = code.replace(/^const SAVE_SCHEMA_VERSION = \d+;\s*/m, '');
     }
 
-    for (const name of ['StoryInv', 'StoryChat', 'StoryChar', 'StoryEquip', 'StoryDice', 'StoryCombat', 'StoryMap', 'StoryClues', 'StoryStore', 'StoryNpc', 'StoryJournal', 'StoryGrowth', 'CanvasChat', 'ViewLobby', 'ViewCreator', 'ViewStory', 'ViewDevLog', 'CocToastLayer', 'CoCScenarioTutorial', 'CoCScenarioDeepOneShadow', 'CoCScenarioCatalog', 'CoCScenarioRunner', 'CoCScenarioPdfImport', 'ChatExport']) {
+    for (const name of ['StoryInv', 'StoryChat', 'StoryChar', 'StoryEquip', 'StoryDice', 'StoryCombat', 'StoryMap', 'StoryClues', 'StoryStore', 'StoryNpc', 'StoryJournal', 'StoryGrowth', 'CanvasChat', 'ViewLobby', 'ViewCreator', 'ViewStory', 'ViewDevLog', 'CocToastLayer', 'CocIcon', 'CoCScenarioTutorial', 'CoCScenarioDeepOneShadow', 'CoCScenarioCatalog', 'CoCScenarioRunner', 'CoCScenarioPdfImport', 'ChatExport']) {
         if (code.includes(`const ${name} =`) && !code.includes(`window.${name} =`)) {
             code = code.replace(new RegExp(`^const ${name}\\s*=`, 'm'), `window.${name} =`);
         }

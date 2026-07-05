@@ -8,7 +8,7 @@
 window.StoryMap = {
       data() { return { selectedRoom: null, mapTab: 'scene' }; },
       template: `
-          <div style="width:100%; max-width:480px; background:#0a0a14; border-radius:8px; border:1px solid #2a2a4a; overflow:hidden;">
+          <div class="coc-panel-card story-map-panel">
 
               <!-- Header -->
               <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom border-secondary">
@@ -77,10 +77,10 @@ window.StoryMap = {
               </div>
 
               <!-- Empty state: no map yet -->
-              <div v-if="mapTab === 'scene' && gameState.sceneMap.rooms.length === 0" class="p-4 text-center text-muted" style="font-size:0.82rem;">
-                  <div style="font-size:2rem; opacity:0.3; margin-bottom:8px;">🗺️</div>
-                  <div>守秘人尚未绘制场景地图。</div>
-                  <div style="font-size:0.7rem; margin-top:4px; color:#444;">进入建筑/场景后，AI 会自动生成地图。</div>
+              <div v-if="mapTab === 'scene' && gameState.sceneMap.rooms.length === 0" class="empty-state p-4">
+                  <coc-icon name="eye" :size="40" class="empty-state-icon"></coc-icon>
+                  <div class="empty-state-title">地图尚未绘制</div>
+                  <div class="empty-state-hint">探索新区域后，守秘人将逐步更新场景图</div>
               </div>
 
               <!-- Locations list tab -->

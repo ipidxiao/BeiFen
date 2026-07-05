@@ -35,20 +35,20 @@ window.ViewStory = {
                       <span class="text-light">{{ gameState.londonKpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}</span>
                   </div>
                   <div class="btn-group flex-shrink-0">
-                      <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'chat' ? 'btn-warning' : 'btn-outline-secondary'" @click="activeStoryTab = 'chat'">📖 剧情</button>
-                      <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'character' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'character'">👤 人物</button>
-                      <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'inventory' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'inventory'">🎒 随身</button>
-                      <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'storage' ? 'btn-secondary' : 'btn-outline-secondary'" @click="activeStoryTab = 'storage'">📦 仓库</button>
-                      <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'journal' ? 'btn-light' : 'btn-outline-secondary'" @click="activeStoryTab = 'journal'">📋 日志</button>
-                      <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'npc' ? 'btn-primary' : 'btn-outline-secondary'" @click="activeStoryTab = 'npc'">🕵️ NPC</button>
-                        <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'growth' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'growth'">📈 成长</button>
-                        <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'clues' ? 'btn-danger' : 'btn-outline-secondary'" @click="activeStoryTab = 'clues'">🔍 线索</button>
+                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'chat' ? 'btn-warning' : 'btn-outline-secondary'" @click="activeStoryTab = 'chat'"><coc-icon name="scroll" :size="14"></coc-icon> 剧情</button>
+                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'character' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'character'"><coc-icon name="character" :size="14"></coc-icon> 人物</button>
+                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'inventory' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'inventory'"><coc-icon name="inventory" :size="14"></coc-icon> 随身</button>
+                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'storage' ? 'btn-secondary' : 'btn-outline-secondary'" @click="activeStoryTab = 'storage'"><coc-icon name="storage" :size="14"></coc-icon> 仓库</button>
+                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'journal' ? 'btn-light' : 'btn-outline-secondary'" @click="activeStoryTab = 'journal'"><coc-icon name="journal" :size="14"></coc-icon> 日志</button>
+                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'npc' ? 'btn-primary' : 'btn-outline-secondary'" @click="activeStoryTab = 'npc'"><coc-icon name="npc" :size="14"></coc-icon> NPC</button>
+                        <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'growth' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'growth'"><coc-icon name="growth" :size="14"></coc-icon> 成长</button>
+                        <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'clues' ? 'btn-danger' : 'btn-outline-secondary'" @click="activeStoryTab = 'clues'"><coc-icon name="clues" :size="14"></coc-icon> 线索</button>
                   </div>
                   <button class="btn btn-sm btn-outline-light fw-bold flex-shrink-0" style="padding:4px 6px; margin-left:auto;" @click="copyChat" title="复制全部对话">📋</button>
                   <button class="btn btn-sm btn-outline-light fw-bold flex-shrink-0" style="padding:4px 6px;" @click="exportChat" title="导出对话文本">📥</button>
-                  <button class="btn btn-sm btn-outline-info fw-bold flex-shrink-0" style="padding:4px 8px;" @click="switchScreen('settings')" title="AI引擎设置">⚙️</button>
-                  <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'equip' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'equip'">⚔️ 装备</button>
-                  <button class="btn btn-sm btn-outline-secondary fw-bold flex-shrink-0" style="padding:4px 8px;" @click="showModal('dice')" title="骰子台">🎲</button>
+                  <button class="btn btn-sm btn-outline-info fw-bold flex-shrink-0 d-inline-flex align-items-center gap-1" style="padding:4px 8px;" @click="switchScreen('settings')" title="AI引擎设置"><coc-icon name="settings" :size="14"></coc-icon></button>
+                  <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'equip' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'equip'"><coc-icon name="equip" :size="14"></coc-icon> 装备</button>
+                  <button class="btn btn-sm btn-outline-secondary fw-bold flex-shrink-0 d-inline-flex align-items-center" style="padding:4px 8px;" @click="showModal('dice')" title="骰子台"><coc-icon name="dice" :size="16"></coc-icon></button>
                     <button class="btn btn-sm btn-outline-warning fw-bold flex-shrink-0" style="padding: 4px 8px;" @click="openSaveModal()" title="存档管理">💾</button>
               </div>
 

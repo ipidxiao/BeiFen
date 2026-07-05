@@ -11,13 +11,17 @@
  * AI API calls (DeepSeek/OpenAI) are not intercepted — they require network.
  */
 
-const CACHE_NAME = 'coc-engine-v18.1.0-caeabb6d';
+const CACHE_NAME = 'coc-engine-v18.1.0-5da87fb0';
 
 const ASSETS = [
     '/',
     '/index.html',
     '/manifest.json',
     '/favicon.svg',
+    '/css/icons.svg',
+    '/icons/icon-192.png',
+    '/icons/icon-512.png',
+    '/icons/icon-512-maskable.png',
     '/sw.js',
     '/css/style.css',
     '/vendor/vue.global.prod.js',
@@ -109,6 +113,7 @@ const ASSETS = [
     '/js/scenario/runner.js',
     '/js/components/combat_ui_helpers.js',
     '/js/components/chat_format_helpers.js',
+    '/js/components/icon_sprite.js',
     '/js/components/story_chat.js',
     '/js/components/story_char.js',
     '/js/components/story_inv.js',
