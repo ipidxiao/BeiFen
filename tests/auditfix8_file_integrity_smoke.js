@@ -58,4 +58,9 @@ const packagedZips = fs.readdirSync(root, { recursive: true }).filter(f => Strin
 const nonReleaseZips = packagedZips.filter(f => !f.startsWith('CoC_Engine_'));
 assert.deepStrictEqual(nonReleaseZips, [], 'release package does not contain nested zip archives');
 
+
+const ciSmoke = path.join(root, 'scripts', 'ci_smoke.mjs');
+assert(fs.existsSync(ciSmoke), 'scripts/ci_smoke.mjs exists');
+const { execSync } = require('child_process');
+execSync(`"${process.execPath}" "${ciSmoke}" --self-check`, { cwd: root, encoding: 'utf8' });
 console.log('AUDITFIX8 file integrity smoke tests passed');

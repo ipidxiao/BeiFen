@@ -1,4 +1,4 @@
-﻿# 🌑 CoC 7th Engine — V18.1
+# 🌑 CoC 7th Engine — V18.1
 
 > 克苏鲁的呼唤第七版 TRPG 纯前端引擎  
 > 版本: **18.1.0**（以 `package.json` 为准）· Service Worker 缓存名 `coc-engine-v18.1.0-<hash>`（以 `sw.js` / `getCacheName()` 为准，含内容哈希）  
@@ -21,6 +21,14 @@
 | AI 工具 | 35 | `js/tools/definitions.mjs` 工具目录 + 9 Handler 模块 |
 | 组件 | 15 | `js/components/*.mjs` Vue 面板（不含 3 个 UI helper） |
 | 资产 | 7 | favicon/SVG 精灵/Web Audio SFX/Canvas/PWA 等（动态统计） |
+
+
+## Windows / CI 故障排查
+
+- **Agent 或 PowerShell 报「no exit status」**：优先用 Node 直连：`node tests/run_all_smoke.js`、`node scripts/ci_smoke.mjs`（避免嵌套 `npm` 子进程）。
+- **Windows 包装脚本**（显式退出码）：`powershell -File scripts/run_tests.ps1`、`scripts\\run_tests.cmd`、`powershell -File scripts/ci_smoke.ps1`。
+- **PowerShell 链式命令**：用 `;` 分隔，不要用 `&&`（旧版 PS 不支持）。
+- **自检**：`node scripts/ci_smoke.mjs --self-check` 仅验证 CI 入口可调用，不跑完整套件。
 
 ## 🚀 快速开始
 
