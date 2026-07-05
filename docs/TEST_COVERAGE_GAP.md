@@ -79,6 +79,16 @@
 7. `normalizeToolValue` — string/number/array/object 各类型边界
 8. `fetchWithTimeout` — AbortController mock 超时场景
 
+## 五、已补充（2026-07-05 可选增强 backlog）
+
+| 套件 | 路径 | 覆盖 |
+|------|------|------|
+| 存档 fixture 迁移 | `tests/save_migration_smoke.js` + `tests/fixtures/saves/v1–v7` | migrateSaveData / loadGame 全版本 |
+| 大厅→战斗→存读 flow | `tests/flow_lobby_combat_smoke.js` | enterModule → start_combat → save → load（Node VM） |
+| UI 纯函数 | `tests/ui/component_helpers_smoke.mjs` | combat_ui_helpers + chat_format_helpers |
+
+运行：`npm test` 或单独 `npm run test:e2e`。
+
 ## 四、工具建议
 
 ```

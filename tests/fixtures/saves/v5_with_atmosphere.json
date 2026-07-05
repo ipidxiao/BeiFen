@@ -1,0 +1,42 @@
+{
+  "version": 5,
+  "savedAt": "2020-05-01T00:00:00.000Z",
+  "slotName": "v5 atmosphere fixture",
+  "location": "阁楼",
+  "charNames": "Alice",
+  "data": {
+    "roster": [
+      {
+        "name": "Alice",
+        "isActive": true,
+        "hp": 10,
+        "sanity": 50,
+        "attrs": { "DEX": 60, "CON": 50, "SIZ": 50, "POW": 50 },
+        "derived": { "hp": 10, "maxHp": 10, "db": "0" },
+        "equipment": {},
+        "skillAllocations": { "侦查": 60 }
+      }
+    ],
+    "inventory": [],
+    "storage": [],
+    "currentLocation": "阁楼",
+    "knownLocations": ["阁楼"],
+    "chatHistory": [],
+    "journalLog": [],
+    "npcRegistry": [],
+    "combat": {
+      "active": false,
+      "round": 1,
+      "enemies": [],
+      "initiativeOrder": [],
+      "currentTurnIdx": 0,
+      "location": "",
+      "notes": ""
+    },
+    "sceneMap": { "title": "", "rooms": [], "currentRoomId": null },
+    "clueBoard": { "clues": [], "links": [] },
+    "diceHistory": [{ "notation": "1d6", "total": 4 }],
+    "atmosphere": { "level": "tense", "note": "寒冷" },
+    "selectedCharIndex": 0
+  }
+}

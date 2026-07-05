@@ -3,8 +3,10 @@
   "version": "18.1.0",
   "scripts": {
     "test": "node tests/run_all_smoke.js",
+    "test:e2e": "node tests/flow_lobby_combat_smoke.js",
     "test:deep": "node tests/deep_verify.mjs",
     "test:gap": "node tests/coverage_gap_smoke.js",
+    "stats:readme": "node scripts/generate_readme_stats.mjs",
     "merge": "python merge.py",
     "merge:dry": "python merge.py --dry-run",
     "merge:report": "python merge.py --conflict-report",

@@ -1,0 +1,43 @@
+{
+  "version": 2,
+  "savedAt": "2020-02-01T00:00:00.000Z",
+  "slotName": "v2 kpEngine fixture",
+  "location": "书房",
+  "charNames": "Alice",
+  "data": {
+    "roster": [
+      {
+        "name": "Alice",
+        "isActive": true,
+        "hp": 10,
+        "sanity": 50,
+        "attrs": { "DEX": 60, "CON": 50, "SIZ": 50, "POW": 50 },
+        "derived": { "hp": 10, "maxHp": 10, "db": "0" },
+        "equipment": {},
+        "skillAllocations": { "侦查": 60 }
+      }
+    ],
+    "inventory": ["煤油灯"],
+    "storage": [],
+    "currentLocation": "书房",
+    "knownLocations": ["书房", "楼梯"],
+    "chatHistory": [],
+    "journalLog": [{ "type": "fixture", "summary": "v2 with kpEngine enabled" }],
+    "npcRegistry": [],
+    "combat": {
+      "active": false,
+      "round": 1,
+      "enemies": [],
+      "initiativeOrder": [],
+      "currentTurnIdx": 0,
+      "location": "",
+      "notes": ""
+    },
+    "kpEngine": {
+      "enabled": true,
+      "systemName": "COC_LONDON_KP_ENGINE_V2",
+      "global": { "attention": 1, "playerPower": 0, "phase": "CALM", "doomClock": 0 }
+    },
+    "selectedCharIndex": 0
+  }
+}

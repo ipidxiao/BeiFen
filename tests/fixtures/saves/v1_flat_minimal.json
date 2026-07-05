@@ -1,0 +1,30 @@
+{
+  "roster": [
+    {
+      "name": "Alice",
+      "isActive": true,
+      "hp": 10,
+      "sanity": 50,
+      "attrs": { "DEX": 60, "CON": 50, "SIZ": 50, "POW": 50 },
+      "derived": { "hp": 10, "maxHp": 10, "db": "0" },
+      "equipment": {},
+      "skillAllocations": { "侦查": 60 }
+    }
+  ],
+  "inventory": ["旧钥匙"],
+  "storage": [],
+  "currentLocation": "地下室",
+  "knownLocations": ["地下室"],
+  "chatHistory": [],
+  "journalLog": [{ "type": "fixture", "summary": "v1 flat minimal — no kpEngine" }],
+  "combat": {
+    "active": false,
+    "round": 1,
+    "enemies": [],
+    "initiativeOrder": [],
+    "currentTurnIdx": 0,
+    "location": "",
+    "notes": ""
+  },
+  "selectedCharIndex": 0
+}

@@ -1,0 +1,50 @@
+{
+  "version": 3,
+  "savedAt": "2020-03-01T00:00:00.000Z",
+  "slotName": "v3 sceneMap fixture",
+  "location": "大厅",
+  "charNames": "Alice",
+  "data": {
+    "roster": [
+      {
+        "name": "Alice",
+        "isActive": true,
+        "hp": 10,
+        "sanity": 50,
+        "attrs": { "DEX": 60, "CON": 50, "SIZ": 50, "POW": 50 },
+        "derived": { "hp": 10, "maxHp": 10, "db": "0" },
+        "equipment": {},
+        "skillAllocations": { "侦查": 60 }
+      }
+    ],
+    "inventory": ["地图碎片"],
+    "storage": ["储物箱"],
+    "currentLocation": "大厅",
+    "knownLocations": ["大厅", "书房"],
+    "chatHistory": [],
+    "journalLog": [{ "type": "fixture", "summary": "v3 with sceneMap / scene paths" }],
+    "npcRegistry": [{ "name": "老管家", "status": "alive", "relation": "可疑", "notes": [] }],
+    "combat": {
+      "active": false,
+      "round": 1,
+      "enemies": [],
+      "initiativeOrder": [],
+      "currentTurnIdx": 0,
+      "location": "",
+      "notes": ""
+    },
+    "sceneMap": {
+      "title": "老宅",
+      "rooms": [
+        { "id": "r1", "name": "大厅", "x": 1, "y": 1 },
+        { "id": "r2", "name": "书房", "x": 2, "y": 1 }
+      ],
+      "currentRoomId": "r1"
+    },
+    "kpEngine": {
+      "enabled": false,
+      "scenePaths": [{ "from": "r1", "to": "r2", "label": "走廊" }]
+    },
+    "selectedCharIndex": 0
+  }
+}

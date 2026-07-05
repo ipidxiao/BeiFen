@@ -4,6 +4,8 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+import { toastTitle as toastTitleHelper } from './chat_format_helpers.mjs';
+
 export const CocToastLayer = {
     props: ['toasts'],
     template: `
@@ -16,7 +18,7 @@ export const CocToastLayer = {
     `,
     methods: {
         toastTitle(type) {
-            return ({ success: '成功', warning: '注意', danger: '错误', info: '提示' }[type]) || '提示';
+            return toastTitleHelper(type);
         }
     }
 };

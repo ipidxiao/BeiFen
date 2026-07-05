@@ -5,6 +5,7 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+
 window.StoryCombat = {
       data() { return { expandInitiative: false }; },
       template: `
@@ -111,18 +112,18 @@ window.StoryCombat = {
       computed: {
           activeChars() { return this.gameState.roster.filter(c => c.isActive); },
           activeOrder() {
-              return this.gameState.combat.initiativeOrder.filter(t => {
-                  if (t.isEnemy) { const e = this.gameState.combat.enemies.find(en => en.id === t.id); return e && !e.isDefeated; }
-                  return this.gameState.roster.find(c => c.name === t.name && c.isActive && c.hp > 0);
-              });
+              return filterActiveInitiativeOrder(
+                  this.gameState.combat.initiativeOrder,
+                  this.gameState.combat.enemies,
+                  this.gameState.roster
+              );
           },
-          activeTurnIdx() { return this.gameState.combat.currentTurnIdx % Math.max(1, this.activeOrder.length); },
+          activeTurnIdx() { return computeActiveTurnIdx(this.gameState.combat.currentTurnIdx, this.activeOrder.length); },
           currentTurn() { return this.activeOrder[this.activeTurnIdx] || null; },
           currentTurnName() { return this.currentTurn ? this.currentTurn.name : '—'; },
           currentTurnIsEnemy() { return this.currentTurn ? this.currentTurn.isEnemy : false; },
           firstWoundedChar() {
-              const c = this.gameState.roster.find(r => r.isActive && r.hp < (r.derived?.hp || 10));
-              return c ? c.name : (this.activeChars[0]?.name || '队友');
+              return resolveFirstWoundedChar(this.gameState.roster, this.activeChars);
           }
       },
       methods: {

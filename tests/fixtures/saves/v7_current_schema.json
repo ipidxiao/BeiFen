@@ -1,0 +1,71 @@
+{
+  "version": 7,
+  "savedAt": "2026-07-05T00:00:00.000Z",
+  "slotName": "v7 current schema",
+  "location": "伦敦·白教堂",
+  "moduleId": "default",
+  "charNames": "Alice",
+  "data": {
+    "roster": [
+      {
+        "name": "Alice",
+        "isActive": true,
+        "hp": 8,
+        "sanity": 45,
+        "attrs": { "DEX": 60, "CON": 50, "SIZ": 50, "POW": 50 },
+        "derived": { "hp": 10, "maxHp": 10, "db": "0" },
+        "equipment": { "weapon": "左轮手枪 [弹药:2]" },
+        "skillAllocations": { "侦查": 60, "手枪": 90 }
+      }
+    ],
+    "inventory": ["黄铜钥匙"],
+    "storage": ["煤油灯"],
+    "currentLocation": "伦敦·白教堂",
+    "knownLocations": ["伦敦·白教堂", "地下通道"],
+    "chatHistory": [],
+    "journalLog": [{ "type": "fixture", "summary": "v7 full schema with active combat" }],
+    "npcRegistry": [{ "name": "线人", "status": "alive", "relation": "友好", "notes": ["可靠"] }],
+    "combat": {
+      "active": true,
+      "round": 2,
+      "enemies": [{ "id": "enemy_ghoul", "name": "Ghoul", "hp": 8, "maxHp": 12, "armor": 2, "isEnemy": true }],
+      "initiativeOrder": [
+        { "id": "enemy_ghoul", "name": "Ghoul", "initiative": 44, "isEnemy": true },
+        { "id": "Alice", "name": "Alice", "initiative": 35, "isEnemy": false }
+      ],
+      "currentTurnIdx": 0,
+      "location": "地下通道",
+      "notes": "fixture combat"
+    },
+    "sceneMap": {
+      "title": "白教堂",
+      "rooms": [{ "id": "alley", "name": "暗巷", "x": 0, "y": 0 }],
+      "currentRoomId": "alley"
+    },
+    "clueBoard": { "clues": [], "links": [] },
+    "diceHistory": [{ "notation": "1d100", "total": 42 }],
+    "atmosphere": { "level": "tense", "note": "雾浓" },
+    "scenarioRunner": {
+      "active": false,
+      "scenarioId": null,
+      "scenarioTitle": "",
+      "currentNodeId": null,
+      "choices": [],
+      "ended": false,
+      "flags": {},
+      "pendingBranch": null
+    },
+    "activeCampaign": null,
+    "campaignArchive": null,
+    "londonKpState": null,
+    "kpEngine": {
+      "enabled": true,
+      "systemName": "COC_LONDON_KP_ENGINE_V2",
+      "global": { "attention": 2, "playerPower": 1, "phase": "TENSE", "doomClock": 1 },
+      "scenePaths": [{ "from": "alley", "to": "tunnel", "label": "下水道" }],
+      "keyClueBlockedAttempts": 0
+    },
+    "selectedCharIndex": 0,
+    "contextMeta": { "runtimeChatMessages": 0, "savedChatMessages": 0 }
+  }
+}

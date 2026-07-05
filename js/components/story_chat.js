@@ -1,4 +1,5 @@
 // GENERATED from js/components/story_chat.mjs — do not edit; run: npm run build:js
+
 window.StoryChat = {
     data() {
         return {
@@ -137,16 +138,7 @@ window.StoryChat = {
             }
         },
         formatChatContent(msg) {
-            if (!msg) return '';
-            if (msg.statusAlert && msg.statusAlert.kind === 'hp_damage') {
-                const sa = msg.statusAlert;
-                const lines = [`🩸 ${sa.name} 失去 ${sa.dmg} 点生命（${sa.hp}/${sa.maxHp}）`];
-                if (Array.isArray(sa.lines)) lines.push(...sa.lines);
-                if (sa.majorWound && sa.majorWound.droppedWeapon) lines.push(`🔻 武器掉落：${sa.majorWound.droppedWeapon}`);
-                if (sa.majorWound && sa.majorWound.bleeding) lines.push('🩸 内出血！需立即急救。');
-                return lines.filter(Boolean).join('\n');
-            }
-            return msg.content || '';
+            return formatChatContentHelper(msg);
         }
     },
     mounted() {

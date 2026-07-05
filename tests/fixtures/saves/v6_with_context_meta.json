@@ -1,0 +1,43 @@
+{
+  "version": 6,
+  "savedAt": "2020-06-01T00:00:00.000Z",
+  "slotName": "v6 contextMeta fixture",
+  "location": "档案室",
+  "charNames": "Alice",
+  "data": {
+    "roster": [
+      {
+        "name": "Alice",
+        "isActive": true,
+        "hp": 10,
+        "sanity": 50,
+        "attrs": { "DEX": 60, "CON": 50, "SIZ": 50, "POW": 50 },
+        "derived": { "hp": 10, "maxHp": 10, "db": "0" },
+        "equipment": {},
+        "skillAllocations": { "侦查": 60 }
+      }
+    ],
+    "inventory": [],
+    "storage": [],
+    "currentLocation": "档案室",
+    "knownLocations": ["档案室"],
+    "chatHistory": [{ "role": "user", "content": "我检查书架。" }],
+    "journalLog": [],
+    "npcRegistry": [],
+    "combat": {
+      "active": false,
+      "round": 1,
+      "enemies": [],
+      "initiativeOrder": [],
+      "currentTurnIdx": 0,
+      "location": "",
+      "notes": ""
+    },
+    "sceneMap": { "title": "", "rooms": [], "currentRoomId": null },
+    "clueBoard": { "clues": [], "links": [] },
+    "diceHistory": [],
+    "atmosphere": { "level": "calm", "note": "" },
+    "contextMeta": { "runtimeChatMessages": 3, "savedChatMessages": 3 },
+    "selectedCharIndex": "1"
+  }
+}

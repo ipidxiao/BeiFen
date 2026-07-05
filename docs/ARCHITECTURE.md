@@ -78,6 +78,18 @@ CoC 7e combat action taxonomy (`COC_7E_COMBAT_ACTIONS` in `masks_london_kp_rules
 
 See [AUDIT3_BATCHES.md — Enforcement 诚实性](AUDIT3_BATCHES.md#enforcement-诚实性--wontfix--按设计) for audit disposition.
 
+## Testing & E2E flow smoke
+
+| Entry | Purpose |
+|-------|---------|
+| `npm test` | `tests/run_all_smoke.js` — all VM/ESM smoke suites |
+| `npm run test:e2e` | `tests/flow_lobby_combat_smoke.js` — lobby → enterModule → start_combat → save → load (Node VM, no Playwright) |
+| `tests/save_migration_smoke.js` | v1–v7 JSON fixtures under `tests/fixtures/saves/` |
+| `tests/ui/component_helpers_smoke.mjs` | Pure UI helpers (combat quick actions, toast/chat formatters) |
+| `npm run stats:readme` | Regenerate README package stats |
+
+See [TEST_COVERAGE_GAP.md](TEST_COVERAGE_GAP.md) and [GIT_WORKFLOW.md](GIT_WORKFLOW.md).
+
 ## KP enforcement inventory (engine-enforced)
 
 | Rule | Module | KP required? | Notes |

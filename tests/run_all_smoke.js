@@ -60,11 +60,14 @@ const SUITES = [
     'auditfix6_smoke.js',
     'coverage_gap_smoke.js',
     'test_v18_engines.mjs',
+    'ui/component_helpers_smoke.mjs',
   ]},
 
   // Phase 3 — 重构验证（迁移 + Handler + 浏览器模拟）
   { phase: 'Phase 3: 重构验证', tests: [
     'auditfix7_migration_smoke.js',
+    'save_migration_smoke.js',
+    'flow_lobby_combat_smoke.js',
     'auditfix7_handler_smoke.js',
     'auditfix7_browser_smoke.js',
   ]},
