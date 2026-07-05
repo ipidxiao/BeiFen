@@ -1,0 +1,161 @@
+{
+  "id": "cc_lighthouse_log",
+  "title": "灯塔日志",
+  "subtitle": "风暴角最后一条摩尔斯信号",
+  "author": "CoC Engine Community",
+  "license": "CC-BY 4.0",
+  "tags": ["海岸", "1920s", "灯塔", "社区模组"],
+  "description": "风暴角灯塔守塔人失踪三周。海岸警卫队委托你调查最后一本航海日志——其中记录着向深海闪烁的磷绿信号与守塔人逐渐透明的身体。改编自公共海事恐怖传统。",
+  "era": "1920s",
+  "estimatedMinutes": 30,
+  "startNode": "dock",
+  "initialLocation": "风暴角·码头",
+  "setup": {
+    "location": "风暴角·码头",
+    "atmosphere": { "level": "calm", "note": "铅灰色海面" },
+    "map": {
+      "title": "风暴角灯塔",
+      "rooms": [
+        { "id": "dock", "name": "码头", "connections": ["path"] },
+        { "id": "path", "name": "悬崖小径", "connections": ["dock", "base"] },
+        { "id": "base", "name": "灯塔基座", "connections": ["path", "stairs"] },
+        { "id": "stairs", "name": "螺旋楼梯", "connections": ["base", "lamp"] },
+        { "id": "lamp", "name": "灯室", "connections": ["stairs", "quarters"] },
+        { "id": "quarters", "name": "守塔人宿舍", "connections": ["lamp"] }
+      ],
+      "currentRoomId": "dock"
+    },
+    "journal": "调查风暴角灯塔守塔人失踪案，找回航海日志。"
+  },
+  "nodes": {
+    "dock": {
+      "narrative": "小渔船靠岸。风暴角灯塔在悬崖顶端沉默矗立——灯室无光亮，但海平线偶尔闪过磷绿色的短促光点，节奏像摩尔斯电码：三长两短。",
+      "choices": [
+        { "id": "path", "label": "沿悬崖小径上行", "next": "path" },
+        { "id": "signal", "label": "用望远镜解读海上光点", "next": "signal_check", "skillCheck": { "skill": "侦查" } }
+      ]
+    },
+    "signal_check": {
+      "narrative": "光点闪烁频率固定……",
+      "branch": { "success": "signal_ok", "failure": "path" }
+    },
+    "signal_ok": {
+      "narrative": "你破译出重复信息：「不要应答——它在听。」笔迹风格与守塔人日志一致。",
+      "effects": {
+        "clues": [{ "id": "cll_morse", "title": "海上摩尔斯", "content": "重复警告：不要应答，它在听。", "type": "signal" }],
+        "journal": "海上信号警告勿应答。"
+      },
+      "choices": [{ "id": "up", "label": "前往灯塔", "next": "path" }]
+    },
+    "path": {
+      "narrative": "悬崖小径湿滑。岩缝中嵌着守塔人的帽子——内侧标签写着「第三夜起，我不再投下影子」。",
+      "effects": {
+        "location": "悬崖小径",
+        "mapRoom": "path",
+        "clues": [{ "id": "cll_hat", "title": "守塔人帽子", "content": "第三夜起不再投下影子。", "type": "physical" }]
+      },
+      "choices": [
+        { "id": "base", "label": "进入灯塔基座", "next": "base" },
+        { "id": "cliff", "label": "检查悬崖下方", "next": "cliff_check", "skillCheck": { "skill": "攀爬" } }
+      ]
+    },
+    "cliff_check": {
+      "narrative": "岩壁下有被冲上岸的航海日志残页。",
+      "branch": { "success": "cliff_ok", "failure": "base" }
+    },
+    "cliff_ok": {
+      "narrative": "残页记载：「透镜不再折射光，而是折射记忆。深海用摩尔斯召唤守塔人。」",
+      "effects": { "clues": [{ "id": "cll_log_page", "title": "日志残页", "content": "透镜折射记忆；深海用摩尔斯召唤。", "type": "document" }] },
+      "choices": [{ "id": "b", "label": "进入灯塔", "next": "base" }]
+    },
+    "base": {
+      "narrative": "基座门未锁。内部弥漫着海水咸腥与机油味。墙上日历停在守塔人失踪那天，每一天都被圈出并标注「更近了」。",
+      "effects": { "location": "灯塔基座", "mapRoom": "base" },
+      "choices": [
+        { "id": "stairs", "label": "上螺旋楼梯", "next": "stairs" },
+        { "id": "supplies", "label": "搜查补给室", "next": "supplies" }
+      ]
+    },
+    "supplies": {
+      "narrative": "补给室堆满空煤油桶。角落有守塔人未寄出的信：「若你读到这封信，切勿在灯室应答摩尔斯。应答者将成为新信号源。」",
+      "effects": {
+        "clues": [{ "id": "cll_letter", "title": "未寄出的信", "content": "切勿在灯室应答摩尔斯。", "type": "document" }],
+        "journal": "应答摩尔斯将成为新信号源。"
+      },
+      "choices": [{ "id": "st", "label": "上楼梯", "next": "stairs" }]
+    },
+    "stairs": {
+      "narrative": "螺旋楼梯每上一级，墙上的影子就淡一分。到半途时你已看不见自己的影子——只有脚步声在金属台阶上回响。",
+      "effects": { "location": "螺旋楼梯", "mapRoom": "stairs", "san": 1 },
+      "choices": [
+        { "id": "lamp", "label": "继续上到灯室", "next": "lamp" },
+        { "id": "quarters", "label": "拐进守塔人宿舍", "next": "quarters" }
+      ]
+    },
+    "quarters": {
+      "narrative": "宿舍整洁如从未住人。桌上摊开完整航海日志，最后几页字迹越来越透明，最终只剩压痕。末页写着：「它来了。我应答了。」",
+      "effects": {
+        "location": "守塔人宿舍",
+        "mapRoom": "quarters",
+        "clues": [{ "id": "cll_full_log", "title": "完整航海日志", "content": "守塔人应答了深海摩尔斯信号。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "lamp2", "label": "带日志上灯室", "next": "lamp" },
+        { "id": "hide", "label": "在宿舍等到天亮", "next": "ending_dawn" }
+      ]
+    },
+    "lamp": {
+      "narrative": "灯室透镜布满裂纹，内部有液体缓慢流动——不是水，是压缩的月光。守塔人背对你站在窗前，身体半透明，向大海有节奏地举手，像在发送摩尔斯。",
+      "effects": { "location": "灯室", "mapRoom": "lamp", "san": 2, "atmosphere": { "level": "dread", "note": "磷绿透镜" } },
+      "choices": [
+        { "id": "talk", "label": "呼唤守塔人", "next": "talk_check", "skillCheck": { "skill": "说服" } },
+        { "id": "lens", "label": "破坏透镜", "next": "lens_check", "skillCheck": { "skill": "力量" } },
+        { "id": "respond", "label": "用灯光应答海上信号", "next": "ending_respond" }
+      ]
+    },
+    "talk_check": {
+      "narrative": "守塔人缓缓转身……",
+      "branch": { "success": "talk_ok", "failure": "talk_fail" }
+    },
+    "talk_ok": {
+      "narrative": "守塔人嘴唇蠕动，发出嘶哑声音：「打碎透镜……在我完全消失之前……」他的身体正在变得完全透明。",
+      "effects": { "journal": "守塔人请求打碎透镜。" },
+      "choices": [{ "id": "break", "label": "破坏透镜", "next": "lens_check", "skillCheck": { "skill": "力量" } }]
+    },
+    "talk_fail": {
+      "narrative": "守塔人没有回应，只是继续向海发送信号。透镜光芒 intensify。",
+      "choices": [
+        { "id": "br", "label": "强行破坏透镜", "next": "lens_check", "skillCheck": { "skill": "力量" } },
+        { "id": "flee", "label": "逃离灯塔", "next": "ending_flee" }
+      ]
+    },
+    "lens_check": {
+      "narrative": "你举起工具砸向裂纹透镜。",
+      "branch": { "success": "ending_win", "failure": "ending_wounded" }
+    },
+    "ending_win": {
+      "narrative": "透镜碎裂，液体倾泻后蒸发为盐雾。守塔人倒下，恢复人类外形——早已死亡多时。风暴角灯塔永久熄灭，海岸再未收到三长两短。\n\n【结局：信号终止】",
+      "effects": { "journal": "摧毁透镜，终止深海信号。" },
+      "end": true
+    },
+    "ending_wounded": {
+      "narrative": "你只打碎一角。海水幻影涌入灯室——溺毙前被渔船救起，但每个夜晚耳膜里仍有摩尔斯敲击。\n\n【结局：生还·诅咒信号】",
+      "effects": { "san": 5 },
+      "end": true
+    },
+    "ending_respond": {
+      "narrative": "你应答的瞬间，守塔人微笑——意识被拖入深海水影。补给船找到的空灯室里，多了一具穿你衣服的半透明躯体。\n\n【结局：成为新信号源】",
+      "effects": { "san": 10 },
+      "end": true
+    },
+    "ending_flee": {
+      "narrative": "你锁上灯室门乘小船逃离。回望时灯塔重新亮起——磷绿光芒向大海闪烁：三长两短。\n\n【结局：逃离·信号扩散】",
+      "end": true
+    },
+    "ending_dawn": {
+      "narrative": "你在宿舍蜷缩至黎明。晨光中守塔人消失，日志化为海水。海岸警卫队标记此案为「失踪」——但你知道信号仍在某处闪烁。\n\n【结局：幸存·真相未明】",
+      "effects": { "san": 3 },
+      "end": true
+    }
+  }
+}

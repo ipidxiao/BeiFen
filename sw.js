@@ -5,231 +5,159 @@
 // ===============================================
 
 /**
-
  * Service Worker — offline caching for CoC Engine.
-
- * 
-
+ *
  * Caches all static assets on first load, serves from cache thereafter.
-
- * Falls back to network for API calls (DeepSeek).
-
+ * AI API calls (DeepSeek/OpenAI) are not intercepted — they require network.
  */
 
-const CACHE_NAME = 'coc-engine-v18.1';
+const CACHE_NAME = 'coc-engine-v18.5';
 
 const ASSETS = [
-
     '/',
-
     '/index.html',
-
+    '/manifest.json',
+    '/favicon.svg',
+    '/sw.js',
     '/css/style.css',
-
     '/vendor/vue.global.prod.js',
-
     '/vendor/bootstrap.min.css',
-
+    '/vendor/chart.min.js',
     '/js/data/jobs.js',
-
     '/js/data/experiences.js',
-
     '/js/data/items.js',
-
-    '/js/data/items_db.js',
-
     '/js/data/dev_logs.js',
-
+    '/js/data/scenarios/tutorial.js',
+    '/js/data/scenarios/deep_one_shadow.js',
+    '/js/data/scenarios/abandoned_asylum.js',
+    '/js/data/scenarios/midnight_museum.js',
+    '/js/data/scenarios/coastal_festival.js',
+    '/js/data/scenarios/university_occult.js',
+    '/js/data/scenarios/lighthouse_signal.js',
+    '/js/data/scenarios/missing_child.js',
+    '/js/data/scenarios/train_to_nowhere.js',
+    '/js/data/scenarios/carnival_of_masks.js',
+    '/js/data/scenarios/remote_catalog.js',
+    '/js/data/scenarios/catalog.js',
+    '/js/data/scenarios/packages/isolated_lab.json',
+    '/js/data/scenarios/packages/haunted_inheritance.json',
+    '/js/data/scenarios/packages/cc_asylum_whispers.json',
+    '/js/data/scenarios/packages/cc_lighthouse_log.json',
+    '/js/data/scenarios/packages/cc_museum_night.json',
     '/js/data/skills.js',
-  '/js/data/npc_templates.js',
-  '/js/components/sanity_effects.js',
-  '/js/data/spells.js',
-  '/js/data/mythos_tomes.js',
-  '/js/components/dice_canvas.js',
-  '/js/data/injury_tables.js',
-  '/js/audio/sfx.js',
-  '/js/data/insanity_tables.js',
-  '/js/tools/handlers/mythos.js',
-
+    '/js/data/mythos_tomes.js',
+    '/js/data/spells.js',
+    '/js/data/injury_tables.js',
+    '/js/data/npc_templates.js',
+    '/js/data/insanity_tables.js',
+    '/js/data/ai_prompt_config.js',
     '/js/data/logger.js',
-
     '/js/data/utils.js',
-
     '/js/coc.js',
-
+    '/js/engines/dice.js',
+    '/js/engines/attributes.js',
+    '/js/engines/skills.js',
+    '/js/engines/combat.js',
+    '/js/engines/healing.js',
+    '/js/engines/sanity.js',
+    '/js/engines/wound.js',
+    '/js/engines/mythos.js',
+    '/js/engines/environmental.js',
+    '/js/engines/poison.js',
     '/js/core/context_manager.js',
-
     '/js/tools/definitions.js',
-
-    '/js/tools/handlers/character.js',
-
-    '/js/tools/handlers/inventory.js',
-
-    '/js/tools/handlers/dice.js',
-
-    '/js/tools/handlers/clues.js',
-
-    '/js/tools/handlers/map.js',
-
-    '/js/tools/handlers/combat.js',
-
-    '/js/tools/handlers/npc.js',
-
-    '/js/tools/handlers/system.js',
-
-    '/js/tools/handlers/index.js',
-
     '/js/state/core.js',
-
     '/js/state/ui.js',
-
     '/js/state/gameplay.js',
-
     '/js/state/persistence.js',
-
     '/js/state.js',
-
-    '/js/ai/network.js',
-
-    '/js/ai/tool_dispatch.js',
-
-    '/js/ai_logic.js',
-
+    '/js/state/accessor.js',
+    '/js/tools/handlers/character.js',
+    '/js/tools/handlers/inventory.js',
+    '/js/tools/handlers/dice.js',
+    '/js/tools/handlers/clues.js',
+    '/js/tools/handlers/map.js',
+    '/js/tools/handlers/combat.js',
+    '/js/tools/handlers/mythos.js',
+    '/js/tools/handlers/npc.js',
+    '/js/tools/handlers/system.js',
+    '/js/tools/handlers/index.js',
     '/js/components/char_creator.js',
-
+    '/js/ai/network.js',
+    '/js/ai/tool_dispatch.js',
+    '/js/ai_logic.js',
+    '/js/scenario/store.js',
+    '/js/scenario/runner.js',
     '/js/components/story_chat.js',
-
     '/js/components/story_char.js',
-
     '/js/components/story_inv.js',
-
-    '/js/components/story_store.js',
-
-    '/js/components/story_journal.js',
-
-    '/js/components/story_npc.js',
-
-    '/js/components/story_combat.js',
-
-    '/js/components/story_growth.js',
-
-    '/js/components/story_map.js',
-
-    '/js/components/story_clues.js',
-
-    '/js/components/story_dice.js',
-
     '/js/components/story_equip.js',
-
     '/js/components/canvas_chat.js',
-
+    '/js/components/story_store.js',
+    '/js/components/story_journal.js',
+    '/js/components/story_npc.js',
+    '/js/components/story_combat.js',
+    '/js/components/story_growth.js',
+    '/js/components/story_map.js',
+    '/js/components/story_clues.js',
+    '/js/audio/sfx.js',
+    '/js/components/dice_canvas.js',
+    '/js/components/story_dice.js',
     '/js/chat_export.js',
-
-    '/js/components/ui_feedback.js',
-
-    '/js/views/lobby_view.js',
-
-    '/js/views/creator_view.js',
-
     '/js/views/story_view.js',
-
     '/js/views/dev_log_view.js',
-
+    '/js/components/sanity_effects.js',
+    '/js/components/ui_feedback.js',
+    '/js/views/lobby_view.js',
+    '/js/views/creator_view.js',
     '/js/app.js',
-
 ];
 
+const SKIP_HOSTS = ['api.deepseek.com', 'openai.com', 'cdn.jsdelivr.net', 'unpkg.com'];
 
+const isSkippableRequest = (url) => SKIP_HOSTS.some((host) => url.hostname.includes(host));
 
 self.addEventListener('install', (event) => {
-
     event.waitUntil(
-
-        caches.open(CACHE_NAME).then((cache) => {
-
-            return Promise.allSettled(
-
-                ASSETS.map(url => cache.add(url).catch(() => {}))
-
-            );
-
-        })
-
+        caches.open(CACHE_NAME).then((cache) =>
+            Promise.allSettled(ASSETS.map((url) => cache.add(url).catch(() => {})))
+        )
     );
-
     self.skipWaiting();
-
 });
-
-
 
 self.addEventListener('activate', (event) => {
-
     event.waitUntil(
-
-        caches.keys().then((keys) => {
-
-            return Promise.all(
-
-                keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-
-            );
-
-        })
-
+        caches.keys().then((keys) =>
+            Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+        )
     );
-
     self.clients.claim();
-
 });
-
-
 
 self.addEventListener('fetch', (event) => {
-
-    // Skip API calls
-
-    if (event.request.url.includes('api.deepseek.com') || 
-
-        event.request.url.includes('openai.com') ||
-
-        event.request.url.includes('cdn.jsdelivr.net')) {
-
-        return;
-
-    }
-
-    
+    const url = new URL(event.request.url);
+    if (isSkippableRequest(url)) return;
+    if (url.origin !== self.location.origin) return;
 
     event.respondWith(
-
         caches.match(event.request).then((cached) => {
+            if (cached) return cached;
 
-            const fetchPromise = fetch(event.request).then((response) => {
-
-                if (response && response.status === 200 && response.type === 'basic') {
-
-                    const clone = response.clone();
-
-                    caches.open(CACHE_NAME).then((cache) => {
-
-                        cache.put(event.request, clone);
-
-                    });
-
-                }
-
-                return response;
-
-            }).catch(() => cached);
-
-            
-
-            return cached || fetchPromise;
-
+            return fetch(event.request)
+                .then((response) => {
+                    if (response && response.status === 200 && response.type === 'basic') {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('/index.html');
+                    }
+                    return caches.match(event.request);
+                });
         })
-
     );
-
 });
-

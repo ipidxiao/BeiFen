@@ -10,7 +10,6 @@
     <link rel="manifest" href="./manifest.json">
     <title>🌑 克苏鲁的呼唤 · CoC 7th 引擎 — 沉浸式 TRPG 跑团助手</title>
     <link href="./vendor/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" onerror="this.remove()">
     <script src="./vendor/vue.global.prod.js"></script>
 <script>window.Vue || document.write('<script src="https://unpkg.com/vue@3/dist/vue.global.js"><\/script>')</script>
     <script src="./vendor/chart.min.js"></script>
@@ -90,7 +89,7 @@
 <body>
 
     <div id="app" class="container-fluid p-3">
-        <view-lobby v-if="['lobby', 'settings', 'character', 'saves', 'modules'].includes(gameState?.currentScreen)"></view-lobby>
+        <view-lobby v-if="['lobby', 'settings', 'character', 'saves', 'modules', 'scenarios', 'scenario_store'].includes(gameState?.currentScreen)"></view-lobby>
         <view-creator v-if="gameState?.currentScreen === 'creator'"></view-creator>
         <view-story v-if="gameState?.currentScreen === 'story' || gameState?.activeModal"></view-story>
         <view-dev-log v-if="gameState?.currentScreen === 'devlog'"></view-dev-log>
@@ -103,6 +102,19 @@
     <script src="./js/data/items.js"></script>
     <script src="./js/data/dev_logs.js"></script>
     <script src="./js/data/skills.js"></script>
+    <script src="./js/data/scenarios/tutorial.js"></script>
+    <script src="./js/data/scenarios/deep_one_shadow.js"></script>
+    <script src="./js/data/scenarios/abandoned_asylum.js"></script>
+    <script src="./js/data/scenarios/midnight_museum.js"></script>
+    <script src="./js/data/scenarios/coastal_festival.js"></script>
+    <script src="./js/data/scenarios/university_occult.js"></script>
+    <script src="./js/data/scenarios/lighthouse_signal.js"></script>
+    <script src="./js/data/scenarios/missing_child.js"></script>
+    <script src="./js/data/scenarios/train_to_nowhere.js"></script>
+    <script src="./js/data/scenarios/carnival_of_masks.js"></script>
+    <script src="./js/data/scenarios/remote_catalog.js"></script>
+    <script src="./js/data/scenarios/catalog.js"></script>
+    <script src="./js/scenario/store.js"></script>
     
         <script src="./js/data/mythos_tomes.js"></script>
     <script src="./js/data/spells.js"></script>
@@ -147,6 +159,7 @@
     <script src="./js/ai/tool_dispatch.js"></script>
     <script src="./js/data/ai_prompt_config.js"></script>
     <script src="./js/ai_logic.js"></script>
+    <script src="./js/scenario/runner.js"></script>
     
     <script src="./js/components/story_chat.js"></script>
     <script src="./js/components/story_char.js"></script>

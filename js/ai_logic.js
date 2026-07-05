@@ -75,6 +75,15 @@ window.CoCAI = (function(State, Engine) {
                 gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '【系统警告】命运已锁定，请先点击上方巨大的按钮进行掷骰！' });
                 scrollToBottom(); return;
             }
+
+            const scenarioRunner = window.CoCScenarioRunner;
+            if (scenarioRunner && scenarioRunner.isActive && scenarioRunner.isActive()) {
+                const text = playerInput.value.trim();
+                playerInput.value = '';
+                scrollToBottom();
+                scenarioRunner.handleInput(text);
+                return;
+            }
             
             gameState.chatHistory.push({ role: 'user', content: playerInput.value.trim() });
             playerInput.value = ""; scrollToBottom(); 
@@ -149,6 +158,18 @@ window.CoCAI = (function(State, Engine) {
             CoCLog.warn('CoCToolDefinitions 未加载或为空；本轮 AI 请求将无法使用工具调用。');
         }
 
+        if (isBrowserOffline()) {
+            gameState.chatHistory.push({
+                role: 'system',
+                isLocalError: true,
+                isAlert: true,
+                content: '📴 【离线模式】AI 守秘人需要网络连接。请恢复网络后重试，或继续使用骰子、战斗、角色卡、存档等本地功能。'
+            });
+            gameState._aiBusyCount = Math.max(0, (gameState._aiBusyCount || 1) - 1);
+            gameState.isLoading = gameState._aiBusyCount > 0;
+            try { scrollToBottom(); } catch (e) {}
+            return false;
+        }
 
         const contextSource = (window.CoCContextManager && window.CoCContextManager.buildApiMessages)
             ? window.CoCContextManager.buildApiMessages(gameState.chatHistory)
@@ -394,6 +415,16 @@ window.CoCAI = (function(State, Engine) {
                 if (!c.skillsUsedThisSession.some(s => s.name === skillName)) {
                     c.skillsUsedThisSession.push({ name: skillName, currentValue: res.skillValue });
                 }
+            }
+
+            const scenarioRunner = window.CoCScenarioRunner;
+            const isScenarioCheck = msg._scenarioCheck || (scenarioRunner && scenarioRunner.isSkillCheckMessage && scenarioRunner.isSkillCheckMessage(msg));
+            if (isScenarioCheck && scenarioRunner && scenarioRunner.onSkillCheckResult) {
+                gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${res.skillValue}）。` });
+                if (msg.tool_calls.every(t => t.isResolved)) msg.isResolved = true;
+                scenarioRunner.onSkillCheckResult(res.rolledValue <= res.skillValue, skillName);
+                scrollToBottom();
+                return;
             }
             
             gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${res.skillValue}）。继续叙事，禁废话。` });

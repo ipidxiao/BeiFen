@@ -6,7 +6,7 @@
 // ===============================================
 
 export const ViewLobby = {
-      data() { return { autoSave: null, saveSlots: [], modules: [], newModName: '', editingModId: null, editingModName: '', rememberKey: false }; },
+      data() { return { autoSave: null, saveSlots: [], modules: [], newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', storeLoading: false, storeError: '' }; },
       template: `
           <div>
               <!-- ===== 模组选择界面 ===== -->
@@ -71,12 +71,113 @@ export const ViewLobby = {
                   </div>
 
                   <button class="btn btn-warning fw-bold mb-3 p-3 w-100" @click="switchScreen('character')">👥 调查员小队管理</button>
+                  <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold" @click="openScenarios">📜 本地剧本模式</button>
+                  <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold" @click="openScenarioStore">📚 模组库</button>
                   <button class="btn btn-outline-info mb-3 p-3 w-100" @click="switchScreen('settings')">⚙️ AI 引擎设置</button>
                   <div class="row g-2 mb-2">
                       <div class="col-6"><button class="btn btn-outline-secondary p-2 w-100" @click="switchScreen('saves')">💾 存档管理</button></div>
                       <div class="col-6"><button class="btn btn-outline-warning p-2 w-100" @click="backToModules">📚 切换模组</button></div>
                   </div>
                   <button class="btn btn-outline-secondary p-2 w-100" @click="switchScreen('devlog')">🛠️ 开发者日志</button>
+              </div>
+
+              <!-- ===== 本地剧本选择 ===== -->
+              <div v-if="gameState.currentScreen === 'scenarios'" class="card card-custom p-3 shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h3 class="text-warning m-0">📜 本地剧本</h3>
+                      <button class="btn btn-outline-secondary btn-sm" @click="switchScreen('lobby')">← 返回</button>
+                  </div>
+                  <div class="text-muted small mb-3">无需 AI 与网络，由内置剧本驱动剧情。首次在线加载后完全离线可玩。Chaosium 商业模组请自行取得授权后按 JSON 格式导入（见 README）。</div>
+                  <div v-for="sc in scenarios" :key="sc.id" class="mb-3 p-3 border rounded" style="border-color:#555;background:#111;">
+                      <div class="fw-bold text-warning">{{ sc.title }}</div>
+                      <div v-if="sc.subtitle" class="text-info small">{{ sc.subtitle }}</div>
+                      <div class="text-muted small mt-1">{{ sc.description }}</div>
+                      <div class="text-secondary mt-1" style="font-size:0.72rem;">{{ sc.era }} · 约 {{ sc.estimatedMinutes || '?' }} 分钟 · {{ sc.nodeCount }} 节点</div>
+                      <button class="btn btn-sm btn-warning fw-bold mt-2" @click="startLocalScenario(sc.id)">开始剧本 ▶</button>
+                  </div>
+                  <div v-if="!scenarios.length" class="text-muted text-center py-3">暂无可用剧本</div>
+              </div>
+
+              <!-- ===== 模组库 ===== -->
+              <div v-if="gameState.currentScreen === 'scenario_store'" class="card card-custom p-3 shadow-sm">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h3 class="text-warning m-0">📚 模组库</h3>
+                      <button class="btn btn-outline-secondary btn-sm" @click="switchScreen('lobby')">← 返回</button>
+                  </div>
+                  <div class="text-muted small mb-3">浏览内置与可下载模组。点击「下载到本地」后存入浏览器 IndexedDB，完全离线可玩。全部为原创免费内容，不含 Chaosium 商业模组。</div>
+                  <div v-if="storeUsesFallback" class="alert alert-warning py-2 small mb-3">⚠️ IndexedDB 不可用，已降级为 localStorage（容量有限）。</div>
+                  <div class="row g-2 mb-3">
+                      <div class="col-md-6">
+                          <input class="form-control form-control-sm bg-dark text-light border-secondary" v-model="storeSearch" placeholder="搜索标题或描述…" @input="refreshStore">
+                      </div>
+                      <div class="col-md-6">
+                          <select class="form-select form-select-sm bg-dark text-light border-secondary" v-model="storeTagFilter" @change="refreshStore">
+                              <option value="">全部标签</option>
+                              <option v-for="tag in storeAllTags" :key="tag" :value="tag">{{ tag }}</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div class="row g-3">
+                      <div class="col-lg-7">
+                          <div class="row g-2">
+                              <div v-for="item in filteredStoreItems" :key="item.id" class="col-md-6">
+                                  <div class="p-2 border rounded h-100" :class="selectedStoreId === item.id ? 'border-warning' : 'border-secondary'" style="background:#111;cursor:pointer;" @click="selectStoreItem(item.id)">
+                                      <div class="d-flex justify-content-between align-items-start gap-1">
+                                          <div class="fw-bold text-warning small">{{ item.title }}</div>
+                                          <span class="badge flex-shrink-0" :class="storeStatusBadge(item.status)">{{ storeStatusLabel(item.status) }}</span>
+                                      </div>
+                                      <div class="text-muted" style="font-size:0.7rem;">{{ item.author }} · {{ item.license }}</div>
+                                      <div class="text-secondary mt-1" style="font-size:0.72rem;line-height:1.3;">{{ (item.description || '').slice(0, 60) }}…</div>
+                                      <div class="mt-1">
+                                          <span v-for="t in (item.tags || []).slice(0, 3)" :key="t" class="badge me-1" style="background:#333;font-size:0.6rem;">{{ t }}</span>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <div v-if="!filteredStoreItems.length" class="text-muted text-center py-4">无匹配模组</div>
+                      </div>
+                      <div class="col-lg-5">
+                          <div v-if="selectedStoreItem" class="p-3 border border-secondary rounded" style="background:#0a0a0a;">
+                              <h5 class="text-warning">{{ selectedStoreItem.title }}</h5>
+                              <div v-if="selectedStoreItem.subtitle" class="text-info small">{{ selectedStoreItem.subtitle }}</div>
+                              <div class="text-muted small mt-2">{{ selectedStoreItem.description }}</div>
+                              <div class="mt-2 small">
+                                  <div><span class="text-secondary">作者：</span>{{ selectedStoreItem.author }}</div>
+                                  <div class="d-flex align-items-center gap-1 flex-wrap">
+                                      <span class="text-secondary">许可：</span>
+                                      <span class="badge bg-dark border border-secondary">{{ selectedStoreItem.license }}</span>
+                                      <a v-if="selectedStoreItem.licenseUrl" :href="selectedStoreItem.licenseUrl" target="_blank" rel="noopener noreferrer" class="badge bg-info text-dark text-decoration-none" style="font-size:0.65rem;">许可详情 ↗</a>
+                                  </div>
+                                  <div v-if="selectedStoreItem.sourceUrl">
+                                      <span class="text-secondary">来源：</span>
+                                      <a :href="selectedStoreItem.sourceUrl" target="_blank" rel="noopener noreferrer" class="text-info small">查看来源 ↗</a>
+                                  </div>
+                                  <div v-if="selectedStoreItem.source === 'remote'">
+                                      <span class="text-secondary">远程源：</span>
+                                      <span class="badge bg-secondary">同域包（离线可用）</span>
+                                  </div>
+                                  <div v-if="selectedStoreItem.status === 'downloaded' && selectedStoreItem.downloadSource">
+                                      <span class="text-secondary">下载自：</span>
+                                      <span class="badge" :class="downloadSourceBadge(selectedStoreItem.downloadSource)">{{ downloadSourceLabel(selectedStoreItem.downloadSource) }}</span>
+                                  </div>
+                                  <div><span class="text-secondary">时长：</span>约 {{ selectedStoreItem.estimatedMinutes || selectedStoreItem.playTime || '?' }} 分钟</div>
+                                  <div><span class="text-secondary">节点：</span>{{ selectedStoreItem.nodeCount || '?' }}</div>
+                              </div>
+                              <div class="mt-2">
+                                  <span v-for="t in (selectedStoreItem.tags || [])" :key="t" class="badge me-1 mb-1" style="background:#2a2a3a;">{{ t }}</span>
+                              </div>
+                              <div v-if="storeError" class="text-danger small mt-2">{{ storeError }}</div>
+                              <div class="d-flex flex-wrap gap-2 mt-3">
+                                  <button v-if="selectedStoreItem.status === 'available'" class="btn btn-sm btn-success fw-bold" :disabled="storeLoading" @click="doDownloadScenario(selectedStoreItem.id)">
+                                      {{ storeLoading ? '下载中…' : '⬇ 下载到本地' }}
+                                  </button>
+                                  <button v-if="selectedStoreItem.status === 'downloaded'" class="btn btn-sm btn-outline-danger" :disabled="storeLoading" @click="doRemoveDownload(selectedStoreItem.id)">移除下载</button>
+                                  <button v-if="selectedStoreItem.status !== 'available'" class="btn btn-sm btn-warning fw-bold" @click="startLocalScenario(selectedStoreItem.id)">开始剧本 ▶</button>
+                              </div>
+                          </div>
+                          <div v-else class="text-muted text-center py-5 border border-secondary rounded" style="background:#0a0a0a;">← 选择左侧模组查看详情</div>
+                      </div>
+                  </div>
               </div>
 
               <!-- ===== 存档管理界面 ===== -->
@@ -173,6 +274,33 @@ export const ViewLobby = {
                   const meta = safeJsonParse(localStorage.getItem('coc_module_' + id + '_meta'), {});
                   return meta.name || '未命名模组';
               } catch(e) { return ''; }
+          },
+          selectedStoreItem() {
+              if (!this.selectedStoreId) return null;
+              return this.storeItems.find((i) => i.id === this.selectedStoreId) || null;
+          },
+          storeAllTags() {
+              const tags = new Set();
+              (this.storeItems || []).forEach((i) => (i.tags || []).forEach((t) => tags.add(t)));
+              return [...tags].sort();
+          },
+          filteredStoreItems() {
+              let items = this.storeItems || [];
+              const q = (this.storeSearch || '').trim().toLowerCase();
+              if (q) {
+                  items = items.filter((i) =>
+                      (i.title || '').toLowerCase().includes(q) ||
+                      (i.description || '').toLowerCase().includes(q) ||
+                      (i.tags || []).some((t) => t.toLowerCase().includes(q))
+                  );
+              }
+              if (this.storeTagFilter) {
+                  items = items.filter((i) => (i.tags || []).includes(this.storeTagFilter));
+              }
+              return items;
+          },
+          storeUsesFallback() {
+              return window.CoCScenarioStore && window.CoCScenarioStore.usesLocalStorageFallback && window.CoCScenarioStore.usesLocalStorageFallback();
           }
       },
       setup() {
@@ -253,6 +381,112 @@ export const ViewLobby = {
                   this.modules = window.CoCState.getModules();
               }
               this.editingModId = null;
+          },
+          refreshScenariosList() {
+              const store = window.CoCScenarioStore;
+              if (store) {
+                  store.init().then(() => {
+                      if (window.CoCScenarioCatalog) window.CoCScenarioCatalog.refresh();
+                      this.scenarios = store.listCatalog().filter((i) => store.isAvailable(i.id));
+                  });
+              } else if (window.CoCScenarioCatalog) {
+                  window.CoCScenarioCatalog.refresh();
+                  this.scenarios = window.CoCScenarioCatalog.list();
+              }
+          },
+          openScenarios() {
+              this.refreshScenariosList();
+              CoCStateAccessor.switchScreen('scenarios');
+          },
+          refreshScenarioStore() {
+              this.storeError = '';
+              const store = window.CoCScenarioStore;
+              if (!store) return;
+              store.init().then(() => {
+                  if (window.CoCScenarioCatalog) window.CoCScenarioCatalog.refresh();
+                  this.refreshStore();
+              });
+          },
+          openScenarioStore() {
+              const store = window.CoCScenarioStore;
+              if (!store) {
+                  window.CoCState.showToast && window.CoCState.showToast('模组库未加载。', 'danger');
+                  return;
+              }
+              this.refreshScenarioStore();
+              CoCStateAccessor.switchScreen('scenario_store');
+          },
+          refreshStore() {
+              const store = window.CoCScenarioStore;
+              if (!store) return;
+              this.storeItems = store.listCatalog();
+              if (this.selectedStoreId && !this.storeItems.find((i) => i.id === this.selectedStoreId)) {
+                  this.selectedStoreId = null;
+              }
+          },
+          selectStoreItem(id) {
+              this.selectedStoreId = id;
+              this.storeError = '';
+          },
+          storeStatusLabel(status) {
+              return { builtin: '已内置', downloaded: '已下载', available: '可下载' }[status] || status;
+          },
+          storeStatusBadge(status) {
+              return { builtin: 'bg-warning text-dark', downloaded: 'bg-success', available: 'bg-secondary' }[status] || 'bg-secondary';
+          },
+          downloadSourceLabel(source) {
+              return { remote: '远程', mirror: '镜像', fallback: '本地包' }[source] || source;
+          },
+          downloadSourceBadge(source) {
+              return { remote: 'bg-primary', mirror: 'bg-info text-dark', fallback: 'bg-secondary' }[source] || 'bg-secondary';
+          },
+          async doDownloadScenario(id) {
+              const store = window.CoCScenarioStore;
+              if (!store) return;
+              this.storeLoading = true;
+              this.storeError = '';
+              try {
+                  await store.downloadScenario(id);
+                  this.refreshStore();
+                  window.CoCState.showToast && window.CoCState.showToast('模组已下载到本地。', 'success');
+              } catch (e) {
+                  this.storeError = String(e.message || e);
+                  window.CoCState.showToast && window.CoCState.showToast('下载失败：' + this.storeError, 'danger');
+              } finally {
+                  this.storeLoading = false;
+              }
+          },
+          async doRemoveDownload(id) {
+              const store = window.CoCScenarioStore;
+              if (!store) return;
+              const ok = await window.CoCState.confirmAction('确认从本地移除该模组？（内置模组无法移除）', { title: '移除下载', danger: true, okText: '移除' });
+              if (!ok) return;
+              this.storeLoading = true;
+              try {
+                  await store.removeDownload(id);
+                  this.refreshStore();
+                  window.CoCState.showToast && window.CoCState.showToast('已移除本地模组。', 'success');
+              } catch (e) {
+                  window.CoCState.showToast && window.CoCState.showToast('移除失败。', 'danger');
+              } finally {
+                  this.storeLoading = false;
+              }
+          },
+          startLocalScenario(scenarioId) {
+              if (window.CoCState.gameState.roster.length === 0) {
+                  window.CoCState.showToast && window.CoCState.showToast('请先创建至少一名调查员。', 'warning');
+                  this.pendingScenarioId = scenarioId;
+                  CoCStateAccessor.switchScreen('character');
+                  return;
+              }
+              const runner = window.CoCScenarioRunner;
+              if (!runner || !runner.startScenario(scenarioId)) {
+                  window.CoCState.showToast && window.CoCState.showToast('剧本加载失败。', 'danger');
+                  return;
+              }
+              this.pendingScenarioId = null;
+              CoCStateAccessor.switchScreen('story');
+              window.CoCState.scrollToBottom && window.CoCState.scrollToBottom();
           }
       },
       mounted() { this.refreshData(); },
@@ -260,6 +494,8 @@ export const ViewLobby = {
           'gameState.currentScreen'(newScreen) {
               if (newScreen === 'modules') this.modules = window.CoCState.getModules();
               if (newScreen === 'lobby') this.autoSave = window.CoCState.getAutoSave();
+              if (newScreen === 'scenarios') this.refreshScenariosList();
+              if (newScreen === 'scenario_store') this.refreshScenarioStore();
               if (newScreen === 'saves') { this.saveSlots = window.CoCState.getSaveSlots(); window.CoCState.getStorageStatus && window.CoCState.getStorageStatus('slot1', '预估存档'); }
           }
       }

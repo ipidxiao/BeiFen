@@ -10,7 +10,8 @@
     "merge:report": "python merge.py --conflict-report",
     "build": "python build.py",
     "build:js": "node scripts/build_browser.mjs",
-    "build:js:check": "node scripts/build_browser.mjs --check",
+    "build:js:check": "node scripts/build_browser.mjs --check && node scripts/verify_browser_exports.mjs",
+    "test:exports": "node scripts/verify_browser_exports.mjs",
     "serve": "python -m http.server 8080"
   },
   "devDependencies": {

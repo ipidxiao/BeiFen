@@ -69,6 +69,8 @@ const formatAiError = (err) => {
     if (Number.isFinite(err.status)) return `HTTP ${err.status}${err.statusText ? ' ' + err.statusText : ''}`;
     return err.message || String(err);
 };
+/** True when the browser reports no network connectivity. */
+const isBrowserOffline = () => typeof navigator !== 'undefined' && navigator.onLine === false;
 /**
  * Fetch AI completion with automatic retry on transient errors.
  * @param {string} url - API endpoint

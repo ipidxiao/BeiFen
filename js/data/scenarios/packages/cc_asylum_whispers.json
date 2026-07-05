@@ -1,0 +1,157 @@
+{
+  "id": "cc_asylum_whispers",
+  "title": "疗养院低语",
+  "subtitle": "石岭镇封闭病房的回声",
+  "author": "CoC Engine Community",
+  "license": "CC-BY 4.0",
+  "tags": ["精神病院", "1920s", "封闭空间", "社区模组"],
+  "description": "1923年石岭疗养院在一场不明火灾后永久关闭。你受雇清点遗留档案，却在空荡走廊里听见轮椅的吱呀声与低语。改编自公共领域恐怖叙事传统与社区跑团种子。",
+  "era": "1920s",
+  "estimatedMinutes": 28,
+  "startNode": "gate",
+  "initialLocation": "石岭疗养院·铁门",
+  "setup": {
+    "location": "石岭疗养院·铁门",
+    "atmosphere": { "level": "calm", "note": "秋雾笼罩的山腰" },
+    "map": {
+      "title": "石岭疗养院",
+      "rooms": [
+        { "id": "gate", "name": "铁门", "connections": ["lobby"] },
+        { "id": "lobby", "name": "大厅", "connections": ["gate", "ward", "basement"] },
+        { "id": "ward", "name": "病房区", "connections": ["lobby", "office"] },
+        { "id": "office", "name": "院长办公室", "connections": ["ward"] },
+        { "id": "basement", "name": "地下档案室", "connections": ["lobby", "tunnel"] },
+        { "id": "tunnel", "name": "废弃隧道", "connections": ["basement"] }
+      ],
+      "currentRoomId": "gate"
+    },
+    "journal": "委托：清点石岭疗养院关闭前的病人档案与财物。"
+  },
+  "nodes": {
+    "gate": {
+      "narrative": "生锈铁门上挂着「永久封闭」的牌子，但锁已被撬开。雾从门缝渗出，带着消毒水与焦糊味。远处山腰传来断续低语，像很多人在同时喃喃。",
+      "choices": [
+        { "id": "enter", "label": "进入大厅", "next": "lobby" },
+        { "id": "perimeter", "label": "沿外墙搜索", "next": "perimeter_check", "skillCheck": { "skill": "侦查" } }
+      ]
+    },
+    "perimeter_check": {
+      "narrative": "碎窗下发现新鲜脚印，通向侧门。",
+      "branch": { "success": "side_door", "failure": "lobby" }
+    },
+    "side_door": {
+      "narrative": "侧门虚掩。墙上有五道平行抓痕，指甲断裂残留。低语声在此格外清晰。",
+      "effects": { "clues": [{ "id": "caw_scratches", "title": "墙上抓痕", "content": "五道平行抓痕，像被拖行留下。", "type": "physical" }] },
+      "choices": [{ "id": "in", "label": "进入大厅", "next": "lobby" }]
+    },
+    "lobby": {
+      "narrative": "大厅天花板熏黑，登记台翻倒。值班日志最后一页写着：「第17号病人从未离开——他一直在墙里低语。」广播喇叭仍通电，循环播放模糊的摇篮曲。",
+      "effects": {
+        "location": "疗养院大厅",
+        "mapRoom": "lobby",
+        "clues": [{ "id": "caw_log", "title": "值班日志", "content": "第17号病人从未离开，一直在墙里低语。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "ward", "label": "前往病房区", "next": "ward" },
+        { "id": "basement", "label": "下地下档案室", "next": "basement" },
+        { "id": "listen", "label": "静听低语来源", "next": "listen_check", "skillCheck": { "skill": "聆听" } }
+      ]
+    },
+    "listen_check": {
+      "narrative": "低语像从墙体内部传来……",
+      "branch": { "success": "listen_ok", "failure": "listen_fail" }
+    },
+    "listen_ok": {
+      "narrative": "你分辨出至少十七种不同声线，全部重复着同一句话：「放我们出来。」声源指向病房区深处。",
+      "effects": { "journal": "低语来自墙内，至少十七种声线。" },
+      "choices": [{ "id": "w", "label": "前往病房区", "next": "ward" }]
+    },
+    "listen_fail": {
+      "narrative": "低语化为耳鸣。但你注意到通往地下室的楼梯有新鲜泥渍。",
+      "choices": [
+        { "id": "b", "label": "下地下室", "next": "basement" },
+        { "id": "w2", "label": "去病房区", "next": "ward" }
+      ]
+    },
+    "ward": {
+      "narrative": "病房区走廊两侧门扇大开。17号病房门牌被钉死，门缝下渗出黑色液体。轮椅停在走廊中央，坐垫仍有余温。",
+      "effects": { "location": "病房区", "mapRoom": "ward", "san": 1 },
+      "choices": [
+        { "id": "door17", "label": "检查17号病房", "next": "room17", "skillCheck": { "skill": "力量" } },
+        { "id": "office", "label": "去院长办公室", "next": "office" }
+      ]
+    },
+    "room17": {
+      "narrative": "门轴尖叫。房内无床，只有一面古镜——镜中映出的不是你，而是一个穿拘束衣的瘦影，嘴唇无声开合。",
+      "branch": { "success": "mirror_ok", "failure": "mirror_fail" }
+    },
+    "mirror_ok": {
+      "narrative": "移开镜子后发现墙后隐藏空间，堆满编号17的病历。每份都记录：「患者声称墙壁在呼吸、在低语。」",
+      "effects": {
+        "clues": [{ "id": "caw_records", "title": "17号病历", "content": "反复记录墙壁呼吸与低语。", "type": "document" }],
+        "journal": "17号病人与墙中低语有关。"
+      },
+      "choices": [{ "id": "off", "label": "带病历去院长办公室", "next": "office" }]
+    },
+    "mirror_fail": {
+      "narrative": "镜中瘦影突然贴近。黑色液体从门缝涌入，理智受到冲击。",
+      "effects": { "san": 2 },
+      "choices": [{ "id": "run", "label": "逃向院长办公室", "next": "office" }]
+    },
+    "office": {
+      "narrative": "院长办公室整洁异常。桌上放着未寄出的信：「实验成功——病人意识可嵌入墙体结构。石岭将成为永恒收容所。」签名被火烧去一半。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office",
+        "clues": [{ "id": "caw_letter", "title": "院长信件", "content": "意识可嵌入墙体；石岭为永恒收容所。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "base", "label": "下档案室查证", "next": "basement" },
+        { "id": "ritual", "label": "按信中仪式尝试封印", "next": "seal_check", "skillCheck": { "skill": "神秘学" } }
+      ]
+    },
+    "basement": {
+      "narrative": "地下档案室潮湿阴冷。铁柜里塞满「意识转移」实验记录。最后一页标注：主节点在废弃隧道尽头。",
+      "effects": {
+        "location": "地下档案室",
+        "mapRoom": "basement",
+        "clues": [{ "id": "caw_experiment", "title": "意识转移记录", "content": "主节点位于废弃隧道尽头。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "tunnel", "label": "进入废弃隧道", "next": "tunnel" },
+        { "id": "up", "label": "返回大厅", "next": "lobby" }
+      ]
+    },
+    "tunnel": {
+      "narrative": "隧道壁面覆盖脉动组织，像巨大肺叶。尽头是一面「活墙」——十七张模糊面孔在皮下游动，同时低语你的名字。",
+      "effects": { "location": "废弃隧道", "mapRoom": "tunnel", "san": 3, "atmosphere": { "level": "dread", "note": "活墙低语" } },
+      "choices": [
+        { "id": "destroy", "label": "用档案中的盐与真名摧毁节点", "next": "finale", "skillCheck": { "skill": "图书馆使用" } },
+        { "id": "merge", "label": "倾听低语并回应", "next": "ending_merge" }
+      ]
+    },
+    "seal_check": {
+      "narrative": "你在办公室绘制封印阵。",
+      "branch": { "success": "finale", "failure": "ending_walled" }
+    },
+    "finale": {
+      "narrative": "活墙感知到威胁，低语变为尖叫。墙体开始向内收缩。",
+      "branch": { "success": "ending_win", "failure": "ending_walled" }
+    },
+    "ending_win": {
+      "narrative": "盐与真名共振，活墙崩解为灰烬。十七道低语同时叹息后归于寂静。疗养院彻底沉寂，你带着档案离开——石岭镇再无人敢靠近山腰。\n\n【结局：低语止息】",
+      "effects": { "journal": "摧毁活墙节点，疗养院诅咒终结。" },
+      "end": true
+    },
+    "ending_walled": {
+      "narrative": "墙体合拢。你的意识被撕成碎片，嵌入石岭的每一面墙。救援队只找到空档案与你的笔记本，最后一页字迹正在变成低语。\n\n【结局：成为墙的一部分】",
+      "effects": { "san": 8 },
+      "end": true
+    },
+    "ending_merge": {
+      "narrative": "你回应低语。十七张面孔同时微笑——你的记忆被它们分食，而疗养院多了一个新的声线，在墙里永远喃喃。\n\n【结局：与低语同化】",
+      "effects": { "san": 10 },
+      "end": true
+    }
+  }
+}

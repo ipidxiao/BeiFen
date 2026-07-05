@@ -1,0 +1,129 @@
+{
+  "id": "isolated_lab",
+  "title": "隔离研究所",
+  "subtitle": "极地科考站的静默",
+  "author": "CoC Engine Team",
+  "license": "Original - CoC Engine",
+  "tags": ["极地", "1920s", "封闭空间", "科幻恐怖"],
+  "description": "1925年，南极内陆科考站「长夜站」失去联络。救援队抵达时只剩一名幸存者——他声称「墙里的东西」带走了所有人。",
+  "era": "1920s",
+  "estimatedMinutes": 35,
+  "startNode": "arrival",
+  "initialLocation": "长夜站·停机坪",
+  "setup": {
+    "location": "长夜站·停机坪",
+    "atmosphere": { "level": "calm", "note": "极地白夜" },
+    "map": {
+      "title": "长夜科考站",
+      "rooms": [
+        { "id": "pad", "name": "停机坪", "connections": ["hub"] },
+        { "id": "hub", "name": "中央枢纽", "connections": ["pad", "lab", "barracks"] },
+        { "id": "lab", "name": "生物实验室", "connections": ["hub", "specimen"] },
+        { "id": "barracks", "name": "队员宿舍", "connections": ["hub"] },
+        { "id": "specimen", "name": "标本冷库", "connections": ["lab"] }
+      ],
+      "currentRoomId": "pad"
+    },
+    "journal": "任务：调查长夜站失联原因，找回科考数据。"
+  },
+  "nodes": {
+    "arrival": {
+      "narrative": "运输机离去。停机坪上积雪被染成暗红——不是血，是某种 phosphorescent 藻类。中央枢纽的门自动滑开，内部灯光闪烁，广播循环播放：「请保持隔离——样本已逃逸。」",
+      "choices": [
+        { "id": "hub", "label": "进入中央枢纽", "next": "hub" },
+        { "id": "survivor", "label": "寻找幸存者", "next": "survivor_check", "skillCheck": { "skill": "侦查" } }
+      ]
+    },
+    "survivor_check": {
+      "narrative": "你在雪堆后发现蜷缩的人影。",
+      "branch": { "success": "survivor_ok", "failure": "hub" }
+    },
+    "survivor_ok": {
+      "narrative": "幸存者是地质学家陈博士。他语无伦次：「样本不是细菌——是几何。它在墙里生长。别进实验室。」",
+      "effects": {
+        "clues": [{ "id": "il_chen", "title": "陈博士证词", "content": "样本是几何生命体，在墙内生长。", "type": "testimony" }],
+        "journal": "样本逃逸，与墙内几何体有关。"
+      },
+      "choices": [
+        { "id": "h", "label": "进入枢纽", "next": "hub" },
+        { "id": "lab", "label": "调查实验室", "next": "lab" }
+      ]
+    },
+    "hub": {
+      "narrative": "枢纽大厅墙上贴满隔离规程。一台终端仍运行，最后日志：「样本突破B级隔离——建议全员撤离——撤离失败。」 走廊通向实验室与宿舍。",
+      "effects": { "location": "中央枢纽", "mapRoom": "hub" },
+      "choices": [
+        { "id": "lab2", "label": "前往生物实验室", "next": "lab" },
+        { "id": "bar", "label": "搜查队员宿舍", "next": "barracks" },
+        { "id": "term", "label": "导出终端数据", "next": "term_check", "skillCheck": { "skill": "计算机使用" } }
+      ]
+    },
+    "term_check": {
+      "narrative": "终端密码仍有效。",
+      "branch": { "success": "term_ok", "failure": "hub" }
+    },
+    "term_ok": {
+      "narrative": "数据揭示：样本来自冰芯深处，非地球生物。其结构在二维投影时呈现「墙」的形态——进入三维空间会折叠成封闭曲面。",
+      "effects": {
+        "clues": [{ "id": "il_data", "title": "冰芯样本数据", "content": "非地球几何生命；二维投影为墙。", "type": "document" }],
+        "san": 1
+      },
+      "choices": [{ "id": "l", "label": "前往实验室", "next": "lab" }]
+    },
+    "barracks": {
+      "narrative": "宿舍空无一人，床铺整齐如从未使用。镜子上用 lipstick 写着：「别相信平的墙。」 所有镜子都映出比房间多一个角的空间。",
+      "effects": { "location": "队员宿舍", "mapRoom": "barracks", "san": 2 },
+      "choices": [
+        { "id": "mirror", "label": "研究镜中异常", "next": "mirror_check", "skillCheck": { "skill": "神秘学" } },
+        { "id": "back", "label": "返回枢纽", "next": "hub" }
+      ]
+    },
+    "mirror_check": {
+      "narrative": "镜中多出的角是样本的「锚点」。",
+      "branch": { "success": "mirror_ok", "failure": "lab" }
+    },
+    "mirror_ok": {
+      "narrative": "你理解：样本通过镜面折叠进入墙体。破坏镜子可暂时阻断扩散——但实验室是主巢。",
+      "effects": { "journal": "镜为锚点；实验室是主巢。" },
+      "choices": [{ "id": "lab3", "label": "前往实验室", "next": "lab" }]
+    },
+    "lab": {
+      "narrative": "实验室B级隔离门被从内部熔穿。室内培养槽空无一物——但四面墙在缓慢「呼吸」，表面浮现非欧几何纹。中央悬浮着一块冰芯，内部有 moving shadow。",
+      "effects": { "location": "生物实验室", "mapRoom": "lab", "san": 3, "atmosphere": { "level": "dread", "note": "几何样本" } },
+      "choices": [
+        { "id": "spec", "label": "进入标本冷库", "next": "specimen" },
+        { "id": "destroy", "label": "尝试销毁冰芯", "next": "destroy_check", "skillCheck": { "skill": "科学" } }
+      ]
+    },
+    "specimen": {
+      "narrative": "冷库中堆满解剖过的队员——他们的内脏排列成 perfect fractal。墙上用 frozen blood 写着样本的「真名」——一串无法发音的几何符号。",
+      "effects": { "location": "标本冷库", "mapRoom": "specimen", "san": 4 },
+      "choices": [
+        { "id": "name", "label": "记录真名并返回实验室", "next": "finale", "skillCheck": { "skill": "图书馆使用" } },
+        { "id": "flee", "label": "逃向停机坪", "next": "ending_flee" }
+      ]
+    },
+    "destroy_check": {
+      "narrative": "冰芯对热与盐敏感。",
+      "branch": { "success": "finale", "failure": "ending_taken" }
+    },
+    "finale": {
+      "narrative": "你携带真名与盐回到实验室。墙体的呼吸加速——样本感知到威胁。",
+      "branch": { "success": "ending_win", "failure": "ending_taken" }
+    },
+    "ending_win": {
+      "narrative": "盐与真名共振，冰芯碎裂。墙体停止呼吸，折叠空间展平。陈博士被救出，长夜站永久封禁。南极的风里仍偶尔闪过几何 shadow。\n\n【结局：样本遏制】",
+      "effects": { "journal": "摧毁样本，长夜站封锁。" },
+      "end": true
+    },
+    "ending_taken": {
+      "narrative": "墙体合拢。你成为样本的三维投影之一——在墙里与其他队员一同排列成 fractal。救援队只找到空无一人的实验室，墙上有新的人形轮廓。\n\n【结局：成为样本】",
+      "effects": { "san": 8 },
+      "end": true
+    },
+    "ending_flee": {
+      "narrative": "你乘最后一班运输机逃离。回望时长夜站整栋建筑向内折叠，像被吸入一个点。官方报告：科考站因雪崩掩埋。\n\n【结局：逃离·真相被埋】",
+      "end": true
+    }
+  }
+}

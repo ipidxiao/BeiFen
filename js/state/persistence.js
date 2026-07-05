@@ -136,6 +136,7 @@ window.CoCStatePersistence = (function() {
                     clueBoard: migrated.clueBoard || { clues: [], links: [] },
                     diceHistory: migrated.diceHistory || [],
                     atmosphere: migrated.atmosphere || { level: 'calm', note: '' },
+                    scenarioRunner: migrated.scenarioRunner || { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null },
                     selectedCharIndex: migrated.selectedCharIndex || 0
                 };
             }
@@ -218,6 +219,7 @@ window.CoCStatePersistence = (function() {
                     clueBoard: safeJsonClone(gameState.clueBoard, { clues: [], links: [] }),
                     diceHistory: safeJsonClone(gameState.diceHistory, []),
                     atmosphere: safeJsonClone(gameState.atmosphere, { level: 'calm', note: '' }),
+                    scenarioRunner: safeJsonClone(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null }),
                     selectedCharIndex: gameState.selectedCharIndex,
                     contextMeta: { runtimeChatMessages: gameState.chatHistory.length, savedChatMessages: chatToSave.length }
                 }
@@ -306,6 +308,8 @@ window.CoCStatePersistence = (function() {
             if (d.clueBoard) Object.assign(gameState.clueBoard, d.clueBoard);
             if (d.diceHistory) gameState.diceHistory.splice(0, gameState.diceHistory.length, ...d.diceHistory);
             if (d.atmosphere) Object.assign(gameState.atmosphere, d.atmosphere);
+            if (d.scenarioRunner) Object.assign(gameState.scenarioRunner, d.scenarioRunner);
+            else Object.assign(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null });
             gameState.selectedCharIndex = d.selectedCharIndex || 0;
             clampSelectedCharIndex(gameState);
             if (core && core.cleanupInitiativeOrder) core.cleanupInitiativeOrder();

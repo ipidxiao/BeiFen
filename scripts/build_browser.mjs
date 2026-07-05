@@ -36,8 +36,21 @@ const GENERATE_PAIRS = [
     ['js/data/jobs.mjs', 'js/data/jobs.js'],
     ['js/data/experiences.mjs', 'js/data/experiences.js'],
     ['js/data/items.mjs', 'js/data/items.js'],
-    ['js/data/items_db.mjs', 'js/data/items_db.js'],
     ['js/data/dev_logs.mjs', 'js/data/dev_logs.js'],
+    ['js/data/scenarios/tutorial.mjs', 'js/data/scenarios/tutorial.js'],
+    ['js/data/scenarios/deep_one_shadow.mjs', 'js/data/scenarios/deep_one_shadow.js'],
+    ['js/data/scenarios/abandoned_asylum.mjs', 'js/data/scenarios/abandoned_asylum.js'],
+    ['js/data/scenarios/midnight_museum.mjs', 'js/data/scenarios/midnight_museum.js'],
+    ['js/data/scenarios/coastal_festival.mjs', 'js/data/scenarios/coastal_festival.js'],
+    ['js/data/scenarios/university_occult.mjs', 'js/data/scenarios/university_occult.js'],
+    ['js/data/scenarios/lighthouse_signal.mjs', 'js/data/scenarios/lighthouse_signal.js'],
+    ['js/data/scenarios/missing_child.mjs', 'js/data/scenarios/missing_child.js'],
+    ['js/data/scenarios/train_to_nowhere.mjs', 'js/data/scenarios/train_to_nowhere.js'],
+    ['js/data/scenarios/carnival_of_masks.mjs', 'js/data/scenarios/carnival_of_masks.js'],
+    ['js/data/scenarios/remote_catalog.mjs', 'js/data/scenarios/remote_catalog.js'],
+    ['js/data/scenarios/catalog.mjs', 'js/data/scenarios/catalog.js'],
+    ['js/scenario/store.mjs', 'js/scenario/store.js'],
+    ['js/scenario/runner.mjs', 'js/scenario/runner.js'],
     ['js/data/logger.mjs', 'js/data/logger.js'],
     ['js/data/utils.mjs', 'js/data/utils.js'],
     ['js/data/ai_prompt_config.mjs', 'js/data/ai_prompt_config.js'],
@@ -264,9 +277,15 @@ function mjsToBrowserJs(src, relPath) {
     }
 
     // Components/views: ensure window assignment for export const pattern
-    for (const name of ['StoryInv', 'StoryChat', 'StoryChar', 'StoryEquip', 'StoryDice', 'StoryCombat', 'StoryMap', 'StoryClues', 'StoryStore', 'StoryNpc', 'StoryJournal', 'StoryGrowth', 'CanvasChat', 'ViewLobby', 'ViewCreator', 'ViewStory', 'ViewDevLog', 'CocToastLayer']) {
+    for (const name of ['StoryInv', 'StoryChat', 'StoryChar', 'StoryEquip', 'StoryDice', 'StoryCombat', 'StoryMap', 'StoryClues', 'StoryStore', 'StoryNpc', 'StoryJournal', 'StoryGrowth', 'CanvasChat', 'ViewLobby', 'ViewCreator', 'ViewStory', 'ViewDevLog', 'CocToastLayer', 'CoCScenarioTutorial', 'CoCScenarioDeepOneShadow', 'CoCScenarioCatalog', 'CoCScenarioRunner', 'ChatExport']) {
         if (code.includes(`const ${name} =`) && !code.includes(`window.${name} =`)) {
             code = code.replace(new RegExp(`^const ${name}\\s*=`, 'm'), `window.${name} =`);
+        }
+    }
+
+    for (const name of ['parseItemData', 'generateNpcFromTemplate']) {
+        if (code.includes(`function ${name}(`) && !code.includes(`window.${name}`)) {
+            code = code.trimEnd() + `\nwindow.${name} = ${name};\n`;
         }
     }
 

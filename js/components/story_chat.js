@@ -11,7 +11,10 @@ window.StoryChat = {
     template: `
         <div class="d-flex flex-column flex-grow-1 overflow-hidden p-2">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="text-warning m-0">📍 {{ gameState.currentLocation }}</h6>
+                <div>
+                    <h6 class="text-warning m-0">📍 {{ gameState.currentLocation }}</h6>
+                    <div v-if="scenarioModeLabel" class="badge mt-1" style="background:#2a2200;color:#ffc107;font-size:0.65rem;">{{ scenarioModeLabel }}</div>
+                </div>
                 <div><button class="btn btn-outline-info btn-sm" @click="showModal('map')">🗺️ 地图</button></div>
             </div>
             
@@ -42,9 +45,14 @@ window.StoryChat = {
                     🎲 {{ getPendingCheck().tool.target_name || '调查员' }} 掷骰：【{{ getSafeSkillName(getPendingCheck().tool) }}】
                 </button>
             </div>
+            <div v-else-if="scenarioChoices.length" class="mb-2 d-flex flex-column gap-1">
+                <button v-for="ch in scenarioChoices" :key="ch.id" class="btn btn-outline-warning btn-sm text-start" @click="pickScenarioChoice(ch.id)" :disabled="gameState.isLoading">
+                    ▸ {{ ch.label }}
+                </button>
+            </div>
             <div v-else class="input-group mb-1">
                 <button class="btn btn-outline-secondary fw-bold" @click="$emit('switch-tab', 'character')">👥</button>
-                <input type="text" class="form-control bg-dark text-light border-secondary" v-model="playerInput" @keyup.enter="handlePlayerAction" :disabled="gameState.isLoading" placeholder="你要做什么？">
+                <input type="text" class="form-control bg-dark text-light border-secondary" v-model="playerInput" @keyup.enter="handlePlayerAction" :disabled="gameState.isLoading" :placeholder="scenarioChoices.length ? '或输入与选项一致的文字…' : '你要做什么？'">
                 <button class="btn btn-warning fw-bold" @click="handlePlayerAction" :disabled="gameState.isLoading">发送</button>
             </div>
         </div>
@@ -67,6 +75,13 @@ window.StoryChat = {
             const total = this.totalMsgs;
             const visible = this._vStart + this._vSize;
             return Math.max(0, (total - visible) * this._avgHeight);
+        },
+        scenarioChoices() {
+            return this.gameState?.scenarioRunner?.choices || [];
+        },
+        scenarioModeLabel() {
+            const r = window.CoCScenarioRunner;
+            return r && r.getModeLabel ? r.getModeLabel() : null;
         }
     },
     methods: {
@@ -91,6 +106,11 @@ window.StoryChat = {
                     if (box) box.scrollTop = box.scrollHeight;
                 });
             });
+        },
+        pickScenarioChoice(choiceId) {
+            if (window.CoCScenarioRunner && window.CoCScenarioRunner.selectChoice) {
+                window.CoCScenarioRunner.selectChoice(choiceId);
+            }
         }
     },
     mounted() {

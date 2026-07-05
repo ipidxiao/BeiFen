@@ -1,0 +1,134 @@
+{
+  "id": "haunted_inheritance",
+  "title": "闹鬼的遗产",
+  "subtitle": "遗嘱与家族诅咒",
+  "author": "CoC Engine Team",
+  "license": "Original - CoC Engine",
+  "tags": ["老宅", "1920s", "继承", "闹鬼"],
+  "description": "你继承了一栋维多利亚式老宅。律师警告：前七任继承者都在入住第一周内失踪。遗嘱附条件——必须在宅中住满三夜才能过户。",
+  "era": "1920s",
+  "estimatedMinutes": 30,
+  "startNode": "arrival",
+  "initialLocation": "黑木庄园·门厅",
+  "setup": {
+    "location": "黑木庄园·门厅",
+    "atmosphere": { "level": "calm", "note": "雨夜老宅" },
+    "map": {
+      "title": "黑木庄园",
+      "rooms": [
+        { "id": "hall", "name": "门厅", "connections": ["library", "stairs", "garden"] },
+        { "id": "library", "name": "图书馆", "connections": ["hall"] },
+        { "id": "stairs", "name": "楼梯与二楼", "connections": ["hall", "master"] },
+        { "id": "master", "name": "主卧室", "connections": ["stairs", "attic"] },
+        { "id": "attic", "name": "阁楼", "connections": ["master"] },
+        { "id": "garden", "name": "后花园", "connections": ["hall", "crypt"] },
+        { "id": "crypt", "name": "家族 crypt", "connections": ["garden"] }
+      ],
+      "currentRoomId": "hall"
+    },
+    "journal": "继承黑木庄园——条件：连续住满三夜。"
+  },
+  "nodes": {
+    "arrival": {
+      "narrative": "律师交给你钥匙：「第一夜别睡主卧室。前任继承者的行李还在 upstairs——别翻。」 门厅钟停在午夜，但秒针仍在颤抖。",
+      "choices": [
+        { "id": "lib", "label": "搜查图书馆", "next": "library" },
+        { "id": "stairs", "label": "上楼查看", "next": "stairs" },
+        { "id": "wait", "label": "在门厅等到天亮", "next": "night1" }
+      ]
+    },
+    "library": {
+      "narrative": "图书馆家族谱系图显示：每代继承者姓名都被划掉，旁边标注同一日期——「回归日」。一本1870年日记提到：「我们与地下的存在交易，以血亲换庄园繁荣。」",
+      "effects": {
+        "location": "图书馆",
+        "mapRoom": "library",
+        "clues": [{ "id": "hi_genealogy", "title": "家族谱系", "content": "每代继承者在同一「回归日」消失；1870年地下交易。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "garden", "label": "去后花园", "next": "garden" },
+        { "id": "up", "label": "上楼", "next": "stairs" }
+      ]
+    },
+    "stairs": {
+      "narrative": "楼梯 carpet 有拖拽痕迹通向主卧室。前任继承者的 suitcase 在门外，锁已被撬。门内传来均匀的鼾声——房间应为空。",
+      "effects": { "location": "楼梯", "mapRoom": "stairs", "san": 1 },
+      "choices": [
+        { "id": "master", "label": "推开主卧室", "next": "master" },
+        { "id": "attic", "label": "去阁楼", "next": "attic" }
+      ]
+    },
+    "master": {
+      "narrative": "床上躺着穿你今日所穿衣物的「人」——背对你，皮肤 wax 质。镜中映出的却是你的脸。它低语：「第三夜，你回家。」",
+      "effects": { "location": "主卧室", "mapRoom": "master", "san": 3 },
+      "choices": [
+        { "id": "fight", "label": "攻击替身", "next": "fight_check", "skillCheck": { "skill": "格斗" } },
+        { "id": "run", "label": "逃向阁楼", "next": "attic" }
+      ]
+    },
+    "fight_check": {
+      "narrative": "替身没有骨骼。",
+      "branch": { "success": "fight_ok", "failure": "night1" }
+    },
+    "fight_ok": {
+      "narrative": "替身化为 wax 淌地。床下发现前任继承者的 ID——日期是昨天。",
+      "effects": { "clues": [{ "id": "hi_id", "title": "前任证件", "content": "继承者昨日仍在；替身取代活人。", "type": "physical" }] },
+      "choices": [{ "id": "att", "label": "搜查阁楼", "next": "attic" }]
+    },
+    "attic": {
+      "narrative": "阁楼堆满七具 wax 人像——每张脸都是历任继承者，包括一个与你一模一样的新 wax 头，尚未完成。",
+      "effects": { "location": "阁楼", "mapRoom": "attic", "san": 4 },
+      "choices": [
+        { "id": "read", "label": "阅读仪式笔记", "next": "ritual_note" },
+        { "id": "crypt", "label": "经花园去 crypt", "next": "crypt" }
+      ]
+    },
+    "ritual_note": {
+      "narrative": "笔记记载：回归日需继承者「自愿」走入 crypt——否则替身会完成取代。破除方法：在第三夜前毁掉 crypt 中的 ancestral wax heart。",
+      "effects": {
+        "clues": [{ "id": "hi_ritual", "title": "仪式笔记", "content": "crypt 中有 wax heart；第三夜前毁之可破咒。", "type": "document" }],
+        "journal": "必须在第三夜前毁掉 crypt 中的 wax heart。"
+      },
+      "choices": [{ "id": "c", "label": "前往 crypt", "next": "crypt" }]
+    },
+    "garden": {
+      "narrative": "后花园 rose 枯死，中央 statuary 眼睛被挖空。statuary 底座通向 crypt——门缝渗出 wax 味。",
+      "effects": { "location": "后花园", "mapRoom": "garden" },
+      "choices": [{ "id": "down", "label": "进入 crypt", "next": "crypt" }]
+    },
+    "crypt": {
+      "narrative": "crypt 中央悬着一颗 wax heart，由七条姓名链缠绕——你的姓名链是空的，等待第三夜填入。地下存在由 shadow 与 whispers 构成，邀请你「完成继承」。",
+      "effects": { "location": "家族 crypt", "mapRoom": "crypt", "san": 3, "atmosphere": { "level": "ritual", "note": "回归仪式" } },
+      "choices": [
+        { "id": "destroy", "label": "毁掉 wax heart", "next": "finale", "skillCheck": { "skill": "神秘学" } },
+        { "id": "accept", "label": "接受继承", "next": "ending_accept" }
+      ]
+    },
+    "night1": {
+      "narrative": "第一夜在门厅熬过。黎明时律师电话：「还有两夜。上一任在第二夜试图烧庄园——火焰是 cold 的。」",
+      "effects": { "journal": "第一夜生还；还有两夜。" },
+      "choices": [
+        { "id": "lib2", "label": "白天搜查图书馆", "next": "library" },
+        { "id": "crypt2", "label": "按直觉去 crypt", "next": "crypt" }
+      ]
+    },
+    "finale": {
+      "narrative": "wax heart 与家族契约绑定。",
+      "branch": { "success": "ending_win", "failure": "ending_wax" }
+    },
+    "ending_win": {
+      "narrative": "heart 碎裂，姓名链化为 dust。替身们在阁楼同时 collapse。你获得庄园——但每个雨夜仍能听见 crypt 方向的 whispers：「我们会等下一代。」\n\n【结局：诅咒破除】",
+      "effects": { "journal": "毁掉 wax heart，合法继承庄园。" },
+      "end": true
+    },
+    "ending_wax": {
+      "narrative": "heart 只裂一半。第三夜你「自愿」走入 crypt——意识被注入 wax。律师见到的继承者 smile 完美，从不眨眼。\n\n【结局：成为庄园的一部分】",
+      "effects": { "san": 7 },
+      "end": true
+    },
+    "ending_accept": {
+      "narrative": "你接受继承。地下 shadow 与你融合——庄园繁荣，但外界 forget 你的原名。门厅新 wax 人像完成最后一道轮廓。\n\n【结局：黑暗继承】",
+      "effects": { "san": 6 },
+      "end": true
+    }
+  }
+}

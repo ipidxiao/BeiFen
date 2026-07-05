@@ -1,0 +1,155 @@
+{
+  "id": "cc_museum_night",
+  "title": "博物馆之夜",
+  "subtitle": "午夜展厅的苏醒雕像",
+  "author": "CoC Engine Community",
+  "license": "CC-BY 4.0",
+  "tags": ["博物馆", "1920s", "都市恐怖", "社区模组"],
+  "description": "大都会自然史博物馆邀请你协助夜间安保巡检。闭馆后，某些展品在玻璃柜中改变了姿势——埃及厅的石棺渗出新鲜树脂，恐龙骨架的头颅缓缓转向你。改编自公共都市怪谈传统。",
+  "era": "1920s",
+  "estimatedMinutes": 32,
+  "startNode": "entrance",
+  "initialLocation": "博物馆·正门",
+  "setup": {
+    "location": "博物馆·正门",
+    "atmosphere": { "level": "calm", "note": "午夜大都会" },
+    "map": {
+      "title": "大都会自然史博物馆",
+      "rooms": [
+        { "id": "entrance", "name": "正门大厅", "connections": ["egypt", "fossil", "office"] },
+        { "id": "egypt", "name": "埃及厅", "connections": ["entrance", "vault"] },
+        { "id": "fossil", "name": "化石厅", "connections": ["entrance", "workshop"] },
+        { "id": "office", "name": "馆长办公室", "connections": ["entrance"] },
+        { "id": "vault", "name": "地下藏品库", "connections": ["egypt"] },
+        { "id": "workshop", "name": "修复工坊", "connections": ["fossil"] }
+      ],
+      "currentRoomId": "entrance"
+    },
+    "journal": "夜间安保巡检：确认闭馆后无异常。"
+  },
+  "nodes": {
+    "entrance": {
+      "narrative": "午夜钟声刚过。博物馆正门在你身后锁死。保安老张递给你手电：「别单独进埃及厅。上周有人看见石棺盖移开了一指宽。」大厅巨象骨架在月光下投下过长影子。",
+      "choices": [
+        { "id": "egypt", "label": "巡检埃及厅", "next": "egypt" },
+        { "id": "fossil", "label": "巡检化石厅", "next": "fossil" },
+        { "id": "office", "label": "查馆长办公室记录", "next": "office" }
+      ]
+    },
+    "office": {
+      "narrative": "馆长办公室文件散乱。未完成的报告写着：「夜间展品位移现象与1920年捐赠的『午夜护符』有关。护符刻有『唤醒沉睡之物』。」",
+      "effects": {
+        "location": "馆长办公室",
+        "mapRoom": "office",
+        "clues": [{ "id": "cmn_report", "title": "馆长报告", "content": "展品位移与午夜护符有关。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "eg", "label": "前往埃及厅", "next": "egypt" },
+        { "id": "fo", "label": "前往化石厅", "next": "fossil" }
+      ]
+    },
+    "egypt": {
+      "narrative": "埃及厅空气闷热如墓穴。石棺盖果然移开一指宽，新鲜树脂从缝隙渗出。壁画上的祭司眼睛似乎跟随你移动。",
+      "effects": { "location": "埃及厅", "mapRoom": "egypt", "san": 1 },
+      "choices": [
+        { "id": "sarc", "label": "检查石棺", "next": "sarc_check", "skillCheck": { "skill": "侦查" } },
+        { "id": "vault", "label": "下地下藏品库", "next": "vault" },
+        { "id": "amulet", "label": "寻找午夜护符", "next": "amulet_search", "skillCheck": { "skill": "图书馆使用" } }
+      ]
+    },
+    "sarc_check": {
+      "narrative": "石棺内部……",
+      "branch": { "success": "sarc_ok", "failure": "sarc_fail" }
+    },
+    "sarc_ok": {
+      "narrative": "棺内无木乃伊，只有一卷莎草纸：「护符在藏品库第7架。摧毁它，否则午夜万物苏醒。」",
+      "effects": {
+        "clues": [{ "id": "cmn_papyrus", "title": "莎草纸", "content": "护符在藏品库第7架，须摧毁。", "type": "document" }],
+        "journal": "护符位于地下藏品库第7架。"
+      },
+      "choices": [
+        { "id": "v", "label": "下藏品库", "next": "vault" },
+        { "id": "w", "label": "去修复工坊找工具", "next": "workshop" }
+      ]
+    },
+    "sarc_fail": {
+      "narrative": "棺盖突然滑开！干枯手臂抓住你的袖口。你挣脱时理智受到冲击。",
+      "effects": { "san": 2 },
+      "choices": [{ "id": "v2", "label": "逃向藏品库", "next": "vault" }]
+    },
+    "fossil": {
+      "narrative": "化石厅恐龙骨架头颅缓缓转向你。玻璃眼中的琥珀反射出你不存在的第三个影子。地上有新鲜爪痕——不是恐龙，是三角测量般的几何印迹。",
+      "effects": { "location": "化石厅", "mapRoom": "fossil", "san": 1 },
+      "choices": [
+        { "id": "dino", "label": "调查恐龙骨架", "next": "dino_check", "skillCheck": { "skill": "科学" } },
+        { "id": "work", "label": "去修复工坊", "next": "workshop" }
+      ]
+    },
+    "dino_check": {
+      "narrative": "骨架关节处有细微磨损——像最近移动过。",
+      "branch": { "success": "dino_ok", "failure": "dino_fail" }
+    },
+    "dino_ok": {
+      "narrative": "胸腔内嵌着一枚铜制护符碎片，铭文与馆长报告吻合：「午夜护符」。",
+      "effects": {
+        "clues": [{ "id": "cmn_shard", "title": "护符碎片", "content": "铜制碎片，铭文为午夜护符。", "type": "physical" }],
+        "journal": "恐龙骨架内发现护符碎片。"
+      },
+      "choices": [{ "id": "wk", "label": "去工坊分析", "next": "workshop" }]
+    },
+    "dino_fail": {
+      "narrative": "骨架突然前倾，颚骨开合发出石头摩擦声。你后退撞上展柜。",
+      "effects": { "san": 2 },
+      "choices": [{ "id": "wk2", "label": "逃向工坊", "next": "workshop" }]
+    },
+    "workshop": {
+      "narrative": "修复工坊堆满石膏与化学试剂。工作台上有馆长笔记：「护符完整时，馆内一切收藏在午夜获得短暂意志。7:00前须重置。」",
+      "effects": {
+        "location": "修复工坊",
+        "mapRoom": "workshop",
+        "clues": [{ "id": "cmn_notes", "title": "馆长笔记", "content": "护符使收藏在午夜获得意志，7点前须重置。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "acid", "label": "调配酸液销毁护符", "next": "finale_prep" },
+        { "id": "vault2", "label": "下藏品库取护符", "next": "vault" }
+      ]
+    },
+    "amulet_search": {
+      "narrative": "你在展柜底座发现隐藏暗格。",
+      "branch": { "success": "vault", "failure": "egypt" }
+    },
+    "vault": {
+      "narrative": "地下藏品库第7架放着青铜护符，表面刻满睁开的眼睛。四周货架上，蜡像、面具、动物标本都在微微颤抖，像在等待某个信号。",
+      "effects": { "location": "地下藏品库", "mapRoom": "vault", "san": 2, "atmosphere": { "level": "ritual", "note": "午夜苏醒" } },
+      "choices": [
+        { "id": "take", "label": "取走护符去工坊销毁", "next": "finale_prep" },
+        { "id": "wear", "label": "佩戴护符", "next": "ending_custodian" },
+        { "id": "destroy_here", "label": "当场砸碎护符", "next": "finale", "skillCheck": { "skill": "力量" } }
+      ]
+    },
+    "finale_prep": {
+      "narrative": "你携带护符与酸液返回。馆内展品开始集体转向你——石棺完全敞开，恐龙骨架迈出第一步。",
+      "effects": { "san": 1 },
+      "choices": [{ "id": "fin", "label": "销毁护符", "next": "finale", "skillCheck": { "skill": "科学" } }]
+    },
+    "finale": {
+      "narrative": "护符在酸液中溶解，发出刺耳嗡鸣。所有展品同时静止。",
+      "branch": { "success": "ending_win", "failure": "ending_statue" }
+    },
+    "ending_win": {
+      "narrative": "护符化为铜绿泡沫。展品恢复死寂，姿态复位。黎明时馆长感谢你——但埃及厅壁画上，多了一个穿你衣服的祭司轮廓。\n\n【结局：午夜复位】",
+      "effects": { "journal": "摧毁午夜护符，博物馆恢复平静。" },
+      "end": true
+    },
+    "ending_statue": {
+      "narrative": "护符只裂未碎。展品涌来——你被蜡像包裹，成为新展品。标签写着：「夜间安保·1925」。\n\n【结局：成为馆藏】",
+      "effects": { "san": 8 },
+      "end": true
+    },
+    "ending_custodian": {
+      "narrative": "佩戴护符的瞬间，你理解了一切收藏的记忆。你成为博物馆永恒的夜间守护者——白天沉睡于石棺，午夜巡视展厅。\n\n【结局：新守夜人】",
+      "effects": { "san": 6 },
+      "end": true
+    }
+  }
+}
