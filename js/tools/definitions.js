@@ -114,7 +114,7 @@ window.CoCToolDefinitions = (function() {
             }
         },
         fire_weapon: {
-            description: '开火结算。优先指定 shooter_name（开火调查员）和 enemy_name（目标敌人）；target_name 仅作为旧版兼容字段，等同 shooter_name。',
+            description: '开火结算（CoC 7e：常规火器伤害通常无视护甲，代码以 skipArmor 执行；特殊护甲/掩体由守秘人叙事处理）。优先指定 shooter_name 和 enemy_name；target_name 仅作旧版兼容。',
             parameters: {
                 type: 'object',
                 properties: {

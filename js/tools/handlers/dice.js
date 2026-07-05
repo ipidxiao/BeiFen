@@ -13,6 +13,8 @@ window.CoCToolHandlerModules.dice = function(ctx) {
     const { gameState, rollCustomDice, groupRoll } = ctx;
 
     const getKpEng = () => {
+        const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+        if (cfg && typeof cfg.getKpEngine === 'function') return cfg.getKpEngine();
         if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
         return null;
     };

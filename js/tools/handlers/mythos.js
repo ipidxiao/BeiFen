@@ -11,18 +11,26 @@
 window.CoCToolHandlerModules = window.CoCToolHandlerModules || {};
 window.CoCToolHandlerModules.mythos = function(ctx) {
     var gameState = ctx.gameState;
-    var Engine = ctx.Engine;
     var addJournalEntry = ctx.addJournalEntry;
 
     return {
         study_tome: (args) => {
+            var Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
             var c = gameState.roster.find(function(r) { return r.name === args.target_name; });
             if (!c) return '错误：找不到调查员 ' + args.target_name;
             if (!Engine || !Engine.MythosEngine) return '错误：神话引擎未加载。';
-            // Check if character has the tome in inventory
             var tomes = window.CoCMythosTomes || {};
             var tome = tomes[args.tome_name];
             if (!tome) return '错误：未知典籍 ' + args.tome_name;
+            const inv = [...(gameState.inventory || []), ...(c.equipment ? Object.values(c.equipment).filter(Boolean) : [])];
+            const hasTome = inv.some((item) => {
+                const label = String(item || '').trim().toLowerCase();
+                if (label.length < 2) return false;
+                const key = String(args.tome_name || '').toLowerCase();
+                const title = String(tome.title || args.tome_name || '').toLowerCase();
+                return label.includes(key) || label.includes(title) || title.includes(label);
+            });
+            if (!hasTome) return '错误：' + c.name + ' 背包/装备中未持有典籍「' + (tome.title || args.tome_name) + '」。';
             // Full study if weeks provided; otherwise initial browse
             var result;
             if (args.weeks && Number(args.weeks) > 0) {
@@ -40,6 +48,7 @@ window.CoCToolHandlerModules.mythos = function(ctx) {
             return result.description;
         },
         cast_spell: (args) => {
+            var Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
             var c = gameState.roster.find(function(r) { return r.name === args.caster_name; });
             if (!c) return '错误：找不到施法者 ' + args.caster_name;
             var target = args.target_name ? gameState.roster.find(function(r) { return r.name === args.target_name; }) : null;

@@ -69,12 +69,11 @@ window.StoryChat = {
             return h.slice(this._vStart, end);
         },
         topSpacer() {
-            return this._vStart * this._avgHeight;
+            return this._spacerBefore(this._vStart);
         },
         bottomSpacer() {
-            const total = this.totalMsgs;
-            const visible = this._vStart + this._vSize;
-            return Math.max(0, (total - visible) * this._avgHeight);
+            const end = Math.min(this._vStart + this._vSize, this.totalMsgs);
+            return this._spacerBefore(this.totalMsgs) - this._spacerBefore(end);
         },
         scenarioChoices() {
             return this.gameState?.scenarioRunner?.choices || [];
@@ -85,10 +84,35 @@ window.StoryChat = {
         }
     },
     methods: {
+        _heightAt(index) {
+            const h = this._vHeights[index];
+            return (h && h > 0) ? h : this._avgHeight;
+        },
+        _spacerBefore(index) {
+            let sum = 0;
+            const limit = Math.max(0, Math.min(index, this.totalMsgs));
+            for (let i = 0; i < limit; i++) sum += this._heightAt(i);
+            return sum;
+        },
         onChatScroll() {
             const box = this.$refs.chatBox;
             if (!box) return;
             const scrollTop = box.scrollTop;
+            if (this._vHeights.length >= this.totalMsgs && this.totalMsgs > 0) {
+                let acc = 0;
+                let newStart = 0;
+                for (let i = 0; i < this.totalMsgs; i++) {
+                    const h = this._heightAt(i);
+                    if (acc + h > scrollTop) {
+                        newStart = Math.max(0, i - 5);
+                        break;
+                    }
+                    acc += h;
+                    newStart = Math.max(0, i - 4);
+                }
+                if (Math.abs(newStart - this._vStart) > 3) this._vStart = newStart;
+                return;
+            }
             const newStart = Math.max(0, Math.floor(scrollTop / this._avgHeight) - 5);
             if (Math.abs(newStart - this._vStart) > 3) {
                 this._vStart = newStart;
@@ -127,6 +151,19 @@ window.StoryChat = {
     },
     mounted() {
         this.scrollChatToBottom();
+    },
+    updated() {
+        this.$nextTick(() => {
+            const box = this.$refs.chatBox;
+            if (!box) return;
+            const nodes = box.querySelectorAll('.chat-msg');
+            nodes.forEach((el, i) => {
+                const idx = this._vStart + i;
+                if (idx < this.totalMsgs && el.offsetHeight > 0) {
+                    this._vHeights[idx] = el.offsetHeight;
+                }
+            });
+        });
     },
     setup(props, context) {
         const state = window.CoCState;

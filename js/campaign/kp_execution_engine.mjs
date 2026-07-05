@@ -436,10 +436,24 @@ export const KpExecutionEngine = {
         return runLanguageCorrection(text, opts);
     },
 
-    /** Soft era gate for AI narrative — flags future-tech without player knowledge. */
+    /** Soft era gate for AI narrative — flags or strips future-tech without player knowledge. */
     validateNarrativeEra(text, context = {}) {
-        if (!this.isEnabled(context.gameState)) return { ok: true };
-        return checkEraRestriction(text, context);
+        if (!this.isEnabled(context.gameState)) return { ok: true, text };
+        const check = checkEraRestriction(text, context);
+        if (check.ok) return { ok: true, text };
+        return { ...check, text: this.stripNarrativeEra(text, context) };
+    },
+
+    stripNarrativeEra(text, context = {}) {
+        let out = String(text || '');
+        const terms = extractFutureTechTerms(out);
+        for (const term of terms) {
+            const re = /^[\x00-\x7F]+$/.test(term)
+                ? new RegExp(`\\b${escapeRegex(term)}\\b`, 'gi')
+                : new RegExp(escapeRegex(term), 'g');
+            out = out.replace(re, '……');
+        }
+        return out.replace(/\s{2,}/g, ' ').trim() || '（叙事含时代违禁科技，已替换。）';
     },
 
     validateFirearmAmmo(gameState, weaponStr) {
@@ -496,6 +510,10 @@ export const KpExecutionEngine = {
         const adjusted = d > 0 ? d + envInc : d;
         st.ATTENTION_LEVEL = clamp((st.ATTENTION_LEVEL || 0) + adjusted, 0, 10);
         kp.global.attention = st.ATTENTION_LEVEL;
+        if (adjusted > 0) {
+            st.DOOM_CLOCK = clamp((st.DOOM_CLOCK || 0) + 1, 0, 24);
+            kp.global.doomClock = st.DOOM_CLOCK;
+        }
         if (st.ATTENTION_LEVEL >= 7) st.hunt.active = true;
         if (st.ATTENTION_LEVEL >= 9) st.reality.active = true;
         this._syncPhase(st, kp);
@@ -507,6 +525,24 @@ export const KpExecutionEngine = {
             });
         }
         return st.ATTENTION_LEVEL;
+    },
+
+    collectCombatPowerStats(gameState) {
+        const track = gameState?.combat?._powerTrack;
+        if (!track) {
+            return { avgDamage: 0, rounds: 1, resourceUse: 'low', hpLoss: 'none' };
+        }
+        const rounds = Math.max(1, (gameState.combat.round || 1) - (track.startRound || 1) + 1);
+        const hits = Math.max(1, track.hitCount || 1);
+        const avgDamage = (track.damageDealt || 0) / hits;
+        const active = (gameState.roster || []).filter((c) => c && c.isActive);
+        const hpLoss = active.some((c, i) => c.hp < (track.startHp[i] ?? c.hp)) ? 'some' : 'none';
+        return {
+            avgDamage,
+            rounds,
+            resourceUse: (track.ammoSpent || 0) > 2 ? 'high' : 'low',
+            hpLoss
+        };
     },
 
     evaluatePlayerPower(gameState, stats) {
@@ -523,6 +559,23 @@ export const KpExecutionEngine = {
         st.PLAYER_POWER = clamp((st.PLAYER_POWER || 0) + gain, 0, 10);
         kp.global.playerPower = st.PLAYER_POWER;
         return st.PLAYER_POWER;
+    },
+
+    finalizeCombatPower(gameState, reason) {
+        if (!this.isEnabled(gameState)) return 0;
+        if (gameState.combat?._powerFinalized) {
+            return (this.getGlobalState(gameState).PLAYER_POWER) || 0;
+        }
+        const stats = this.collectCombatPowerStats(gameState);
+        const pp = this.evaluatePlayerPower(gameState, stats);
+        if (gameState.combat) {
+            delete gameState.combat._powerTrack;
+            gameState.combat._powerFinalized = true;
+        }
+        if (reason === 'victory') {
+            this.runAntagonistTick(gameState, { type: 'combat_win' });
+        }
+        return pp;
     },
 
     scaleEnemyStats(baseEnemy, opts = {}) {

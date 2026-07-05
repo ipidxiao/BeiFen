@@ -98,6 +98,39 @@ window.CoCToolHandlerModules.combat = function(ctx) {
         return null;
     };
 
+    const initCombatPowerTrack = () => {
+        const active = (gameState.roster || []).filter((c) => c && c.isActive);
+        gameState.combat._powerTrack = {
+            startHp: active.map((c) => c.hp),
+            damageDealt: 0,
+            hitCount: 0,
+            ammoSpent: 0,
+            startRound: gameState.combat.round || 1
+        };
+        gameState.combat._powerFinalized = false;
+    };
+
+    const trackCombatDamage = (actualDmg) => {
+        const track = gameState.combat?._powerTrack;
+        if (!track) return;
+        const dmg = Math.max(0, Number(actualDmg) || 0);
+        if (dmg > 0) {
+            track.damageDealt += dmg;
+            track.hitCount += 1;
+        }
+    };
+
+    const allEnemiesDefeated = () => {
+        const enemies = gameState.combat?.enemies;
+        return Array.isArray(enemies) && enemies.length > 0 && enemies.every((e) => e.isDefeated || e.hp <= 0);
+    };
+
+    const maybeFinalizeCombatVictory = () => {
+        const kpEng = getKpEng();
+        if (!kpEng || !kpEng.finalizeCombatPower || !allEnemiesDefeated()) return;
+        kpEng.finalizeCombatPower(gameState, 'victory');
+    };
+
     const applyEnemyDamageWithKp = (enemyName, hpChange, note, actionLabel, options = {}) => {
         const e = gameState.combat.enemies.find(en => en.name === enemyName);
         if (!e) return null;
@@ -115,9 +148,11 @@ window.CoCToolHandlerModules.combat = function(ctx) {
             return { blocked: true, enemy: e };
         }
         updateEnemy(enemyName, rawChange < 0 ? -actualDmg : rawChange, note);
+        if (rawChange < 0) trackCombatDamage(actualDmg);
         if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && e.hp <= 0) {
             kpEng.checkAntiOneShot(gameState, e);
         }
+        if (e.hp <= 0 || e.isDefeated) maybeFinalizeCombatVictory();
         return { blocked: false, enemy: e, actualDmg };
     };
 
@@ -150,11 +185,19 @@ window.CoCToolHandlerModules.combat = function(ctx) {
                 enemies = kp.onCombatStart(gameState, enemies);
             }
             startCombat(enemies, args.location, args.notes);
+            initCombatPowerTrack();
             const names = enemies.map(e => e.name).join('、');
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚔️ [战斗开始] 敌人：${names}。战斗界面已激活，请查看战斗面板！` });
             return `战斗已开始，敌人：${names}`;
         },
         end_combat: (args) => {
+            const kpEng = getKpEng();
+            if (args.outcome === 'victory' && kpEng && kpEng.finalizeCombatPower) {
+                kpEng.finalizeCombatPower(gameState, 'victory');
+            } else if (gameState.combat) {
+                delete gameState.combat._powerTrack;
+                gameState.combat._powerFinalized = false;
+            }
             endCombat(args.outcome, args.notes);
             return '战斗已结束';
         },
@@ -174,12 +217,8 @@ window.CoCToolHandlerModules.combat = function(ctx) {
             const c = gameState.roster.find(r => r.name === args.target_name);
             if (!c) return `找不到目标: ${args.target_name}`;
             const dmg = args.damage || 0;
-            const prev = c.hp;
-            // Delegate HP change + wound tracking to the character handler
+            // HP + journal via update_character_status only — avoid duplicate chat/journal
             ctx.dispatch('update_character_status', { target_name: args.target_name, hp_change: -dmg });
-            const desc = args.description ? `【${args.enemy_name}】${args.description}，` : `【${args.enemy_name}】发动攻击，`;
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚔️ ${desc}造成 ${dmg} 伤害！${args.target_name} HP: ${prev}→${Math.max(0, prev - dmg)}` });
-            addJournalEntry({ type: 'hp_loss', charName: c.name, summary: `被${args.enemy_name}攻击，受到 ${dmg} 点伤害（HP: ${Math.max(0, prev - dmg)}/${c.derived?.hp || prev}）` });
             advanceTurn();
             return `${args.target_name} 受到 ${dmg} 点伤害`;
         },
@@ -248,7 +287,15 @@ window.CoCToolHandlerModules.combat = function(ctx) {
             gameState.combat.enemies = gameState.combat.enemies || [];
             npc.id = 'npc_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
             gameState.combat.enemies.push(npc);
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, 
+            const order = gameState.combat.initiativeOrder || (gameState.combat.initiativeOrder = []);
+            order.push({
+                id: npc.id,
+                name: npc.name,
+                initiative: 40 + Math.floor(Math.random() * 10) + 1,
+                isEnemy: true
+            });
+            order.sort((a, b) => b.initiative - a.initiative);
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true,
                 content: '👤 ' + npc.name + ' 登场！(' + npc.description + ')' });
             addJournalEntry({ type: 'npc_spawn', charName: npc.name, summary: '模板:' + tmpl + ' HP:' + npc.hp + ' 护甲:' + npc.armor });
             return npc.name + ' 已生成（模板:' + tmpl + ' HP:' + npc.hp + ' 护甲:' + npc.armor + '）。';

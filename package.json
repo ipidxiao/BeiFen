@@ -11,6 +11,7 @@
     "build": "python build.py",
     "build:js": "node scripts/build_browser.mjs",
     "build:js:check": "node scripts/build_browser.mjs --check && node scripts/verify_browser_exports.mjs",
+    "ci:smoke": "node scripts/ci_smoke.mjs",
     "test:exports": "node scripts/verify_browser_exports.mjs",
     "serve": "python -m http.server 8080"
   },

@@ -220,14 +220,13 @@ window.CoCAI = (function(State, Engine) {
             const msg = `🛑 [AI保护] 工具调用轮数超过上限（${MAX_TOOL_ROUNDS}）。已中断本轮自动续写，避免循环调用。`;
             CoCLog.error(msg);
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: msg });
-            gameState._aiBusyCount = Math.max(0, (gameState._aiBusyCount || 1) - 1);
-            gameState.isLoading = gameState._aiBusyCount > 0;
             try { scrollToBottom(); } catch(e) {}
             return false;
         }
         gameState._aiBusyCount = (gameState._aiBusyCount || 0) + 1;
-        gameState.isLoading = gameState._aiBusyCount > 0; scrollToBottom();
-        
+        gameState.isLoading = gameState._aiBusyCount > 0;
+        scrollToBottom();
+        try {
         const tools = buildAiToolDefinitions();
         if (!tools.length) {
             CoCLog.warn('CoCToolDefinitions 未加载或为空；本轮 AI 请求将无法使用工具调用。');
@@ -240,9 +239,6 @@ window.CoCAI = (function(State, Engine) {
                 isAlert: true,
                 content: '📴 【离线模式】AI 守秘人需要网络连接。请恢复网络后重试，或继续使用骰子、战斗、角色卡、存档等本地功能。'
             });
-            gameState._aiBusyCount = Math.max(0, (gameState._aiBusyCount || 1) - 1);
-            gameState.isLoading = gameState._aiBusyCount > 0;
-            try { scrollToBottom(); } catch (e) {}
             return false;
         }
 
@@ -254,9 +250,6 @@ window.CoCAI = (function(State, Engine) {
                 isAlert: true,
                 content: '🔑 请配置 API Key：在设置中填入密钥后再使用 AI 守秘人。'
             });
-            gameState._aiBusyCount = Math.max(0, (gameState._aiBusyCount || 1) - 1);
-            gameState.isLoading = gameState._aiBusyCount > 0;
-            try { scrollToBottom(); } catch (e) {}
             return false;
         }
 
@@ -289,7 +282,7 @@ window.CoCAI = (function(State, Engine) {
                 cleanMsg.content += CoCAIPromptConfig.buildSystemInjection(teamDetails, gameState.aiSettings.difficultyPreset || 'standard', gameState);
                 const kpEng = _getKpEngine();
                 if (kpEng.isEnabled && kpEng.isEnabled(gameState)) {
-                    kpEng.runAntagonistTick(gameState, { type: 'observe' });
+                    // observe tick runs in onPlayerAction — avoid duplicate KNOWLEDGE increment per turn
                     if (kpEng.adaptStrategy) {
                         const strat = kpEng.adaptStrategy(gameState);
                         if (strat) cleanMsg.content += `\n\n[KP敌对策略权重] ALERT=${strat.alertLevel} KNOW=${strat.knowledgeLevel} misinfo=${strat.weights.misinformation}`;
@@ -363,9 +356,10 @@ window.CoCAI = (function(State, Engine) {
                 if (kpOn && kpEng.validateNarrativeEra) {
                     const eraCheck = kpEng.validateNarrativeEra(aiMsg.content, { gameState });
                     if (eraCheck && !eraCheck.ok) {
+                        if (eraCheck.text) aiMsg.content = eraCheck.text;
                         gameState.chatHistory.push({
                             role: 'system', isLocalOnly: true, isHidden: true,
-                            content: `⚠️ [KP引擎] 叙事含时代违禁科技（${eraCheck.code || 'ERA'}）：${eraCheck.reason || ''}`
+                            content: `⚠️ [KP引擎] 叙事含时代违禁科技（${eraCheck.code || 'ERA'}）：${eraCheck.reason || ''}（已剥离违禁词）`
                         });
                     }
                 }
@@ -382,7 +376,8 @@ window.CoCAI = (function(State, Engine) {
                 ? `AI请求超过 ${Math.round(AI_REQUEST_TIMEOUT_MS / 1000)} 秒未响应，重试后仍失败${attemptsText}。`
                 : `与守秘人的连接中断：${formatAiError(e)}${attemptsText}。请检查网络/API Key/模型设置。`;
             gameState.chatHistory.push({ role: 'system', isLocalError: true, isAlert: true, content: `🔌 【网络异常】${detail}` });
-        } finally { 
+        }
+        } finally {
             gameState._aiBusyCount = Math.max(0, (gameState._aiBusyCount || 1) - 1);
             gameState.isLoading = gameState._aiBusyCount > 0;
             try { if (State.compactChatHistory) State.compactChatHistory('ai'); } catch(err){}
@@ -398,16 +393,7 @@ window.CoCAI = (function(State, Engine) {
     const makeToolSnapshot = () => safeJsonClone({
         roster: gameState.roster,
         inventory: gameState.inventory,
-        storage: gameState.storage,
-        journalLog: gameState.journalLog,
-        npcRegistry: gameState.npcRegistry,
         combat: gameState.combat,
-        sceneMap: gameState.sceneMap,
-        clueBoard: gameState.clueBoard,
-        diceHistory: gameState.diceHistory,
-        atmosphere: gameState.atmosphere,
-        currentLocation: gameState.currentLocation,
-        knownLocations: gameState.knownLocations,
         chatHistoryLength: gameState.chatHistory.length
     }, null);
 
@@ -421,16 +407,7 @@ window.CoCAI = (function(State, Engine) {
         const replaceArray = (target, source) => target.splice(0, target.length, ...(Array.isArray(source) ? source : []));
         replaceArray(gameState.roster, snapshot.roster);
         replaceArray(gameState.inventory, snapshot.inventory);
-        replaceArray(gameState.storage, snapshot.storage);
-        replaceArray(gameState.journalLog, snapshot.journalLog);
-        replaceArray(gameState.npcRegistry, snapshot.npcRegistry);
-        replaceArray(gameState.diceHistory, snapshot.diceHistory);
-        replaceArray(gameState.knownLocations, snapshot.knownLocations);
         if (snapshot.combat) Object.assign(gameState.combat, snapshot.combat);
-        if (snapshot.sceneMap) Object.assign(gameState.sceneMap, snapshot.sceneMap);
-        if (snapshot.clueBoard) Object.assign(gameState.clueBoard, snapshot.clueBoard);
-        if (snapshot.atmosphere) Object.assign(gameState.atmosphere, snapshot.atmosphere);
-        gameState.currentLocation = snapshot.currentLocation || gameState.currentLocation;
         if (Number.isFinite(snapshot.chatHistoryLength)) {
             gameState.chatHistory.splice(snapshot.chatHistoryLength);
         }

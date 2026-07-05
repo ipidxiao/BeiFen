@@ -48,6 +48,7 @@ const SUITES = [
     'kp_execution_smoke.js',
     'kp_semantics_smoke.js',
     'audit2_smoke.js',
+    'audit3_smoke.js',
     'batch4_robustness_smoke.js',
   ]},
 

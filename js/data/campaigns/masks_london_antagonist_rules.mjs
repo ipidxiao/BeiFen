@@ -77,6 +77,8 @@ export const ANTAGONIST_AI_RULES = {
     },
 
     ADAPTIVE_STRATEGY: {
+        // Advisory weights for AI prompt injection — not hard engine enforcement.
+        _note: 'Strategy weights in adaptStrategy() are narrative hints for the KP model; engine only enforces combat immunity / reality distortion.',
         INPUT: ['player_success_rate', 'player_combat_focus', 'player_social_behavior'],
         LOGIC: {
             IF_players_win_combat_often: { reduce_direct_combat: true, increase_traps: true },

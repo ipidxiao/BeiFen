@@ -5,6 +5,7 @@
 // ===============================================
 
 import { safeJsonParse, safeJsonClone } from '../data/utils.mjs';
+import { clampSelectedCharIndex } from './selection.mjs';
 
 function _applyKpPreferenceToGameState(gameState) {
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
@@ -567,10 +568,18 @@ export const CoCStatePersistence = (function() {
                     return ok;
                 }
                 _idbLoad(fullKey).then((payload) => {
-                    if (payload) _idbCache[fullKey] = payload;
-                }).catch(() => {});
+                    if (!payload) {
+                        showToast('未找到存档。', 'warning');
+                        return;
+                    }
+                    _idbCache[fullKey] = payload;
+                    const ok = _restoreFromData(safeJsonParse(payload, null));
+                    if (ok) showToast('已从 IndexedDB 恢复存档。', 'success');
+                    else showToast('IndexedDB 存档数据无效。', 'danger');
+                }).catch(() => showToast('IndexedDB 读档失败。', 'danger'));
+                showToast('正在从 IndexedDB 加载存档…', 'info');
                 return false;
-            } catch(e) { return false; }
+            } catch (e) { return false; }
         };
 
         const deleteSave = (slotKey) => {
