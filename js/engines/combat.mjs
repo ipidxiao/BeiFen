@@ -100,17 +100,33 @@ export function attachCombatEngine(CoCEngine) {
 
     autoResolveExchange: function(attacker, defender, weapon, callbacks) {
         const result = this.resolveCombatExchange(attacker, defender, { weapon });
-        if (result.winner === 'attacker' && result.damage > 0) {
-            if (defender.isEnemy) {
-                callbacks.updateEnemy(defender.name, -result.damage, result.msg);
-            } else if (state.update_character_status) {
-                callbacks.update_character_status({ target_name: defender.name, hp_change: -result.damage });
+        const mal = this.checkMalfunction(weapon, result.res);
+        if (mal.jammed) {
+            result.msg = mal.desc;
+            result.damage = 0;
+            result.winner = 'defender';
+            return result;
+        }
+        let damage = result.damage;
+        if (result.winner === 'attacker' && damage > 0 && result.res) {
+            const impale = this.checkImpale(weapon, result.res);
+            if (impale.impaled) {
+                damage += impale.impaleDamage || 0;
+                result.msg += ` ${impale.desc}（额外 ${impale.impaleDamage} 伤）`;
+                result.damage = damage;
             }
-        } else if (result.winner === 'defender' && result.damage > 0) {
-            if (attacker.isEnemy) {
-                callbacks.updateEnemy(attacker.name, -result.damage, result.msg);
-            } else if (state.update_character_status) {
-                callbacks.update_character_status({ target_name: attacker.name, hp_change: -result.damage });
+        }
+        if (result.winner === 'attacker' && damage > 0) {
+            if (defender.isEnemy && callbacks.updateEnemy) {
+                callbacks.updateEnemy(defender.name, -damage, result.msg);
+            } else if (callbacks.update_character_status) {
+                callbacks.update_character_status({ target_name: defender.name, hp_change: -damage });
+            }
+        } else if (result.winner === 'defender' && damage > 0) {
+            if (attacker.isEnemy && callbacks.updateEnemy) {
+                callbacks.updateEnemy(attacker.name, -damage, result.msg);
+            } else if (callbacks.update_character_status) {
+                callbacks.update_character_status({ target_name: attacker.name, hp_change: -damage });
             }
         }
         return result;

@@ -1,8 +1,8 @@
 ﻿# 🌑 CoC 7th Engine — V18.1
 
 > 克苏鲁的呼唤第七版 TRPG 纯前端引擎  
-> 版本: **18.1.0**（以 `package.json` 为准）· Service Worker 缓存名 `coc-engine-v18.7`（以 `sw.js` 为准）  
-> 门禁: **27/27** smoke ✅ · deep_verify 0/179 ✅
+> 版本: **18.1.0**（以 `package.json` 为准）· Service Worker 缓存名 `coc-engine-v18.1.0-<hash>`（以 `sw.js` / `getCacheName()` 为准，含内容哈希）  
+> 门禁: **30/30** smoke ✅ · deep_verify 0/179 ✅
 
 > 工作区目录名 `CoC_Engine_V17.2_CCGS` 为历史遗留；当前发布版本以 `package.json` / README 标题为准。
 
@@ -17,7 +17,7 @@
 | 游戏数据 | 13 | 技能/物品/职业/经历/典籍/法术/理智/重伤/NPC/AI提示词等（`js/data/` 根级） |
 | 剧本 | 18 | 10 内置 + 8 可下载（含 6 个 CC 社区改编模组） |
 | CSS | ~798 行 | 21 变量 + 8 面板唯一色 + 13 keyframes + 暗黑主题 |
-| 测试 | 27 suites | VM smoke + ESM + deep_verify（`npm test`） |
+| 测试 | 30 suites | VM smoke + ESM + deep_verify（`npm test`） |
 | AI 工具 | 31 | `js/tools/definitions.mjs` 工具目录 + 9 Handler 模块 |
 | 资产 | 6 | favicon/SVG 精灵/Web Audio SFX/Canvas 骰子/PWA |
 
@@ -26,7 +26,7 @@
 ```bash
 npm run build:js      # .mjs → 浏览器 .js（改源码后必跑）
 npm run build:js:check  # CI：校验生成物无 drift
-npm test              # 27/27 全量 smoke
+npm test              # 30/30 全量 smoke
 npm run build         # 打包 ZIP（内部自动 build:js）
 npm run serve         # 本地开发服务器 :8080
 ```

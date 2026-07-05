@@ -29,8 +29,7 @@ export function character(ctx) {
                     let maxHp = c.derived.hp;
                     let halfHp = Math.floor(maxHp / 2);
                     c.hp += args.hp_change;
-                    let alertMsg = `<div class="text-start px-2 py-1">`;
-                    alertMsg += `<div class="mb-2" style="font-size: 1.05rem;">🩸 <b>[受到伤害]</b> 失去 <span class="text-white fw-bold">${dmg}</span> 点生命！(当前 ${c.hp}/${maxHp})</div>`;
+                    const statusAlert = { kind: 'hp_damage', name: c.name, dmg, hp: c.hp, maxHp, lines: [] };
                     var triggeredMajorWound = false;
                     var wound = null;
                     if (window.CoCEngine && window.CoCEngine.MajorWoundEngine) {
@@ -41,20 +40,19 @@ export function character(ctx) {
                         triggeredMajorWound = true;
                         if (!c.status) c.status = {};
                         c.status.hasMajorWound = true;
-                        alertMsg += '<div class="text-danger fw-bold mb-1 border-start border-danger border-3 ps-2">⚠️ 【重伤】部位：' + wound.location.location + ' — ' + wound.location.desc + '</div>';
-                        if (wound.unconscious) {
-                            alertMsg += '<div class="text-warning mt-1">💤 昏迷！角色失去意识。</div>';
-                        }
-                        if (wound.droppedWeapon) {
-                            alertMsg += '<div class="text-warning mt-1">🔻 武器掉落：' + wound.droppedWeapon + '</div>';
-                        }
-                        if (wound.bleeding) {
-                            alertMsg += '<div class="text-danger mt-1">🩸 内出血！需立即急救。</div>';
-                        }
+                        statusAlert.majorWound = {
+                            location: wound.location.location,
+                            desc: wound.location.desc,
+                            unconscious: !!wound.unconscious,
+                            droppedWeapon: wound.droppedWeapon || null,
+                            bleeding: !!wound.bleeding
+                        };
+                        statusAlert.lines.push(`⚠️ 【重伤】部位：${wound.location.location} — ${wound.location.desc}`);
                     } else if (dmg >= halfHp && !(c.status && c.status.hasMajorWound)) {
                         if (!c.status) c.status = {}; c.status.hasMajorWound = true;
                         triggeredMajorWound = true;
-                        alertMsg += '<div class="text-danger fw-bold mb-1 border-start border-danger border-3 ps-2">⚠️ 【重伤】单次伤害过高，遭受致命打击！</div>';
+                        statusAlert.majorWound = { generic: true };
+                        statusAlert.lines.push('⚠️ 【重伤】单次伤害过高，遭受致命打击！');
                     }
 
                     let forceCheck = null;
@@ -63,24 +61,32 @@ export function character(ctx) {
                         if (c.status && c.status.hasMajorWound) {
                             if (!c.status) c.status = {}; c.status.isDying = true;
                             var dc = window.CoCEngine && window.CoCEngine.MajorWoundEngine ? window.CoCEngine.MajorWoundEngine.dyingCheck(c) : null;
-                            alertMsg += '<div class="text-danger fw-bold mt-2 border-start border-danger border-3 ps-2">💀 【濒死】' + (dc ? dc.description : '玩家倒在血泊中，离死亡仅一步之遥。') + '</div>';
+                            statusAlert.dying = { description: dc ? dc.description : '玩家倒在血泊中，离死亡仅一步之遥。' };
+                            statusAlert.lines.push('💀 【濒死】' + statusAlert.dying.description);
                             if (dc && !dc.passed) { c.status.isDead = true; c.isActive = false; resultMsg += '玩家死亡。'; }
                             else resultMsg += '玩家濒死。';
                         } else {
                             if (!c.status) c.status = {}; c.status.isUnconscious = true;
-                            alertMsg += `<div class="text-warning fw-bold mt-2 border-start border-warning border-3 ps-2">💤 【休克】玩家因剧痛失去了意识。</div>`;
+                            statusAlert.unconscious = true;
+                            statusAlert.lines.push('💤 【休克】玩家因剧痛失去了意识。');
                             resultMsg += "玩家昏迷。";
                         }
                     } else if (triggeredMajorWound) {
-                        alertMsg += `<div class="text-warning fw-bold mt-2 border-start border-warning border-3 ps-2">⚠️ 请立刻进行体质(CON)检定以保持清醒！</div>`;
+                        statusAlert.lines.push('⚠️ 请立刻进行体质(CON)检定以保持清醒！');
                         resultMsg += "玩家重伤，系统正强制其进行体质检定。";
                         forceCheck = { skill: "体质", target: c.name };
                     } else {
                         resultMsg += "玩家受到伤害。";
                     }
 
-                    alertMsg += `</div>`;
-                    gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: alertMsg });
+                    const plainContent = `🩸 [受到伤害] ${c.name} 失去 ${dmg} 点生命（${c.hp}/${maxHp}）`;
+                    gameState.chatHistory.push({
+                        role: 'system',
+                        isLocalOnly: true,
+                        isAlert: true,
+                        statusAlert,
+                        content: plainContent
+                    });
                     addJournalEntry({ type: 'hp_loss', charName: c.name, summary: `受到 ${dmg} 点伤害（HP: ${c.hp}/${maxHp}）` });
                     if (forceCheck) return { msg: resultMsg + " 绝对禁止反悔！", forceCheck };
                 }

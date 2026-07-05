@@ -69,7 +69,7 @@ const badJson = CoCAI.validateToolArguments('update_inventory', 'not json');
 check(badJson.ok === false, 'bad JSON fails validation');
 
 // ═══ 4. Tool dispatch ═══
-const dispResult = CoCAI.dispatchToolHandler('update_inventory', { items: ['银钥匙'] });
+const dispResult = CoCAI.dispatchToolHandler('update_inventory', { items: ['银钥匙'], source: 'test_loot' });
 check(typeof dispResult === 'string', 'dispatch returns string');
 check(window.CoCState.gameState.inventory.includes('银钥匙'), 'inventory mutated');
 CoCAI.dispatchToolHandler('system_alert', { message: 'test alert' });

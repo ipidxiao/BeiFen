@@ -4,14 +4,27 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+import { safeJsonParse, safeJsonClone } from '../data/utils.mjs';
+
 function _applyKpPreferenceToGameState(gameState) {
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
     if (cfg && cfg.applyKpPreferenceToGameState) cfg.applyKpPreferenceToGameState(gameState);
 }
 
+function _loadKpPreference(moduleId) {
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    if (cfg && cfg.loadKpPreference) return cfg.loadKpPreference(moduleId);
+    return null;
+}
+
 function _saveKpPreference(moduleId, enabled) {
     const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
     if (cfg && cfg.saveKpPreference) cfg.saveKpPreference(moduleId, enabled);
+}
+
+function _kpDefaultEnabled() {
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    return (cfg && cfg.KP_ENGINE_DEFAULT_ENABLED !== undefined) ? cfg.KP_ENGINE_DEFAULT_ENABLED : true;
 }
 
 const SAVE_SCHEMA_VERSION = 7;
@@ -128,6 +141,7 @@ export const CoCStatePersistence = (function() {
                     recentInjectionTypes: [],
                     combatStrategyLog: []
                 });
+                gameState.kpEngine.enabled = _kpDefaultEnabled();
             }
             gameState.londonKpState = null;
             const sysPrompt = gameState.chatHistory.find(m => m.role === 'system' && m.isHidden);
@@ -297,7 +311,9 @@ export const CoCStatePersistence = (function() {
                         global: gameState.kpEngine.global,
                         sessionStartedAt: gameState.kpEngine.sessionStartedAt,
                         lastEventInjectionAt: gameState.kpEngine.lastEventInjectionAt,
-                        combatStrategyLog: gameState.kpEngine.combatStrategyLog
+                        combatStrategyLog: gameState.kpEngine.combatStrategyLog,
+                        scenePaths: gameState.kpEngine.scenePaths,
+                        keyClueBlockedAttempts: gameState.kpEngine.keyClueBlockedAttempts
                     }, null) : null,
                     selectedCharIndex: gameState.selectedCharIndex,
                     contextMeta: { runtimeChatMessages: gameState.chatHistory.length, savedChatMessages: chatToSave.length }
@@ -392,9 +408,17 @@ export const CoCStatePersistence = (function() {
             gameState.activeCampaign = d.activeCampaign || null;
             gameState.campaignArchive = d.campaignArchive ? safeJsonClone(d.campaignArchive, null) : null;
             gameState.londonKpState = d.londonKpState ? safeJsonClone(d.londonKpState, null) : null;
-            gameState.kpEngine = d.kpEngine ? safeJsonClone(d.kpEngine, null) : gameState.kpEngine;
+            if (d.kpEngine) {
+                const restoredKp = safeJsonClone(d.kpEngine, {});
+                if (restoredKp && typeof restoredKp === 'object') {
+                    gameState.kpEngine = restoredKp;
+                }
+            }
             if (gameState.kpEngine) {
-                _saveKpPreference(gameState.activeModuleId, gameState.kpEngine.enabled);
+                const lobbyPref = _loadKpPreference(gameState.activeModuleId);
+                if (lobbyPref !== null) {
+                    gameState.kpEngine.enabled = lobbyPref;
+                }
             }
             if (gameState.kpEngine && gameState.kpEngine.enabled && typeof window !== 'undefined' && window.KpExecutionEngine) {
                 window.KpExecutionEngine.loadLondonRulesPreset(gameState);

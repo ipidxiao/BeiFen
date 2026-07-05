@@ -218,14 +218,73 @@ function buildKnowledgePool(gameState) {
     if (gameState?.chatHistory) {
         parts.push(...gameState.chatHistory.slice(-40).map((m) => m.content || ''));
     }
-    return parts.join(' ').toLowerCase();
+    return parts.join(' ');
+}
+
+function escapeRegex(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Latin tokens use \\b; CJK terms match as contiguous substrings. */
+function termInText(haystack, term) {
+    const t = String(term || '').trim();
+    if (!t) return false;
+    const h = String(haystack || '');
+    if (/^[\x00-\x7F]+$/.test(t)) {
+        return new RegExp(`\\b${escapeRegex(t)}\\b`, 'i').test(h);
+    }
+    return h.includes(t);
+}
+
+const TECH_KNOWN_TERMS = [
+    '智能手机', '手机', '电脑', '计算机', '笔记本', '无人机', '互联网', 'WiFi', '蓝牙', 'GPS', '3D打印', 'USB', 'U盘', '硬盘',
+    'smartphone', 'internet', 'wifi', 'bluetooth', 'drone'
+];
+
+function extractFutureTechTerms(text) {
+    const terms = new Set();
+    const src = String(text || '');
+    for (const pat of FUTURE_TECH_PATTERNS) {
+        const m = src.match(pat);
+        if (m && m[0] && termInText(src, m[0])) terms.add(m[0]);
+    }
+    for (const snippet of TECH_KNOWN_TERMS) {
+        if (termInText(src, snippet)) terms.add(snippet);
+    }
+    return [...terms];
+}
+
+function textContainsFutureTech(text) {
+    return extractFutureTechTerms(text).length > 0;
 }
 
 function hasInGameKnowledgeForTech(text, gameState) {
     const pool = buildKnowledgePool(gameState);
-    const snippets = text.match(/智能手机|手机|电脑|计算机|笔记本|无人机|互联网|WiFi|蓝牙|GPS|3D打印|USB|U盘|硬盘/gi) || [];
-    if (!snippets.length) return false;
-    return snippets.some((s) => pool.includes(String(s).toLowerCase()));
+    const terms = extractFutureTechTerms(text);
+    if (!terms.length) return false;
+    return terms.some((t) => termInText(pool, t));
+}
+
+function checkEraRestriction(text, context = {}) {
+    const rules = context.rules || COC_LONDON_KP_RULES;
+    const core = rules.CORE_RULES || {};
+    if (!core.ERA_RESTRICTION || !core.ERA_RESTRICTION.forbid_future_technology) {
+        return { ok: true };
+    }
+    if (!textContainsFutureTech(text)) return { ok: true };
+    const gs = context.gameState;
+    const knowledgeGated = core.ERA_RESTRICTION.knowledge_gated !== false;
+    if (knowledgeGated && gs && hasInGameKnowledgeForTech(text, gs)) {
+        return { ok: true };
+    }
+    if (knowledgeGated) {
+        return {
+            ok: false,
+            reason: '信息不足：调查员尚无依据拥有或使用该事物',
+            code: 'KNOWLEDGE_VIOLATION'
+        };
+    }
+    return { ok: false, reason: '时代限制：该行动超出当前战役认知范围', code: 'ERA_VIOLATION' };
 }
 
 function defaultScenePaths() {
@@ -368,30 +427,19 @@ const KpExecutionEngine = {
                 }
             }
         }
-        if (core.ERA_RESTRICTION && core.ERA_RESTRICTION.forbid_future_technology) {
-            for (const pat of FUTURE_TECH_PATTERNS) {
-                if (pat.test(text)) {
-                    const gs = context.gameState;
-                    const knowledgeGated = core.ERA_RESTRICTION.knowledge_gated !== false;
-                    if (knowledgeGated && gs && hasInGameKnowledgeForTech(text, gs)) {
-                        continue;
-                    }
-                    if (knowledgeGated) {
-                        return {
-                            ok: false,
-                            reason: '信息不足：调查员尚无依据拥有或使用该事物',
-                            code: 'KNOWLEDGE_VIOLATION'
-                        };
-                    }
-                    return { ok: false, reason: '时代限制：该行动超出当前战役认知范围', code: 'ERA_VIOLATION' };
-                }
-            }
-        }
+        const eraCheck = checkEraRestriction(text, context);
+        if (!eraCheck.ok) return eraCheck;
         return { ok: true };
     },
 
     validateNarrativeLanguage(text, opts = {}) {
         return runLanguageCorrection(text, opts);
+    },
+
+    /** Soft era gate for AI narrative — flags future-tech without player knowledge. */
+    validateNarrativeEra(text, context = {}) {
+        if (!this.isEnabled(context.gameState)) return { ok: true };
+        return checkEraRestriction(text, context);
     },
 
     validateFirearmAmmo(gameState, weaponStr) {
@@ -538,6 +586,7 @@ const KpExecutionEngine = {
         const legacyDamageRe = /damage|attack|shoot|fire|hit|射击|攻击|伤害|开火/;
         const isPureDamageAction = (a) => {
             const s = String(a || '').toLowerCase();
+            if (s.includes('tactical')) return false;
             const matchesDamage = pureDamageTags.some((t) => s.includes(t)) || legacyDamageRe.test(s);
             const hasTactical = tacticalTags.some((t) => s.includes(t))
                 || fightBackTags.some((t) => s.includes(t));

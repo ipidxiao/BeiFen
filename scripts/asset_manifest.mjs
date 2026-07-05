@@ -4,6 +4,7 @@
  * Consumed by build_browser.mjs (GENERATE_PAIRS, SW ASSETS, index.html scripts),
  * verify_browser_exports.mjs, and smoke tests.
  */
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,9 +18,20 @@ export function getPackageVersion() {
     return String(pkg.version || '0.0.0');
 }
 
-/** Service Worker cache bucket name — bumped automatically on build from package.json. */
+/** Short hash of bundled asset sources — busts SW cache when content changes without version bump. */
+export function getManifestContentHash() {
+    const hash = crypto.createHash('sha256');
+    for (const [mjs] of GENERATE_PAIRS) {
+        const full = path.join(ROOT, mjs);
+        if (fs.existsSync(full) && fs.statSync(full).isFile()) hash.update(fs.readFileSync(full));
+        hash.update('\0');
+    }
+    return hash.digest('hex').slice(0, 8);
+}
+
+/** Service Worker cache bucket name — version + content hash from package.json + manifest. */
 export function getCacheName() {
-    return `coc-engine-v${getPackageVersion()}`;
+    return `coc-engine-v${getPackageVersion()}-${getManifestContentHash()}`;
 }
 
 /** [mjsRelative, jsRelative] — ESM sources transformed to browser IIFE globals. */

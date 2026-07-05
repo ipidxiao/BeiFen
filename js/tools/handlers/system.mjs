@@ -30,8 +30,12 @@ export function system(ctx) {
                 default: return `未知环境伤害类型: ${args.type}`;
             }
             if (result.damage > 0) {
-                c.hp = Math.max(0, c.hp - result.damage);
-                addJournalEntry && addJournalEntry('combat', `${c.name} 受到环境伤害: ${result.desc}`);
+                ctx.dispatch('update_character_status', {
+                    target_name: args.target_name,
+                    hp_change: -result.damage,
+                    note: result.desc || args.type
+                });
+                addJournalEntry && addJournalEntry({ type: 'combat', charName: c.name, summary: `${c.name} 受到环境伤害: ${result.desc}` });
             }
             return result;
         },
@@ -39,7 +43,7 @@ export function system(ctx) {
             const c = gameState.roster.find(r => r.name === args.target_name);
             if (!c) return `找不到目标: ${args.target_name}`;
             const r = Engine.PoisonEngine.applyPoison(c, args.potency, args.delay_rounds || 0);
-            addJournalEntry && addJournalEntry('combat', `${c.name}: ${r.desc}`);
+            addJournalEntry && addJournalEntry({ type: 'combat', charName: c.name, summary: `${c.name}: ${r.desc}` });
             return r;
         },
         bonus_penalty_roll: (args) => {
@@ -49,12 +53,13 @@ export function system(ctx) {
             if (args.bonus_dice > 0) options.bonusDice = args.bonus_dice;
             if (args.penalty_dice > 0) options.penaltyDice = args.penalty_dice;
             const result = Engine.checkSkill(args.skill_name, c, args.difficulty || 'normal', options);
+            const targetVal = result.targetValue ?? result.skillValue;
             return {
                 ...result,
                 description: `${c.name} 进行 ${args.skill_name} 检定` +
                     (args.bonus_dice ? ` (${args.bonus_dice}奖励骰)` : '') +
                     (args.penalty_dice ? ` (${args.penalty_dice}惩罚骰)` : '') +
-                    `: ${result.level} (${result.rolledValue}/${result.targetValue})`
+                    `: ${result.level} (${result.rolledValue}/${targetVal})`
             };
         },
         record_engine_log: (args) => {

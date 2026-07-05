@@ -194,7 +194,8 @@ const CoCToolDefinitions = (function() {
                 properties: {
                     name: { type: 'string', description: '敌人名称' },
                     hp_change: { type: 'number', description: '负数表示受伤（护甲前的原始伤害）' },
-                    note: { type: 'string', description: '攻击描述' }
+                    note: { type: 'string', description: '攻击描述' },
+                    combat_action: { type: 'string', description: '战斗行动标签（默认 attack:melee）' }
                 },
                 required: ['name', 'hp_change']
             }
@@ -210,6 +211,59 @@ const CoCToolDefinitions = (function() {
                     description: { type: 'string' }
                 },
                 required: ['enemy_name', 'target_name', 'damage']
+            }
+        },
+        dodge: {
+            description: '【防御】调查员闪避或寻找掩体，计入战术多样性。',
+            parameters: {
+                type: 'object',
+                properties: {
+                    actor_name: { type: 'string', description: '执行闪避的调查员' },
+                    enemy_name: { type: 'string', description: '威胁来源（可选）' },
+                    skill_name: { type: 'string', description: '检定技能（默认闪避）' },
+                    difficulty: { type: 'string', enum: ['normal', 'hard', 'extreme'], description: '检定难度' }
+                },
+                required: ['actor_name']
+            }
+        },
+        fight_back: {
+            description: '【反击】放弃闪避换取近战反击（CoC 7e fight back）。',
+            parameters: {
+                type: 'object',
+                properties: {
+                    actor_name: { type: 'string' },
+                    target_name: { type: 'string', description: '旧版兼容：同 actor_name' },
+                    enemy_name: { type: 'string' },
+                    skill_name: { type: 'string', description: '反击技能（默认斗殴）' },
+                    damage: { type: 'string', description: '反击伤害骰' }
+                },
+                required: ['actor_name', 'enemy_name']
+            }
+        },
+        disarm: {
+            description: '【战技】缴械对手。',
+            parameters: {
+                type: 'object',
+                properties: {
+                    actor_name: { type: 'string' },
+                    enemy_name: { type: 'string' },
+                    skill_name: { type: 'string' },
+                    difficulty: { type: 'string', enum: ['normal', 'hard', 'extreme'] }
+                },
+                required: ['actor_name', 'enemy_name']
+            }
+        },
+        grapple: {
+            description: '【战技】擒抱或摔跤擒拿。',
+            parameters: {
+                type: 'object',
+                properties: {
+                    actor_name: { type: 'string' },
+                    enemy_name: { type: 'string' },
+                    skill_name: { type: 'string' },
+                    difficulty: { type: 'string', enum: ['normal', 'hard', 'extreme'] }
+                },
+                required: ['actor_name', 'enemy_name']
             }
         },
         create_map: {

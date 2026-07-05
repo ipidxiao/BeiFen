@@ -91,7 +91,7 @@ export const CoCAI = (function(State, Engine) {
             for (let i = gameState.chatHistory.length - 1; i >= 0; i--) {
                 const m = gameState.chatHistory[i];
                 if (m.role === 'user') break;
-                if (m.role === 'assistant' && m.tool_calls && !m.isResolved && m.tool_calls.some(t => t.function.name === 'request_skill_check' && !t.isResolved)) {
+                if (m.role === 'assistant' && m.tool_calls && !m.isResolved && m.tool_calls.some(t => (t.function.name === 'request_skill_check' || t.function.name === 'push_skill_check') && !t.isResolved)) {
                     hasPending = true; break;
                 }
             }
@@ -192,6 +192,8 @@ export const CoCAI = (function(State, Engine) {
      */
     const narrativeListener = (text) => {
         if (!text) return;
+        if (gameState.isLoading) return;
+        if (gameState.combat && gameState.combat.active) return;
 
         for (const { re, titleIdx } of NARRATIVE_CLUE_PATTERNS) {
             const match = text.match(re);
@@ -322,7 +324,7 @@ export const CoCAI = (function(State, Engine) {
                 const kpEng = _getKpEngine();
                 const kpOn = kpEng.isEnabled && kpEng.isEnabled(gameState);
                 const langFilter = _getLanguageFilter();
-                if (langFilter && kpOn) {
+                if (langFilter) {
                     const detailed = langFilter.runDetailed ? langFilter.runDetailed(aiMsg.content) : { text: langFilter.run(aiMsg.content), ok: true };
                     if (detailed.rejected) {
                         // Policy: never show raw forbidden phrasing — apply safeFallback mask when rewrite fails.
@@ -333,7 +335,9 @@ export const CoCAI = (function(State, Engine) {
                             role: 'system',
                             isLocalOnly: true,
                             isHidden: true,
-                            content: '🚫 [KP引擎] 叙事含禁用句式，自动改写失败，已应用安全降级文本（不展示原文）。'
+                            content: kpOn
+                                ? '🚫 [KP引擎] 叙事含禁用句式，自动改写失败，已应用安全降级文本（不展示原文）。'
+                                : '🚫 [输出质量] 叙事含禁用句式，已应用安全降级文本。'
                         });
                         aiMsg.content = fallback;
                     } else {
@@ -344,13 +348,25 @@ export const CoCAI = (function(State, Engine) {
                     }
                 }
                 const outProto = _getOutputProtocol();
-                if (outProto && kpOn && outProto.restructureOrReject) {
+                if (outProto && outProto.restructureOrReject) {
                     const out = outProto.restructureOrReject(aiMsg.content, { autoFix: true });
                     if (out.restructured) {
                         aiMsg.content = out.text;
-                        gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '📝 [KP引擎] 叙事已按五段协议自动重组。' });
+                        gameState.chatHistory.push({
+                            role: 'system', isLocalOnly: true,
+                            content: kpOn ? '📝 [KP引擎] 叙事已按五段协议自动重组。' : '📝 [输出质量] 叙事已按五段协议自动重组。'
+                        });
                     } else if (!out.ok) {
                         gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isHidden: true, content: out.repromptMessage || '输出协议校验未通过' });
+                    }
+                }
+                if (kpOn && kpEng.validateNarrativeEra) {
+                    const eraCheck = kpEng.validateNarrativeEra(aiMsg.content, { gameState });
+                    if (eraCheck && !eraCheck.ok) {
+                        gameState.chatHistory.push({
+                            role: 'system', isLocalOnly: true, isHidden: true,
+                            content: `⚠️ [KP引擎] 叙事含时代违禁科技（${eraCheck.code || 'ERA'}）：${eraCheck.reason || ''}`
+                        });
                     }
                 }
             }
@@ -480,14 +496,19 @@ export const CoCAI = (function(State, Engine) {
             }
             const args = validation.args || {};
 
-            if (toolName === 'request_skill_check') {
+            if (toolName === 'request_skill_check' || toolName === 'push_skill_check') {
                 if (!hasValidToolCallId(tool)) {
-                    pushLocalToolShapeError(`#${i + 1} request_skill_check 缺少有效 tool_call_id，已忽略以避免无法回传检定结果。`);
+                    pushLocalToolShapeError(`#${i + 1} ${toolName} 缺少有效 tool_call_id，已忽略以避免无法回传检定结果。`);
                     tool.isResolved = true;
                     continue;
                 }
                 tool.target_name = args.target_name;
                 tool.skill_name = args.skill_name;
+                tool.isPushed = toolName === 'push_skill_check';
+                if (tool.isPushed) {
+                    tool.pushed_reason = args.pushed_reason;
+                    tool.difficulty = args.difficulty || 'hard';
+                }
                 needsUserAction = true;
                 continue;
             }
@@ -537,9 +558,11 @@ export const CoCAI = (function(State, Engine) {
                 return;
             }
             tool.isResolved = true; 
-            let res = Engine.checkSkill(skillName, c);
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `【${c.name}】进行【${skillName}】检定：骰出 ${res.rolledValue}/${res.skillValue}，${res.level}。` }); 
-            addJournalEntry({ type: 'skill_check', charName: c.name, summary: `${skillName} 检定 ${res.level}（${res.rolledValue}/${res.skillValue}）`, isSuccess: res.rolledValue <= res.skillValue });
+            const checkDifficulty = tool.isPushed ? (tool.difficulty || 'hard') : 'normal';
+            let res = Engine.checkSkill(skillName, c, checkDifficulty);
+            const tv = res.targetValue ?? res.skillValue;
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `【${c.name}】进行【${skillName}】检定${tool.isPushed ? '（推动·更高风险）' : ''}：骰出 ${res.rolledValue}/${tv}，${res.level}。` }); 
+            addJournalEntry({ type: 'skill_check', charName: c.name, summary: `${skillName} 检定 ${res.level}（${res.rolledValue}/${tv}）${tool.isPushed ? ' [推动]' : ''}`, isSuccess: res.rolledValue <= tv });
             
             if (res.rolledValue <= res.skillValue) {
                 if (!c.skillsUsedThisSession) c.skillsUsedThisSession = [];

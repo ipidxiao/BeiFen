@@ -47,6 +47,7 @@ const SUITES = [
     'masks_london_smoke.js',
     'kp_execution_smoke.js',
     'kp_semantics_smoke.js',
+    'audit2_smoke.js',
     'batch4_robustness_smoke.js',
   ]},
 

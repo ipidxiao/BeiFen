@@ -12,6 +12,18 @@ window.CoCToolHandlerModules = window.CoCToolHandlerModules || {};
 window.CoCToolHandlerModules.dice = function(ctx) {
     const { gameState, rollCustomDice, groupRoll } = ctx;
 
+    const getKpEng = () => {
+        if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
+        return null;
+    };
+
+    const kpDiceTick = () => {
+        const kpEng = getKpEng();
+        if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.runAntagonistTick) {
+            kpEng.runAntagonistTick(gameState, { type: 'observe' });
+        }
+    };
+
     const getSuccessLevel = (roll, skillValue) => {
         const fumbleThreshold = skillValue < 50 ? 96 : 100;
         if (roll === 1) return '大成功';
@@ -37,6 +49,7 @@ window.CoCToolHandlerModules.dice = function(ctx) {
             const lines = entry.groupResults.map(r => `・${r.name}：${r.roll}/${r.skillVal} → ${r.level}`).join('\n');
             const msg = `🎲 【群体·${args.skill_name}】\n${lines}`;
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isDiceRoll: true, content: msg });
+            kpDiceTick();
             return entry.groupResults.map(r => `${r.name}:${r.level}`).join(',');
         },
         opposed_roll: (args) => {
@@ -70,6 +83,7 @@ window.CoCToolHandlerModules.dice = function(ctx) {
             const msg = `⚔️ 【对抗·${args.label}】\n・${args.char_name}：${charRoll}/${charVal} → ${charLevelStr}\n・${args.opponent_name}：${oppRoll}/${args.opponent_value} → ${oppLevelStr}\n→ ${winner}`;
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isDiceRoll: true, content: msg });
             rollCustomDice(`1d100`, `对抗·${args.label}（${args.char_name}）`, args.char_name);
+            kpDiceTick();
             return `对抗结果：${winner} 胜出`;
         }
     };

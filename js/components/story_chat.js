@@ -22,7 +22,7 @@ window.StoryChat = {
                 <div :style="{ height: topSpacer + 'px' }"></div>
                 <div v-for="msg in visibleMessages" :key="msg._vid || 0" class="chat-msg">
                     <div v-if="msg.role === 'system' && !msg.isHidden" :class="{'madness-msg': msg.isMadness, 'alert-msg': msg.isAlert, 'sys-msg': !msg.isMadness && !msg.isAlert}">
-                        <strong v-if="!msg.isAlert">[系统]</strong> <span class="chat-content">{{ msg.content }}</span>
+                        <strong v-if="!msg.isAlert">[系统]</strong> <span class="chat-content">{{ formatChatContent(msg) }}</span>
                     </div>
                     <div v-else-if="msg.role === 'user' && !msg.isHidden" class="user-msg"><strong>[玩家]</strong> {{ msg.content }}</div>
                     <div v-else-if="msg.role === 'assistant' && msg.content" class="kp-msg"><strong>[守秘人]</strong> <span class="chat-content">{{ msg.content }}</span></div>
@@ -30,8 +30,8 @@ window.StoryChat = {
                     <div v-if="msg.tool_calls && !msg.isResolved" class="p-3 mt-2 border-start border-warning bg-dark rounded shadow-sm">
                         <strong class="text-warning fs-6">【系统判定待处理】</strong><br>
                         <div v-for="tool in msg.tool_calls" :key="tool.id">
-                            <div v-if="tool && tool.function && tool.function.name === 'request_skill_check' && !tool.isResolved" class="mt-2 text-light">
-                                👉 命运时刻：<b>{{ tool.target_name || '调查员' }}</b> 请进行 <b>{{ getSafeSkillName(tool) }}</b> 检定。
+                            <div v-if="tool && tool.function && (tool.function.name === 'request_skill_check' || tool.function.name === 'push_skill_check') && !tool.isResolved" class="mt-2 text-light">
+                                👉 命运时刻：<b>{{ tool.target_name || '调查员' }}</b> 请进行 <b>{{ getSafeSkillName(tool) }}</b> 检定<span v-if="tool.isPushed">（推动·更高风险）</span>。
                             </div>
                         </div>
                     </div>
@@ -111,6 +111,18 @@ window.StoryChat = {
             if (window.CoCScenarioRunner && window.CoCScenarioRunner.selectChoice) {
                 window.CoCScenarioRunner.selectChoice(choiceId);
             }
+        },
+        formatChatContent(msg) {
+            if (!msg) return '';
+            if (msg.statusAlert && msg.statusAlert.kind === 'hp_damage') {
+                const sa = msg.statusAlert;
+                const lines = [`🩸 ${sa.name} 失去 ${sa.dmg} 点生命（${sa.hp}/${sa.maxHp}）`];
+                if (Array.isArray(sa.lines)) lines.push(...sa.lines);
+                if (sa.majorWound && sa.majorWound.droppedWeapon) lines.push(`🔻 武器掉落：${sa.majorWound.droppedWeapon}`);
+                if (sa.majorWound && sa.majorWound.bleeding) lines.push('🩸 内出血！需立即急救。');
+                return lines.filter(Boolean).join('\n');
+            }
+            return msg.content || '';
         }
     },
     mounted() {
@@ -137,7 +149,7 @@ window.StoryChat = {
                 const msg = history[i];
                 if (msg.role === 'user') break;
                 if (msg.role === 'assistant' && msg.tool_calls && !msg.isResolved) {
-                    const tool = msg.tool_calls.find(t => t && t.function && t.function.name === 'request_skill_check' && !t.isResolved);
+                    const tool = msg.tool_calls.find(t => t && t.function && (t.function.name === 'request_skill_check' || t.function.name === 'push_skill_check') && !t.isResolved);
                     if (tool) return { tool, msg };
                 }
             }

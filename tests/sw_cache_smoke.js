@@ -2,17 +2,19 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const { pathToFileURL } = require('url');
 
 const root = path.join(__dirname, '..');
 const swSource = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
-const expectedCache = `coc-engine-v${pkg.version}`;
+async function run() {
+const { getCacheName } = await import(pathToFileURL(path.join(root, 'scripts', 'asset_manifest.mjs')).href);
+const expectedCache = getCacheName();
 
 const cacheMatch = swSource.match(/const CACHE_NAME = '([^']+)'/);
 assert(cacheMatch, 'sw.js defines CACHE_NAME');
-assert.strictEqual(cacheMatch[1], expectedCache, 'CACHE_NAME matches package.json version');
+assert.strictEqual(cacheMatch[1], expectedCache, 'CACHE_NAME matches getCacheName()');
 
 const assetsMatch = swSource.match(/const ASSETS = \[([\s\S]*?)\];/);
 assert(assetsMatch, 'sw.js defines ASSETS array');
@@ -83,3 +85,9 @@ assert(swSource.includes('isStaleWhileRevalidateAsset'), 'SW uses stale-while-re
 assert(indexHtml.includes('@generated script-tags'), 'index.html has generated script markers');
 
 console.log(`SW cache smoke: CACHE_NAME=${expectedCache}, ${assets.length} ASSETS OK; offline refs verified`);
+}
+
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

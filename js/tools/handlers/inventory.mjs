@@ -21,14 +21,19 @@ export function inventory(ctx) {
         update_inventory: (args) => {
             const kp = _kp();
             const kpOn = kp && kp.isEnabled && kp.isEnabled(gameState);
+            const source = args.source || args.acquisition_source || null;
+            if (kpOn && !source) {
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🚫 [KP引擎] 物品须有明确获取来源（source），不可默认叙事授予。' });
+                return '物品未添加：KP 开启时须指定 source';
+            }
+            const effectiveSource = source || 'narrative_grant';
             let added = [];
-            const source = args.source || args.acquisition_source || 'narrative_grant';
             (Array.isArray(args.items) ? args.items : [args.items]).forEach(i => {
                 const raw = typeof i === 'object' && i ? (i.name || i.id || '') : String(i);
                 let ci = String(raw).trim();
                 if (!ci) return;
                 if (kpOn) {
-                    const v = kp.validateItemAcquisition(ci, source);
+                    const v = kp.validateItemAcquisition(ci, effectiveSource);
                     if (!v.ok) {
                         gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `🚫 [KP引擎] 物品拒绝：${v.reason}` });
                         return;
@@ -47,7 +52,7 @@ export function inventory(ctx) {
             });
             if (added.length > 0) {
                 gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `🎒 [获得物品] ${added.join(', ')}` });
-                addJournalEntry({ type: 'item_found', summary: `获得：${added.join('、')}（来源：${source}）` });
+                addJournalEntry({ type: 'item_found', summary: `获得：${added.join('、')}（来源：${effectiveSource}）` });
             }
             return added.length ? '完成' : (kpOn ? '物品未添加（KP规则校验失败）' : '完成');
         },

@@ -90,6 +90,58 @@ window.CoCToolHandlerModules.combat = function(ctx) {
         return null;
     };
 
+    const recordKpCombatAction = (label) => {
+        const kpEng = getKpEng();
+        if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.recordCombatAction) {
+            return kpEng.recordCombatAction(gameState, label);
+        }
+        return null;
+    };
+
+    const applyEnemyDamageWithKp = (enemyName, hpChange, note, actionLabel, options = {}) => {
+        const e = gameState.combat.enemies.find(en => en.name === enemyName);
+        if (!e) return null;
+        const rawChange = Number(hpChange) || 0;
+        const skipArmor = !!options.skipArmor;
+        const actualDmg = rawChange < 0
+            ? (skipArmor ? Math.max(0, -rawChange) : Math.max(0, (-rawChange) - (e.armor || 0)))
+            : 0;
+        const kpEng = getKpEng();
+        if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && actionLabel) {
+            recordKpCombatAction(actionLabel);
+        }
+        if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && e._kpImmunity && rawChange < 0) {
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '🛡️ [KP引擎] 纯伤害策略触发敌人免疫，本次伤害无效化。' });
+            return { blocked: true, enemy: e };
+        }
+        updateEnemy(enemyName, rawChange < 0 ? -actualDmg : rawChange, note);
+        if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && e.hp <= 0) {
+            kpEng.checkAntiOneShot(gameState, e);
+        }
+        return { blocked: false, enemy: e, actualDmg };
+    };
+
+    const runManeuverCheck = (actionId, tagLabel, actorName, skillName, difficulty, enemyName) => {
+        const c = gameState.roster.find(r => r.name === actorName) || gameState.roster.find(r => r.isActive);
+        if (!c) return '错误：找不到该角色';
+        recordKpCombatAction(tagLabel);
+        const skill = skillName || (actionId === 'dodge' ? '闪避' : '斗殴');
+        const res = Engine.checkSkill(skill, c, difficulty || 'normal');
+        const tv = res.targetValue ?? res.skillValue;
+        gameState.chatHistory.push({
+            role: 'system', isLocalOnly: true, isAlert: true,
+            content: `⚔️ [${actionId}] ${c.name} ${skill} 检定：${res.level}（${res.rolledValue}/${tv}）`
+        });
+        if (enemyName) {
+            const enemy = gameState.combat.enemies.find(e => e.name === enemyName && !e.isDefeated);
+            if (enemy && res.success && actionId === 'disarm') {
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `🗡️ ${enemy.name} 被缴械！` });
+            }
+        }
+        advanceTurn();
+        return `${actionId} 检定 ${res.level}`;
+    };
+
     return {
         start_combat: (args) => {
             let enemies = args.enemies || [];
@@ -109,14 +161,13 @@ window.CoCToolHandlerModules.combat = function(ctx) {
         update_enemy: (args) => {
             const e = gameState.combat.enemies.find(en => en.name === args.name);
             if (!e) return `找不到敌人: ${args.name}`;
+            const actionLabel = args.combat_action || 'attack:melee';
             const rawChange = Number(args.hp_change) || 0;
-            const actualDmg = rawChange < 0 ? Math.max(0, (-rawChange) - (e.armor || 0)) : 0;
-            updateEnemy(args.name, rawChange < 0 ? -actualDmg : rawChange, args.note);
-            const kpEng = getKpEng();
-            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && e.hp <= 0) {
-                kpEng.checkAntiOneShot(gameState, e);
-            }
-            const msg = rawChange < 0 ? pushEnemyDamageNotice(e, actualDmg) : `${args.name} HP 已更新（HP: ${e.hp}/${e.maxHp}）`;
+            const outcome = applyEnemyDamageWithKp(args.name, rawChange, args.note, rawChange < 0 ? actionLabel : null);
+            if (!outcome) return `找不到敌人: ${args.name}`;
+            if (outcome.blocked) return `${args.name} 免疫本次伤害（KP纯伤害策略）`;
+            const actualDmg = outcome.actualDmg || 0;
+            const msg = rawChange < 0 ? pushEnemyDamageNotice(outcome.enemy, actualDmg) : `${args.name} HP 已更新（HP: ${outcome.enemy.hp}/${outcome.enemy.maxHp}）`;
             return msg;
         },
         enemy_attack: (args) => {
@@ -153,6 +204,11 @@ window.CoCToolHandlerModules.combat = function(ctx) {
                 gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚠️ ${c.name} 背包中没有匹配「${ammoType || '该枪型'}」的弹药！` });
                 return '开火失败：背包无匹配弹药。';
             }
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.handleFirearmAttempt) {
+                const firearmCheck = kpEng.handleFirearmAttempt({ gameState });
+                const blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
+                if (blockedMsg) return blockedMsg;
+            }
             if (ammo > 0) {
                 const remaining = spendAmmo(weaponStr, 1, ammoType);
                 if (remaining != null) {
@@ -163,31 +219,18 @@ window.CoCToolHandlerModules.combat = function(ctx) {
                 }
                 gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚠️ 砰！${c.name} 开火 [消耗 1 发子弹，背包剩余 ${ammo} 发]` });
             }
-            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.handleFirearmAttempt) {
-                const firearmCheck = kpEng.handleFirearmAttempt({ gameState });
-                const blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
-                if (blockedMsg) return blockedMsg;
-            }
             const weaponObj = {
                 name: weaponBase,
+                type: 'firearm',
+                malfunction: '00',
                 skill: weaponStr.includes('步枪') ? '步枪' : (weaponStr.includes('霰弹') ? '霰弹枪' : (weaponStr.includes('冲锋') ? '冲锋枪' : '手枪')),
                 damage: args.damage || '1D6'
             };
             const result = Engine.CombatEngine.autoResolveExchange(c, enemy, weaponObj, {
                 updateEnemy: (name, hp, note) => {
-                    updateEnemy(name, hp, note);
-                    const updated = gameState.combat.enemies.find(e => e.name === name);
-                    const kpEng = getKpEng();
-                    if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState)) {
-                        kpEng.recordCombatAction(gameState, 'attack:fire_weapon');
-                        if (updated && updated._kpImmunity && hp < 0) {
-                            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '🛡️ [KP引擎] 纯伤害策略触发敌人免疫，本次伤害无效化。' });
-                            updated.hp = Math.max(updated.hp, 1);
-                            return;
-                        }
-                        if (updated && hp < 0) kpEng.checkAntiOneShot(gameState, updated);
-                    }
-                    if (updated && hp < 0) pushEnemyDamageNotice(updated, -hp);
+                    const outcome = applyEnemyDamageWithKp(name, hp, note, 'attack:fire_weapon:tactical', { skipArmor: true });
+                    const updated = outcome && outcome.enemy;
+                    if (updated && hp < 0 && !outcome.blocked) pushEnemyDamageNotice(updated, outcome.actualDmg);
                 },
                 update_character_status: (handlerArgs) => ctx.dispatch('update_character_status', handlerArgs)
             });
@@ -249,32 +292,53 @@ window.CoCToolHandlerModules.combat = function(ctx) {
                 var firearmCheck = kpEng.handleFirearmAttempt({ gameState });
                 var blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
                 if (blockedMsg) {
-                    ammo = spendAmmo(weaponStr, rounds, ammoType);
-                    if (ammo == null) {
-                        ammo -= rounds;
-                        writeAmmo(c, ammo, weaponBase);
-                    }
-                    gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + c.name + ' 连射 [' + rounds + ' 发] [背包剩余弹药:' + ammo + ']' });
                     advanceTurn();
                     return blockedMsg;
                 }
             }
-            var result = Engine.CombatEngine.resolveBurstFire(c, enemy, weaponObj, rounds, mode);
-
             var remaining = spendAmmo(weaponStr, rounds, ammoType);
             if (remaining != null) ammo = remaining;
             else {
                 ammo -= rounds;
                 writeAmmo(c, ammo, weaponBase);
             }
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + c.name + ' 连射 [' + rounds + ' 发] [背包剩余弹药:' + ammo + ']' });
 
-            // Apply damage to enemy
+            var result = Engine.CombatEngine.resolveBurstFire(c, enemy, weaponObj, rounds, mode);
+            recordKpCombatAction('attack:fire_weapon:tactical');
+
             if (result.totalDamage > 0) {
-                ctx.updateEnemy(enemy.name, -result.totalDamage, result.description);
+                var dmgOutcome = applyEnemyDamageWithKp(enemy.name, -result.totalDamage, result.description, null, { skipArmor: true });
+                if (dmgOutcome && dmgOutcome.blocked) {
+                    gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '🛡️ [KP引擎] 纯伤害策略触发敌人免疫，连射伤害无效化。' });
+                }
             }
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + result.description + ' [背包剩余弹药:' + ammo + ']' });
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + result.description });
             advanceTurn();
             return result.description;
+        },
+        dodge: (args) => {
+            return runManeuverCheck('dodge', 'survive:dodge', args.actor_name, args.skill_name, args.difficulty, args.enemy_name);
+        },
+        fight_back: (args) => {
+            const c = gameState.roster.find(r => r.name === (args.actor_name || args.target_name)) || gameState.roster.find(r => r.isActive);
+            const enemy = gameState.combat.enemies.find(e => e.name === args.enemy_name && !e.isDefeated);
+            if (!c || !enemy) return '错误：找不到角色或敌人';
+            recordKpCombatAction('fight_back:counter');
+            const weaponObj = { skill: args.skill_name || '斗殴', damage: args.damage || '1D3' };
+            const result = Engine.CombatEngine.resolveCombatExchange(c, enemy, { weapon: weaponObj, action: 'counter', counterSkill: args.skill_name || '斗殴', counterDamage: args.damage || '1D3' });
+            if (result.winner === 'defender' && result.damage > 0) {
+                applyEnemyDamageWithKp(enemy.name, -result.damage, result.msg, null, { skipArmor: true });
+            }
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '⚔️ ' + result.msg });
+            advanceTurn();
+            return result.msg;
+        },
+        disarm: (args) => {
+            return runManeuverCheck('disarm', 'disarm:缴械', args.actor_name, args.skill_name, args.difficulty, args.enemy_name);
+        },
+        grapple: (args) => {
+            return runManeuverCheck('grapple', 'grapple:擒抱', args.actor_name, args.skill_name, args.difficulty, args.enemy_name);
         }
     };
 };
