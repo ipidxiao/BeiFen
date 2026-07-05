@@ -123,9 +123,10 @@ export const StoryClues = {
 
               <!-- WEB VIEW -->
               <div v-if="viewMode==='web'" class="flex-grow-1 overflow-auto" style="position:relative;">
-                  <div v-if="gameState.clueBoard.clues.length===0" class="text-center py-5 text-muted" style="font-size:0.82rem;">
-                      <div style="font-size:2rem;opacity:0.25;">✦</div>
-                      <div style="margin-top:8px;">尚无线索可显示</div>
+                  <div v-if="gameState.clueBoard.clues.length===0" class="empty-state">
+                      <coc-icon name="clues" :size="40" class="empty-state-icon"></coc-icon>
+                      <div class="empty-state-title">尚未发现任何线索</div>
+                      <div class="empty-state-hint">调查员发现证据时，AI 会自动记录到此处</div>
                   </div>
                   <svg v-if="gameState.clueBoard.clues.length > 0" :width="webW" :height="webH" :viewBox="'0 0 '+webW+' '+webH" style="width:100%;height:auto;display:block;background:#07070e;">
                       <g v-for="(link, i) in gameState.clueBoard.links" :key="'lk'+i">

@@ -11,6 +11,7 @@
     "merge:dry": "python merge.py --dry-run",
     "merge:report": "python merge.py --conflict-report",
     "build": "python build.py",
+    "icons:pwa": "node scripts/generate_pwa_icons.mjs",
     "build:js": "node scripts/build_browser.mjs",
     "build:js:check": "node scripts/build_browser.mjs --check && node scripts/verify_browser_exports.mjs",
     "ci:smoke": "node scripts/ci_smoke.mjs",

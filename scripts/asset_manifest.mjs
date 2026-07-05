@@ -265,6 +265,7 @@ export const SW_STATIC_EXTRAS = [
     '/manifest.json',
     '/favicon.svg',
     '/css/icons.svg',
+    '/icons/icon-180.png',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
     '/icons/icon-512-maskable.png',

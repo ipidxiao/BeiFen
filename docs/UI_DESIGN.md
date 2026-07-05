@@ -40,7 +40,7 @@ Stroke-based SVG sprite with semantic symbol ids (`icon-dice`, `icon-character`,
 
 Renders `<use href="./css/icons.svg#icon-dice">`. Equipment slots map through `EQUIP_SLOT_ICON_IDS`; journal log types use `journalIconId(type)`. Chat system messages keep emoji where inline SVG is awkward.
 
-Regenerate PWA raster icons: `node scripts/generate_pwa_icons.mjs` (requires `sharp` or ImageMagick).
+Regenerate PWA raster icons: `npm run icons:pwa` (requires `sharp` or ImageMagick). Outputs `icon-180.png` (iOS `apple-touch-icon` in `index.html`), `icon-192.png`, `icon-512.png`, and maskable 512.
 
 ## Empty states (`.empty-state`)
 

@@ -58,7 +58,7 @@ window.CoCItemDB.canReplace = function(existing, newcomer) {
 // ═══════════════════════════════════════════════════════
 export const StoryEquip = {
     template: `
-        <div class="apex-equip-panel story-equip-panel">
+        <div class="apex-equip-panel story-equip-panel coc-panel-card">
             <!-- 装备槽 HUD -->
             <div class="apex-slots">
                 <div v-for="slot in slots" :key="slot.id" 

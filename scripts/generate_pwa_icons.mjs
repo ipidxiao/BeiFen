@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Generate PWA icons (192, 512) from favicon.svg.
- * Uses sharp when available; falls back to a minimal rasterizer via resvg-wasm-free path.
+ * Generate PWA icons (180, 192, 512) from favicon.svg.
+ * 180×180 is used for iOS apple-touch-icon; 192/512 for manifest + SW cache.
+ * Uses sharp when available; falls back to ImageMagick.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -13,7 +14,7 @@ const ROOT = path.join(__dirname, '..');
 const ICONS_DIR = path.join(ROOT, 'icons');
 const SVG_PATH = path.join(ROOT, 'favicon.svg');
 
-const SIZES = [192, 512];
+const SIZES = [180, 192, 512];
 
 async function withSharp() {
     const sharp = (await import('sharp')).default;
