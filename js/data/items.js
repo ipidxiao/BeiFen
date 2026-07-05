@@ -462,3 +462,4 @@ function parseItemData(itemString) {
 
   return { type: 'misc', name: itemString, rawName: itemString, count: count };
 };
+window.parseItemData = parseItemData;

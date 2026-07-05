@@ -84,3 +84,4 @@ function generateNpcFromTemplate(templateName, overrides) {
 
     return npc;
 };
+window.generateNpcFromTemplate = generateNpcFromTemplate;

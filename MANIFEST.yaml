@@ -79,14 +79,20 @@ roles:
       - js/data/logger.mjs
       - js/data/utils.js
       - js/data/utils.mjs
-      - js/char_creator.js
-      - js/char_creator.mjs
       - js/app.js
       - js/app.mjs
       - js/chat_export.js
       - js/chat_export.mjs
       - sw.js
-      - src-tauri/
+      - scripts/build_browser.mjs
+      - js/scenario/store.mjs
+      - js/scenario/store.js
+      - js/scenario/runner.mjs
+      - js/scenario/runner.js
+      - js/data/scenarios/remote_catalog.mjs
+      - js/data/scenarios/remote_catalog.js
+      - js/data/scenarios/catalog.mjs
+      - js/data/scenarios/catalog.js
 
   # ─────────────── 美术 (6 文件) ───────────────
   artist:
@@ -116,8 +122,6 @@ roles:
       - js/data/skills.mjs
       - js/data/items.js
       - js/data/items.mjs
-      - js/data/items_db.js
-      - js/data/items_db.mjs
       - js/data/experiences.js
       - js/data/experiences.mjs
       - js/data/dev_logs.js

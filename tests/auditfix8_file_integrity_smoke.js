@@ -26,12 +26,9 @@ assert(!fs.existsSync(path.join(root, 'js/context_manager.js')), 'legacy root co
 
 const WORKER_FILES = new Set(["js/ai/worker.js", "js/ai/worker_client.js"]);
 const LOADED_ENGINE_SCRIPTS = new Set(localScripts.filter(s => s.startsWith('js/engines/')));
-// Architecture: items_db.js merged into items.js; kept as thin backward-compat wrapper, not loaded in release
-const THIN_WRAPPERS = new Set(["js/data/items_db.js"]);
 const missing = jsFiles.filter(file => {
   if (localScripts.includes(file)) return false;
   if (WORKER_FILES.has(file)) return false;
-  if (THIN_WRAPPERS.has(file)) return false;
   // P0-2 engine splits on disk; coc.js remains authoritative until wired into index.html
   if (file.startsWith('js/engines/') && !LOADED_ENGINE_SCRIPTS.has(file)) return false;
   return true;

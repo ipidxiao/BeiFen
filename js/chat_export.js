@@ -9,7 +9,7 @@
  * Chat Export Utilities — copy & export conversation.
  * Attached to CoCState for global access from any view.
  */
-const ChatExport = {
+window.ChatExport = {
     /**
      * Copy all visible chat messages to clipboard as plain text.
      */
