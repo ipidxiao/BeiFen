@@ -47,9 +47,8 @@ window.StoryCombat = {
                   <div class="px-3 pt-2 pb-1" style="flex-shrink:0;">
                       <div class="text-danger fw-bold mb-2 combat-section-title">敌 方</div>
                       <div v-for="enemy in gameState.combat.enemies" :key="enemy.id"
-                          class="mb-2 p-2 rounded"
-                          :class="enemy.isDefeated ? 'defeated' : ''"
-                          :style="!enemy.isDefeated ? 'background:#1a0808;border:1px solid #5a1a1a' : 'background:#0a0a0a;border:1px solid #222'">
+                          class="mb-2 p-2 rounded combat-enemy-card"
+                          :class="enemy.isDefeated ? 'defeated' : ''">
                           <div class="d-flex justify-content-between align-items-start mb-1">
                               <div>
                                   <span class="fw-bold combat-enemy-name" :class="enemy.isDefeated ? 'defeated' : ''">{{ enemy.name }}</span>

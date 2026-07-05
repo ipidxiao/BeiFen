@@ -13,8 +13,8 @@ window.StoryChat = {
         <div class="d-flex flex-column flex-grow-1 overflow-hidden p-2">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div>
-                    <h6 class="text-warning m-0">📍 {{ gameState.currentLocation }}</h6>
-                    <div v-if="scenarioModeLabel" class="badge mt-1" style="background:#2a2200;color:#ffc107;font-size:0.65rem;">{{ scenarioModeLabel }}</div>
+                    <h6 class="text-warning m-0 chat-location-header">📍 {{ gameState.currentLocation }}</h6>
+                    <div v-if="scenarioModeLabel" class="badge mt-1 chat-mode-badge">{{ scenarioModeLabel }}</div>
                 </div>
                 <div><button class="btn btn-outline-info btn-sm" @click="showModal('map')">🗺️ 地图</button></div>
             </div>
@@ -28,7 +28,7 @@ window.StoryChat = {
                     <div v-else-if="msg.role === 'user' && !msg.isHidden" class="user-msg"><strong>[玩家]</strong> {{ msg.content }}</div>
                     <div v-else-if="msg.role === 'assistant' && msg.content" class="kp-msg"><strong>[守秘人]</strong> <span class="chat-content">{{ msg.content }}</span></div>
                     
-                    <div v-if="msg.tool_calls && !msg.isResolved" class="p-3 mt-2 border-start border-warning bg-dark rounded shadow-sm">
+                    <div v-if="msg.tool_calls && !msg.isResolved" class="p-3 mt-2 border-start border-warning bg-dark rounded shadow-sm chat-pending-check">
                         <strong class="text-warning fs-6">【系统判定待处理】</strong><br>
                         <div v-for="tool in msg.tool_calls" :key="tool.id">
                             <div v-if="tool && tool.function && (tool.function.name === 'request_skill_check' || tool.function.name === 'push_skill_check') && !tool.isResolved" class="mt-2 text-light">
@@ -38,7 +38,7 @@ window.StoryChat = {
                     </div>
                 </div>
                 <div :style="{ height: bottomSpacer + 'px' }"></div>
-                <div v-if="gameState.isLoading" style="color: #f0ad4e; font-size: 13px;">守秘人正在推演中...</div>
+                <div v-if="gameState.isLoading" class="chat-loading">守秘人正在推演中...</div>
             </div>
             
             <div v-if="getPendingCheck()" class="d-grid mb-1">

@@ -13,11 +13,11 @@ window.ViewLobby = {
               <!-- ===== 模组选择界面 ===== -->
               <div v-if="gameState.currentScreen === 'modules'" class="card card-custom p-3 shadow-sm">
                   <div class="text-center mb-4">
-                      <h3 class="text-warning mb-1">📚 模组管理</h3>
-                      <div class="text-muted small">每个模组拥有独立的角色队伍与剧情存档</div>
+                      <h3 class="coc-section-title mb-1">📚 模组管理</h3>
+                      <div class="coc-section-subtitle">每个模组拥有独立的角色队伍与剧情存档</div>
                   </div>
 
-                  <div v-for="mod in modules" :key="mod.id" class="mb-3 p-3 border rounded" :style="mod.id === gameState.activeModuleId ? 'border-color:#ffc107!important;background:#1a1400;' : 'border-color:#444;background:#111;'">
+                  <div v-for="mod in modules" :key="mod.id" class="mb-3 p-3 border rounded lobby-mod-card" :class="mod.id === gameState.activeModuleId ? 'active' : ''">
                       <!-- 重命名输入态 -->
                       <div v-if="editingModId === mod.id" class="d-flex gap-2 mb-1">
                           <input class="form-control form-control-sm bg-dark text-light border-secondary flex-grow-1" v-model="editingModName" @keyup.enter="confirmRename(mod.id)" placeholder="模组名称">
@@ -56,11 +56,11 @@ window.ViewLobby = {
 
               <!-- ===== 大厅界面 ===== -->
               <div v-if="gameState.currentScreen === 'lobby'" class="card card-custom p-3 shadow-sm text-center">
-                  <h3 class="text-warning mb-1">模组大厅</h3>
-                  <div class="text-muted small mb-4" v-if="currentModName">📚 {{ currentModName }}</div>
+                  <h3 class="coc-section-title mb-1">模组大厅</h3>
+                  <div class="coc-section-subtitle mb-4" v-if="currentModName">📚 {{ currentModName }}</div>
 
                   <!-- 自动存档快速恢复 -->
-                  <div v-if="autoSave" class="mb-3 p-2 border border-warning rounded text-start" style="background:#1a1400;">
+                  <div v-if="autoSave" class="mb-3 p-2 border border-warning rounded text-start lobby-autosave-banner">
                       <div class="d-flex justify-content-between align-items-center">
                           <div>
                               <div class="text-warning fw-bold small">🔄 检测到自动存档</div>
@@ -71,17 +71,17 @@ window.ViewLobby = {
                       </div>
                   </div>
 
-                  <button class="btn btn-warning fw-bold mb-3 p-3 w-100" @click="switchScreen('character')">👥 调查员小队管理</button>
-                  <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold" @click="openScenarios">📜 本地剧本模式</button>
-                  <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold" @click="openScenarioStore">📚 模组库</button>
-                  <button class="btn btn-outline-info mb-3 p-3 w-100" @click="switchScreen('settings')">⚙️ AI 引擎设置</button>
-                  <div class="mb-3 p-3 border rounded text-start" :class="gameState.kpEngine?.enabled ? 'border-warning' : 'border-secondary'" style="background:#111;">
+                  <button class="btn btn-warning fw-bold mb-3 p-3 w-100 lobby-action-btn" @click="switchScreen('character')">👥 调查员小队管理</button>
+                  <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold lobby-action-btn" @click="openScenarios">📜 本地剧本模式</button>
+                  <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold lobby-action-btn" @click="openScenarioStore">📚 模组库</button>
+                  <button class="btn btn-outline-info mb-3 p-3 w-100 lobby-action-btn" @click="switchScreen('settings')">⚙️ AI 引擎设置</button>
+                  <div class="mb-3 p-3 border rounded text-start lobby-kp-panel" :class="gameState.kpEngine?.enabled ? 'active border-warning' : 'border-secondary'">
                       <div class="form-check form-switch mb-2">
                           <input class="form-check-input" type="checkbox" id="kpEngineToggle" :checked="gameState.kpEngine?.enabled" @change="toggleKpEngine($event)">
                           <label class="form-check-label text-warning fw-bold" for="kpEngineToggle">⚙️ KP 协议引擎</label>
                       </div>
                       <div class="text-muted" style="font-size:0.72rem;">规则在代码层强制执行（行动校验、缩放、输出协议等）。与战役存档独立，可单独开启。</div>
-                      <div v-if="gameState.kpEngine?.enabled" class="text-info mt-2" style="font-size:0.72rem;">
+                      <div v-if="gameState.kpEngine?.enabled" class="lobby-kp-stats mt-2">
                           注意力 {{ gameState.londonKpState?.ATTENTION_LEVEL ?? gameState.kpEngine?.global?.attention ?? 0 }} ·
                           战力 {{ gameState.londonKpState?.PLAYER_POWER ?? gameState.kpEngine?.global?.playerPower ?? 0 }} ·
                           阶段 {{ gameState.londonKpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}
@@ -101,7 +101,7 @@ window.ViewLobby = {
                       <button class="btn btn-outline-secondary btn-sm" @click="switchScreen('lobby')">← 返回</button>
                   </div>
                   <div class="text-muted small mb-3">无需 AI 与网络，由内置剧本驱动剧情。首次在线加载后完全离线可玩。Chaosium 商业模组请自行取得授权后按 JSON 格式导入（见 README）。</div>
-                  <div v-for="sc in scenarios" :key="sc.id" class="mb-3 p-3 border rounded" style="border-color:#555;background:#111;">
+                  <div v-for="sc in scenarios" :key="sc.id" class="mb-3 p-3 border rounded lobby-scenario-card">
                       <div class="fw-bold text-warning">{{ sc.title }}</div>
                       <div v-if="sc.subtitle" class="text-info small">{{ sc.subtitle }}</div>
                       <div class="text-muted small mt-1">{{ sc.description }}</div>
@@ -268,20 +268,20 @@ window.ViewLobby = {
               </div>
 
               <!-- ===== AI 设置界面 ===== -->
-              <div v-if="gameState.currentScreen === 'settings'" class="card card-custom p-3 shadow-sm">
-                  <h3 class="text-warning mb-3">AI 引擎设置</h3>
-                  <div class="mb-3"><label class="form-label" style="color:#cccccc;">接口地址</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl"></div>
-                  <div class="mb-3"><label class="form-label" style="color:#cccccc;">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey"></div>
-                  <div class="mb-3"><label class="form-label" style="color:#cccccc;">模型名称</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model"></div>
+              <div v-if="gameState.currentScreen === 'settings'" class="card card-custom p-3 shadow-sm settings-panel">
+                  <h3 class="coc-section-title mb-3">AI 引擎设置</h3>
+                  <div class="mb-3"><label class="form-label">接口地址</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl"></div>
+                  <div class="mb-3"><label class="form-label">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey"></div>
+                  <div class="mb-3"><label class="form-label">模型名称</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model"></div>
                   <div class="mb-3">
-                      <label class="form-label" style="color:#cccccc;">守秘人难度</label>
-                      <select class="form-select bg-dark text-light border-secondary" v-model="gameState.aiSettings.difficultyPreset" @change="onDifficultyPresetChange($event)">
+                      <label class="form-label">守秘人难度</label>
+                      <select class="form-select bg-dark text-light border-secondary settings-difficulty-select" v-model="gameState.aiSettings.difficultyPreset" @change="onDifficultyPresetChange($event)">
                           <option value="merciful">仁慈 — 宽容线索与判定</option>
                           <option value="standard">标准 — CoC 7e 默认</option>
                           <option value="brutal">致命 — 残酷后果</option>
                           <option value="divine_war">神战 — 神话战争级严苛模式</option>
                       </select>
-                      <div v-if="gameState.aiSettings.difficultyPreset === 'divine_war' && !gameState.kpEngine?.enabled" class="alert alert-warning py-2 small mt-2 mb-0" style="font-size:0.72rem;line-height:1.4;">
+                      <div v-if="gameState.aiSettings.difficultyPreset === 'divine_war' && !gameState.kpEngine?.enabled" class="alert alert-warning py-2 small mt-2 mb-0 settings-difficulty-hint">
                           ⚠️ 神战预设建议启用 KP 协议引擎（大厅开关），以获得注意力、敌对组织与五段输出协议的完整 enforcement。
                       </div>
                   </div>
@@ -304,10 +304,10 @@ window.ViewLobby = {
                           <div class="d-flex justify-content-between align-items-start">
                               <div>
                                   <strong class="text-warning">{{ char.name }}</strong>
-                                  <span v-if="char.jobName" class="badge ms-1" style="background:#3a3a4a; color:#cccccc;">{{ char.jobName }}</span>
+                                  <span v-if="char.jobName" class="badge ms-1 badge-job">{{ char.jobName }}</span>
                                   <span v-if="char.isInsane" class="badge bg-danger ms-1">疯狂</span><br>
-                                  <span class="badge bg-danger me-1">HP: {{ char.hp }}</span>
-                                  <span class="badge me-1" style="background:#1a5a6a; color:#b0e8f0;">SAN: {{ char.sanity }}</span>
+                                  <span class="badge badge-hp me-1">HP: {{ char.hp }}</span>
+                                  <span class="badge badge-san me-1">SAN: {{ char.sanity }}</span>
                                   <span class="badge" style="background:#3a3a4a; color:#cccccc;">STR: {{ char.attrs.STR }}</span>
                               </div>
                               <div class="d-flex flex-column align-items-end gap-1">

@@ -78,6 +78,10 @@ CoC 7e combat action taxonomy (`COC_7E_COMBAT_ACTIONS` in `masks_london_kp_rules
 
 See [AUDIT3_BATCHES.md — Enforcement 诚实性](AUDIT3_BATCHES.md#enforcement-诚实性--wontfix--按设计) for audit disposition.
 
+## UI design
+
+Visual tokens, chat/combat/lobby patterns, and awesome-design-md inspiration are documented in [UI_DESIGN.md](UI_DESIGN.md).
+
 ## Testing & E2E flow smoke
 
 | Entry | Purpose |
