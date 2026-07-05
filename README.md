@@ -2,7 +2,7 @@
 
 > 克苏鲁的呼唤第七版 TRPG 纯前端引擎  
 > 版本: **18.1.0**（以 `package.json` 为准）· Service Worker 缓存名 `coc-engine-v18.1.0-<hash>`（以 `sw.js` / `getCacheName()` 为准，含内容哈希）  
-> 门禁: **34/34** smoke ✅ · deep_verify 0/179 ✅
+> 门禁: **35/35** smoke ✅ · deep_verify 0/179 ✅
 
 > 工作区目录名 `CoC_Engine_V17.2_CCGS` 为历史遗留；当前发布版本以 `package.json` / README 标题为准。
 
@@ -14,20 +14,20 @@
 |------|------|------|
 | JS 引擎 | 100 | `js/` 下 `.js` 浏览器脚本（含 `build:js` 生成物） |
 | ESM 模块 | 98 | `js/` 下 `.mjs` 权威源码 → `npm run build:js` 生成 `.js` |
-| 游戏数据 | 26 | 技能/物品/职业/经历/典籍/法术/理智/重伤/NPC/AI提示词等（`js/data/` 根级） |
+| 游戏数据 | 13 | 技能/物品/职业/经历/典籍/法术/理智/重伤/NPC/AI提示词等（`js/data/` 根级） |
 | 剧本 | 18 | 10 内置 + 8 可下载（含 CC 社区改编模组） |
-| CSS | ~850 行 | 21 变量 + 8 面板唯一色 + 13 keyframes + 暗黑主题 |
-| 测试 | 34 suites | VM smoke + ESM + deep_verify（`npm test`） |
+| CSS | ~850 行 | style.css 行数（变量/面板色/keyframes/暗黑主题） |
+| 测试 | 35 suites | VM smoke + ESM + deep_verify（`npm test`） |
 | AI 工具 | 35 | `js/tools/definitions.mjs` 工具目录 + 9 Handler 模块 |
-| 组件 | 18 | `js/components/*.mjs` Vue 面板组件 |
-| 资产 | 6 | favicon/SVG 精灵/Web Audio SFX/Canvas 骰子/PWA |
+| 组件 | 15 | `js/components/*.mjs` Vue 面板（不含 3 个 UI helper） |
+| 资产 | 7 | favicon/SVG 精灵/Web Audio SFX/Canvas/PWA 等（动态统计） |
 
 ## 🚀 快速开始
 
 ```bash
 npm run build:js      # .mjs → 浏览器 .js（改源码后必跑）
 npm run build:js:check  # CI：校验生成物无 drift
-npm test              # 34/34 全量 smoke
+npm test              # 35/35 全量 smoke
 npm run stats:readme  # 重新生成 README 包内容统计（--write 写回）
 npm run build         # 打包 ZIP（内部自动 build:js）
 npm run serve         # 本地开发服务器 :8080
