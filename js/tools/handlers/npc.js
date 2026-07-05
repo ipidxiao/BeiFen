@@ -12,11 +12,22 @@ window.CoCToolHandlerModules = window.CoCToolHandlerModules || {};
 window.CoCToolHandlerModules.npc = function(ctx) {
     const { gameState, addJournalEntry, addNpc, updateNpcStatus } = ctx;
 
+    const getKpEng = () => {
+        const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+        if (cfg && typeof cfg.getKpEngine === 'function') return cfg.getKpEngine();
+        if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
+        return null;
+    };
+
     return {
         register_npc: (args) => {
             addNpc({ name: args.name, description: args.description, relation: args.relation, status: args.status || 'alive' });
             addJournalEntry({ type: 'npc_met', charName: null, summary: `初遇 NPC：${args.name}（${args.relation}）` });
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `🕵️ [NPC登录] ${args.name} — ${args.relation}` });
+            const kpEng = getKpEng();
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.applySocialInfiltration) {
+                kpEng.applySocialInfiltration(gameState, { type: 'register', name: args.name });
+            }
             return `已记录 ${args.name}`;
         },
         update_npc_status: (args) => {
@@ -25,6 +36,10 @@ window.CoCToolHandlerModules.npc = function(ctx) {
             if (!ok) return `找不到NPC: ${args.name}`;
             addJournalEntry({ type: 'npc_status', summary: `${args.name} 状态变为：${statusLabels[args.status] || args.status}` });
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: args.status === 'dead', content: `${args.status === 'dead' ? '☠️' : '🔄'} [${statusLabels[args.status] || args.status}] ${args.name}${args.note ? '：' + args.note : ''}` });
+            const kpEng = getKpEng();
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.applySocialInfiltration) {
+                kpEng.applySocialInfiltration(gameState, { type: 'update', name: args.name });
+            }
             return `${args.name} 状态已更新`;
         }
     };

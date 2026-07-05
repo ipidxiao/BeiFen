@@ -56,3 +56,40 @@ Local `vendor/pdf.min.js` is preferred; CDN fallback (`cdnjs.cloudflare.com`) is
 ## Difficulty presets
 
 Canonical id for the KP / 神战 tier: **`divine_war`**. Legacy id `masks_london_kp` resolves via `DIFFICULTY_PRESET_ALIASES` in `ai_prompt_config.mjs`.
+
+## Combat interaction model: offline menu vs online dialogue
+
+CoC 7e combat action taxonomy (`COC_7E_COMBAT_ACTIONS` in `masks_london_kp_rules.mjs`) defines the **official action palette** — categories, tags, and UI quick-action labels. It is **guidance**, not a per-round engine gate.
+
+| Mode | Primary interaction | Role of action menu |
+|------|---------------------|---------------------|
+| **Offline / no network** | Quick actions in `story_combat` UI (`StoryCombat.quickAction`) | **Primary** — player picks from the CoC 7e menu; text is sent as player input |
+| **Online / with AI** | Free-form dialogue and player-described actions in `story_chat` | **Optional reference** — taxonomy helps AI/KP prompts and quick buttons; engine resolves outcomes via tools/handlers |
+
+**What the engine does enforce (separate concern):**
+
+- `recordCombatAction` + pure-damage tracking → `IF_damage_only_strategy` enemy immunity when KP is enabled (`kp_execution_engine.mjs`, `combat.mjs` handlers). This anti–pure-damage rule is **not** the same as forcing the full menu each round.
+- Combat handlers (`fire_weapon`, `dodge`, `grapple`, etc.) return structured results regardless of whether the player used a quick button or free text.
+
+**What the engine does *not* enforce:**
+
+- Presenting or acknowledging the full action menu every round (`COMBAT_SYSTEM.REQUIRE.narrative_acknowledge_options`, `tactical_diversity` in KP rules) — advisory for prompts/UI, not a hard validator.
+- Blocking free-text actions that do not map to a menu category id.
+
+See [AUDIT3_BATCHES.md — Enforcement 诚实性](AUDIT3_BATCHES.md#enforcement-诚实性--wontfix--按设计) for audit disposition.
+
+## KP enforcement inventory (engine-enforced)
+
+| Rule | Module | KP required? | Notes |
+|------|--------|:------------:|-------|
+| Language filter (`CoCLanguageFilter`) | `ai_logic.mjs` | No | Global output quality |
+| Narrative era strip (`validateNarrativeEra`) | `kp_execution_engine.mjs` + `ai_logic.mjs` | No | Same pattern as language filter |
+| Output protocol restructure | `output_protocol.mjs` + `ai_logic.mjs` | No | Five-phase tags |
+| `DOOM_CLOCK` ticks | `kp_execution_engine.mjs` | Yes | Attention+, time, key clue, mythos, combat win, ambush; cap 24 |
+| `ATTENTION` / `PLAYER_POWER` / phase | `kp_execution_engine.mjs` | Yes | Combat, clues, mythos |
+| Pure-damage combat immunity | `recordCombatAction` | Yes | Not full-menu enforcement |
+| Reality distortion (ATTENTION≥9) | `handleFirearmAttempt` | Yes | bullet_fail / spatial_error |
+| Antagonist misinfo / ambush / social infiltration | `runAntagonistTick`, `applySocialInfiltration` | Yes | `adaptStrategy` weights drive rolls |
+| Clue path gate (3 paths) | `canAddClue`, `evaluateKeyClueRequest` | Yes | |
+| Firearm ammo gate | `validateFirearmAmmo` | Yes | |
+| **Combat full menu each round** | — | — | **wontfix** — see [Combat interaction model](#combat-interaction-model-offline-menu-vs-online-dialogue) |

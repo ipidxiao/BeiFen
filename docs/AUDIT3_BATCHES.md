@@ -61,8 +61,31 @@
 
 ---
 
+## Enforcement 诚实性 — wontfix / 按设计
+
+审计曾标注「规则写在 KP 里但未每回合强制」类 gap。下列项为 **intentional design**，非待修复 enforcement 漏洞（同类见一轮 [AUDIT-P1-06](AUDIT_BATCHES.md) KP bottom-layer）。
+
+| 状态 | 主题 | 说明 |
+|:----:|------|------|
+| [-] | **战斗全菜单强制** (`COC_7E_COMBAT_ACTIONS`) | **wontfix / 按设计**：行动分类为可选菜单指引与 prompt/UI 参考；**离线**时 `story_combat` 快速指令为主互动，**联网**时自由描述为主、引擎经 tools/handlers 反馈结果。不每回合强制展示或校验全菜单。`recordCombatAction` 纯伤害免疫等与「强制全菜单」无关，仍保留。详见 [ARCHITECTURE.md — Combat interaction model](ARCHITECTURE.md#combat-interaction-model-offline-menu-vs-online-dialogue)。 |
+
+---
+
 ## 变更日志
 
 | 日期 | 批次 | 说明 |
 |------|------|------|
+| 2026-07-05 | — | 文档：战斗全菜单强制 → wontfix（离线菜单 / 联网自由描述设计澄清） |
+| 2026-07-05 | Post | PARTIAL→DONE：DOOM_CLOCK 多事件 tick、叙事时代 KP-off 剥离、adaptStrategy 引擎接线；战斗菜单 wontfix 归档 |
 | 2026-07-05 | A–E | 三轮审计全批完成；31/31 smoke；新增 audit3_smoke.js |
+
+---
+
+## Post-completion — enforcement gaps closed
+
+| 状态 | ID / 主题 | 说明 | 验证 |
+|:----:|-----------|------|------|
+| [x] | AUDIT3-P2-02 **expanded** | `DOOM_CLOCK` — attention+, time passage, key clue, mythos, combat win, ambush; cap 24; sync global | audit3_smoke P2-02b–d ✓ |
+| [x] | AUDIT3-P3-02 **expanded** | `validateNarrativeEra` runs KP-off (global output quality); degraded ellipsis → single reprompt hint | audit3_smoke P3-02b ✓ |
+| [x] | AUDIT3-P3-07 **expanded** | `adaptStrategy` weights → misinfo/ambush/combat_counter/socialInfiltration engine wiring | audit3_smoke P3-07 ✓ |
+| [-] | **战斗全菜单强制** | **wontfix** — 离线快速指令 / 联网自由描述；见 Batch E enforcement 表 | ARCHITECTURE.md ✓ |

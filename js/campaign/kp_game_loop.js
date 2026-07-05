@@ -83,6 +83,9 @@ function injectTimedEvent(gameState) {
         });
     }
     KpExecutionEngine.runAntagonistTick(gameState, { type: pick === 'clue' ? 'clue' : 'investigate' });
+    if (KpExecutionEngine.advanceGameTime) {
+        KpExecutionEngine.advanceGameTime(gameState, { minutes: 30, reason: 'game_loop' });
+    }
     const clueCheck = checkCluePaths(gameState.clueBoard && gameState.clueBoard.clues);
     if (clueCheck.suggestion && gameState.chatHistory) {
         gameState.chatHistory.push({

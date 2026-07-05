@@ -80,6 +80,7 @@ window.CoCToolHandlerModules.clues = function(ctx) {
                     }
                 }
                 kpEng.updateAttention(gameState, 1, 'key_clue');
+                if (kpEng.tickDoomClock) kpEng.tickDoomClock(gameState, 'key_clue');
             }
             const ok = markClueStatus(args.id, args.status, args.note);
             return ok ? `线索状态已更新：${args.id} → ${args.status}` : `找不到线索：${args.id}`;

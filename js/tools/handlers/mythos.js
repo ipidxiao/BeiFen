@@ -13,6 +13,13 @@ window.CoCToolHandlerModules.mythos = function(ctx) {
     var gameState = ctx.gameState;
     var addJournalEntry = ctx.addJournalEntry;
 
+    const getKpEng = () => {
+        const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+        if (cfg && typeof cfg.getKpEngine === 'function') return cfg.getKpEngine();
+        if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
+        return null;
+    };
+
     return {
         study_tome: (args) => {
             var Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
@@ -45,6 +52,10 @@ window.CoCToolHandlerModules.mythos = function(ctx) {
                 addJournalEntry({ type: 'spell_learned', charName: c.name, summary: '学会了' + result.spellsLearned.length + '个法术：' + result.spellsLearned.join('、') });
             }
             addJournalEntry({ type: 'tome_study', charName: c.name, summary: result.description });
+            const kpEng = getKpEng();
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.runAntagonistTick) {
+                kpEng.runAntagonistTick(gameState, { type: 'mythos' });
+            }
             return result.description;
         },
         cast_spell: (args) => {

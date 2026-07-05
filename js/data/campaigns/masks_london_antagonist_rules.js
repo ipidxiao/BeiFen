@@ -78,8 +78,8 @@ const ANTAGONIST_AI_RULES = {
     },
 
     ADAPTIVE_STRATEGY: {
-        // Advisory weights for AI prompt injection — not hard engine enforcement.
-        _note: 'Strategy weights in adaptStrategy() are narrative hints for the KP model; engine only enforces combat immunity / reality distortion.',
+        // Weights from adaptStrategy() drive engine ticks (misinfo/ambush/social infiltration) plus AI prompt hints.
+        _note: 'Strategy weights partially drive engine: misinformation corrupt chance, ambush/combat_counter on investigate & combat_win, socialInfiltration marks _kpCompromised on friendly NPCs. Combat immunity / reality distortion remain separate enforcement.',
         INPUT: ['player_success_rate', 'player_combat_focus', 'player_social_behavior'],
         LOGIC: {
             IF_players_win_combat_often: { reduce_direct_combat: true, increase_traps: true },

@@ -154,6 +154,40 @@ async function run() {
     assert(eraOut.ok === false, 'P3-02: era violation detected');
     assert(!eraOut.text.includes('智能手机'), 'P3-02: forbidden term stripped');
 
+    setKpEngineEnabled(gs, false);
+    const eraKpOff = KpExecutionEngine.validateNarrativeEra(eraBad, { gameState: gs });
+    assert(eraKpOff.ok === false, 'P3-02b: era strip runs when KP off');
+    assert(!eraKpOff.text.includes('智能手机'), 'P3-02b: forbidden term stripped when KP off');
+    setKpEngineEnabled(gs, true);
+
+    gs.londonKpState.DOOM_CLOCK = 0;
+    gs.kpEngine.global.doomClock = 0;
+    KpExecutionEngine.advanceGameTime(gs, { hours: 1, reason: 'test' });
+    assert(gs.londonKpState.DOOM_CLOCK >= 1, 'P2-02b: DOOM_CLOCK ticks on time advance');
+    assert.strictEqual(gs.kpEngine.global.doomClock, gs.londonKpState.DOOM_CLOCK, 'P2-02b: doom synced to global');
+
+    gs.londonKpState.DOOM_CLOCK = 20;
+    gs.kpEngine.global.doomClock = 20;
+    KpExecutionEngine.tickDoomClock(gs, 'cap_test', 10);
+    assert.strictEqual(gs.londonKpState.DOOM_CLOCK, 24, 'P2-02c: DOOM_CLOCK capped at 24');
+
+    gs.londonKpState.DOOM_CLOCK = 0;
+    gs.kpEngine.global.doomClock = 0;
+    KpExecutionEngine.runAntagonistTick(gs, { type: 'mythos' });
+    assert(gs.londonKpState.DOOM_CLOCK >= 2, 'P2-02d: mythos tick advances DOOM_CLOCK');
+
+    gs.londonKpState.antagonist.ALERT_LEVEL = 8;
+    gs.londonKpState.antagonist.KNOWLEDGE_LEVEL = 7;
+    gs.kpEngine.combatStrategyLog = ['attack:fire', 'attack:melee', '射击', 'grapple'];
+    const strat = KpExecutionEngine.adaptStrategy(gs);
+    assert(strat.weights.combatCounter >= 0.6, 'P3-07: combatCounter weight high when combat-focused');
+    gs.npcRegistry.push({ name: 'Ally', relation: '盟友', status: 'alive' });
+    const origRandom = Math.random;
+    Math.random = () => 0.01;
+    const infil = KpExecutionEngine.applySocialInfiltration(gs, { type: 'test' });
+    Math.random = origRandom;
+    assert(infil && gs.npcRegistry.some((n) => n._kpCompromised), 'P3-07: socialInfiltration marks _kpCompromised');
+
     const noTome = mythosHandlers.study_tome({ target_name: 'A', tome_name: 'necronomicon' });
     assert(noTome.includes('未持有'), 'P3-09: rejects study without tome: ' + noTome);
     gs.inventory.push('死灵之书');

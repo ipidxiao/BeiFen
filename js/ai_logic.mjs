@@ -353,14 +353,25 @@ export const CoCAI = (function(State, Engine) {
                         gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isHidden: true, content: out.repromptMessage || '输出协议校验未通过' });
                     }
                 }
-                if (kpOn && kpEng.validateNarrativeEra) {
+                if (kpEng.validateNarrativeEra) {
                     const eraCheck = kpEng.validateNarrativeEra(aiMsg.content, { gameState });
                     if (eraCheck && !eraCheck.ok) {
                         if (eraCheck.text) aiMsg.content = eraCheck.text;
                         gameState.chatHistory.push({
                             role: 'system', isLocalOnly: true, isHidden: true,
-                            content: `⚠️ [KP引擎] 叙事含时代违禁科技（${eraCheck.code || 'ERA'}）：${eraCheck.reason || ''}（已剥离违禁词）`
+                            content: kpOn
+                                ? `⚠️ [KP引擎] 叙事含时代违禁科技（${eraCheck.code || 'ERA'}）：${eraCheck.reason || ''}（已剥离违禁词）`
+                                : `⚠️ [输出质量] 叙事含时代违禁科技（${eraCheck.code || 'ERA'}）：${eraCheck.reason || ''}（已剥离违禁词）`
                         });
+                        if (kpEng.isEraStripDegraded && kpEng.isEraStripDegraded(aiMsg.content) && !gameState._eraRepromptAttempted) {
+                            gameState._eraRepromptAttempted = true;
+                            gameState.chatHistory.push({
+                                role: 'system', isLocalOnly: true, isHidden: true,
+                                content: kpOn
+                                    ? '🔄 [KP引擎] 时代违禁词过多，建议下一轮重新生成叙事（单次提示）。'
+                                    : '🔄 [输出质量] 时代违禁词过多，建议下一轮重新生成叙事（单次提示）。'
+                            });
+                        }
                     }
                 }
             }

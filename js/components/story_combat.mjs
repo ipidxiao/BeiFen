@@ -23,7 +23,7 @@ export const StoryCombat = {
                   <div class="px-3 py-2 text-center combat-turn-banner">
                       <div class="text-warning fw-bold combat-turn-label">现在行动：{{ currentTurnName }}</div>
                       <div v-if="currentTurnIsEnemy" class="text-danger small">敌人回合 — 等待守秘人裁定</div>
-                      <div v-else class="text-light small">输入行动指令，或选择快速行动</div>
+                      <div v-else class="text-light small">联网：自由描述行动 · 离线：选下方快速指令</div>
                   </div>
 
                   <!-- Initiative Order (collapsible) -->
@@ -85,7 +85,7 @@ export const StoryCombat = {
 
                   <!-- Quick Actions -->
                   <div class="px-3 pb-2 border-top border-secondary pt-2 combat-actions-bar">
-                      <div class="text-muted mb-2 combat-actions-label">快速指令（CoC 7e 行动菜单 — 点击后发送）</div>
+                      <div class="text-muted mb-2 combat-actions-label" title="离线主互动；联网时可自由描述，菜单为可选参考">快速指令（CoC 7e · 离线主互动 / 联网可自由描述）</div>
                       <div class="d-flex flex-wrap gap-1">
                           <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我向最近的敌人发起近战攻击！')">🗡️ 近战</button>
                           <button class="btn btn-sm btn-outline-warning py-0 px-2 combat-quick-btn" @click="quickAction('我开枪射击！')">🔫 射击</button>

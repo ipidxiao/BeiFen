@@ -436,12 +436,19 @@ const KpExecutionEngine = {
         return runLanguageCorrection(text, opts);
     },
 
-    /** Soft era gate for AI narrative — flags or strips future-tech without player knowledge. */
+    /** Soft era gate for AI narrative — flags or strips future-tech without player knowledge (KP on or off). */
     validateNarrativeEra(text, context = {}) {
-        if (!this.isEnabled(context.gameState)) return { ok: true, text };
         const check = checkEraRestriction(text, context);
         if (check.ok) return { ok: true, text };
         return { ...check, text: this.stripNarrativeEra(text, context) };
+    },
+
+    /** True when era strip left too many ellipsis placeholders for readable narrative. */
+    isEraStripDegraded(text) {
+        const t = String(text || '');
+        const ellipsisCount = (t.match(/……/g) || []).length;
+        if (ellipsisCount >= 3) return true;
+        return t.length > 0 && (ellipsisCount * 2) / t.length > 0.15;
     },
 
     stripNarrativeEra(text, context = {}) {
@@ -500,6 +507,50 @@ const KpExecutionEngine = {
         };
     },
 
+    tickDoomClock(gameState, reason, delta = 1) {
+        if (!this.isEnabled(gameState)) return 0;
+        const st = this.getGlobalState(gameState);
+        const kp = ensureKpEngine(gameState);
+        const d = Math.max(0, Number(delta) || 0);
+        if (d <= 0) return st.DOOM_CLOCK || 0;
+        st.DOOM_CLOCK = clamp((st.DOOM_CLOCK || 0) + d, 0, 24);
+        kp.global.doomClock = st.DOOM_CLOCK;
+        return st.DOOM_CLOCK;
+    },
+
+    advanceGameTime(gameState, opts = {}) {
+        if (!this.isEnabled(gameState)) return null;
+        const st = this.getGlobalState(gameState);
+        const hours = Number(opts.hours) || 0;
+        const minutes = Number(opts.minutes) || 0;
+        const totalMin = hours * 60 + minutes;
+        if (totalMin <= 0) return st.TIME || null;
+        if (!st.TIME) st.TIME = buildLondonKpTime();
+        const hourStr = String(st.TIME.hour || '0:00');
+        const match = hourStr.match(/(\d+):(\d+)/);
+        let h = 0;
+        let m = 0;
+        if (match) {
+            h = parseInt(match[1], 10);
+            m = parseInt(match[2], 10);
+        }
+        let combined = h * 60 + m + totalMin;
+        const dayAdvance = Math.floor(combined / (24 * 60));
+        combined %= 24 * 60;
+        if (dayAdvance > 0 && st.TIME.date) {
+            try {
+                const d = new Date(st.TIME.date);
+                d.setDate(d.getDate() + dayAdvance);
+                st.TIME.date = d.toISOString().slice(0, 10);
+            } catch (_) { /* keep date unchanged */ }
+        }
+        const nh = Math.floor(combined / 60);
+        const nm = combined % 60;
+        st.TIME.hour = `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}`;
+        this.tickDoomClock(gameState, opts.reason || 'time_passage');
+        return st.TIME;
+    },
+
     updateAttention(gameState, delta, reason) {
         if (!this.isEnabled(gameState)) return 0;
         const st = this.getGlobalState(gameState);
@@ -511,8 +562,7 @@ const KpExecutionEngine = {
         st.ATTENTION_LEVEL = clamp((st.ATTENTION_LEVEL || 0) + adjusted, 0, 10);
         kp.global.attention = st.ATTENTION_LEVEL;
         if (adjusted > 0) {
-            st.DOOM_CLOCK = clamp((st.DOOM_CLOCK || 0) + 1, 0, 24);
-            kp.global.doomClock = st.DOOM_CLOCK;
+            this.tickDoomClock(gameState, reason || 'attention', 1);
         }
         if (st.ATTENTION_LEVEL >= 7) st.hunt.active = true;
         if (st.ATTENTION_LEVEL >= 9) st.reality.active = true;
@@ -865,17 +915,51 @@ const KpExecutionEngine = {
         };
     },
 
+    applySocialInfiltration(gameState, npcEvent = {}) {
+        if (!this.isEnabled(gameState)) return null;
+        const strat = this.adaptStrategy(gameState);
+        const w = strat?.weights?.socialInfiltration || 0;
+        if (w < 0.6) return null;
+        const registry = gameState.npcRegistry || [];
+        const friendly = registry.filter((n) => n && n.status === 'alive' && !n._kpCompromised
+            && /友|同盟|ally|friend|信任|联络|informant|合作/i.test(String(n.relation || '')));
+        if (!friendly.length) return null;
+        const chance = 0.25 + w * 0.35;
+        if (Math.random() >= chance) return null;
+        const pick = friendly[Math.floor(Math.random() * friendly.length)];
+        pick._kpCompromised = true;
+        if (gameState.chatHistory) {
+            gameState.chatHistory.push({
+                role: 'system',
+                isLocalOnly: true,
+                isHidden: true,
+                content: `🕵️ [KP引擎] 社交渗透（${npcEvent.type || 'npc'}）——${pick.name} 已被标记 _kpCompromised。`
+            });
+        }
+        return { compromised: pick.name, npc: pick, weight: w };
+    },
+
     runAntagonistTick(gameState, event) {
         if (!this.isEnabled(gameState)) return null;
         const st = this.getGlobalState(gameState);
         const kp = ensureKpEngine(gameState);
         const ant = st.antagonist;
         const ev = event || {};
-        const result = { antagonist: { ...ant }, misinformation: false, corruptedClue: null, falseEvidence: null, ambush: false };
+        const strat = this.adaptStrategy(gameState);
+        const weights = strat?.weights || {};
+        const result = {
+            antagonist: { ...ant },
+            strategy: strat,
+            misinformation: false,
+            corruptedClue: null,
+            falseEvidence: null,
+            ambush: false
+        };
 
         if (ev.type === 'clue') {
             ant.ALERT_LEVEL = clamp(ant.ALERT_LEVEL + 1, 0, 10);
-            const corruptChance = ant.ALERT_LEVEL >= 5 ? 0.7 : 0.4;
+            const baseChance = ant.ALERT_LEVEL >= 5 ? 0.7 : 0.4;
+            const corruptChance = Math.min(0.95, baseChance + (weights.misinformation || 0) * 0.15);
             if (Math.random() < corruptChance) {
                 ev.misinformation = true;
                 result.misinformation = true;
@@ -892,13 +976,24 @@ const KpExecutionEngine = {
         if (ev.type === 'observe') ant.KNOWLEDGE_LEVEL = clamp(ant.KNOWLEDGE_LEVEL + 1, 0, 10);
         if (ev.type === 'intel') ant.KNOWLEDGE_LEVEL = clamp(ant.KNOWLEDGE_LEVEL + 2, 0, 10);
         if (ev.type === 'combat_win') {
-            ant.ALERT_LEVEL = clamp(ant.ALERT_LEVEL + 1, 0, 10);
+            const alertBoost = (weights.combatCounter || 0) >= 0.6 ? 1 : 0;
+            ant.ALERT_LEVEL = clamp(ant.ALERT_LEVEL + 1 + alertBoost, 0, 10);
             this.updateAttention(gameState, 1, '战斗胜利');
+            this.tickDoomClock(gameState, 'combat_victory');
         }
-        if (ev.type === 'mythos') this.updateAttention(gameState, 2, '神话接触');
+        if (ev.type === 'mythos') {
+            this.updateAttention(gameState, 2, '神话接触');
+            this.tickDoomClock(gameState, 'mythos_contact');
+        }
 
+        let ambushChance = 0;
         if (ant.ALERT_LEVEL >= 7 && ev.type === 'investigate') {
-            result.ambush = Math.random() < 0.35;
+            ambushChance = 0.35 + (weights.ambush || 0) * 0.2;
+            if ((weights.combatCounter || 0) >= 0.6) ambushChance += 0.15;
+        }
+        if (ambushChance > 0) {
+            result.ambush = Math.random() < Math.min(0.85, ambushChance);
+            if (result.ambush) this.tickDoomClock(gameState, 'antagonist_ambush');
         }
         if (ant.ALERT_LEVEL >= 5 && ev.misinformation) {
             result.falseEvidence = { type: 'forged_document', note: '敌对组织植入伪造证据' };

@@ -76,6 +76,16 @@ export const COC_LONDON_KP_RULES = {
         TIME: { date: null, hour: null, environment: { entropy_increment: 0 } },
         PHASE: 'CALM',
         DOOM_CLOCK: 0,
+        /** Engine-driven doom escalation (cap 24); mirrored to kpEngine.global.doomClock */
+        DOOM_CLOCK_DRIVERS: {
+            attention_positive: '+1 per positive ATTENTION delta (updateAttention)',
+            time_passage: '+1 when advanceGameTime / KpGameLoop advances clock',
+            key_clue: '+1 when mark_clue_status sets status=key',
+            mythos_contact: '+1 on mythos antagonist tick (study_tome / cast_spell)',
+            combat_victory: '+1 on combat_win antagonist tick',
+            antagonist_ambush: '+1 when ambush roll succeeds on investigate',
+            cap: 24
+        },
         ATTENTION_LEVEL: 0,
         PLAYER_POWER: 0
     },
@@ -185,13 +195,17 @@ export const COC_LONDON_KP_RULES = {
 
 /**
  * CoC 7e combat action taxonomy — global KP protocol (not campaign-specific).
- * Categories mirror the official action palette; tags drive engine validation.
+ * Categories mirror the official action palette; tags drive recordCombatAction / anti-damage-only checks.
+ *
+ * Interaction model (not engine-enforced each round):
+ * - Offline: story_combat quick actions are the primary player input path.
+ * - Online: free-form dialogue is primary; this taxonomy is optional menu guidance for UI/prompts.
  */
 export const COC_7E_COMBAT_ACTIONS = {
     GUIDANCE: {
         narrativeFlex: true,
         antiDamageOnly: true,
-        note: 'Present the full action menu each round; pure damage spam without tactical diversity triggers enemy immunity.'
+        note: 'Optional menu guidance — offline quick actions primary, online free dialogue primary. Pure damage spam still triggers enemy immunity via recordCombatAction.'
     },
     CATEGORIES: [
         {
