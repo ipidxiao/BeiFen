@@ -4,6 +4,17 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+/** @returns {boolean} Canonical default lives in js/state/kp_config.mjs */
+function _kpDefaultEnabled() {
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    return (cfg && cfg.KP_ENGINE_DEFAULT_ENABLED !== undefined) ? cfg.KP_ENGINE_DEFAULT_ENABLED : true;
+}
+
+function _applyKpPreferenceToGameState(gameState) {
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    if (cfg && cfg.applyKpPreferenceToGameState) cfg.applyKpPreferenceToGameState(gameState);
+}
+
 /**
  * CoC State Core — reactive state definitions + basic UI navigation.
  *
@@ -33,6 +44,18 @@ export const CoCStateCore = (function(Vue) {
         aiSettings: { baseUrl: "https://api.deepseek.com/chat/completions", apiKey: "", model: "deepseek-chat", difficultyPreset: "standard" },
         atmosphere: { level: 'calm', note: '' },
         scenarioRunner: { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null },
+        activeCampaign: null,
+        campaignArchive: null,
+        kpEngine: {
+            enabled: _kpDefaultEnabled(),
+            systemName: 'COC_LONDON_KP_ENGINE_V2',
+            global: { attention: 0, playerPower: 0, phase: 'CALM', doomClock: 0, alertLevel: 0, knowledgeLevel: 0 },
+            rules: null,
+            sessionStartedAt: null,
+            lastEventInjectionAt: null,
+            combatStrategyLog: []
+        },
+        londonKpState: null,
         selectedCharIndex: 0,
         ui: { toasts: [], confirmDialog: null },
         storageStatus: { usedBytes: 0, quotaBytes: 5 * 1024 * 1024, usedRatio: 0, currentSaveBytes: 0, projectedBytes: 0, projectedRatio: 0, warning: '', lastCheckedAt: null }
@@ -50,6 +73,8 @@ export const CoCStateCore = (function(Vue) {
         skillAllocations: {}, expPackage: null, sanPenalty: 0, stImportText: "",
         backstory: { description: "", ideology: "", significantPeople: "", meaningfulLocations: "", treasuredPossessions: "", traits: "", injuries: "", phobias: "", encounters: "" }
     });
+
+    _applyKpPreferenceToGameState(gameState);
 
     if (gameState.chatHistory.length === 0) {
         gameState.chatHistory.push({

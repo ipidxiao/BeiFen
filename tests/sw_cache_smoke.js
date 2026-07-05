@@ -1,4 +1,4 @@
-// Service Worker cache version, asset completeness, and offline readiness smoke
+// Service Worker cache version, asset manifest sync, and offline readiness smoke
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
@@ -6,10 +6,13 @@ const assert = require('assert');
 const root = path.join(__dirname, '..');
 const swSource = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+
+const expectedCache = `coc-engine-v${pkg.version}`;
 
 const cacheMatch = swSource.match(/const CACHE_NAME = '([^']+)'/);
 assert(cacheMatch, 'sw.js defines CACHE_NAME');
-assert.strictEqual(cacheMatch[1], 'coc-engine-v18.5', 'CACHE_NAME bumped for offline asset refresh');
+assert.strictEqual(cacheMatch[1], expectedCache, 'CACHE_NAME matches package.json version');
 
 const assetsMatch = swSource.match(/const ASSETS = \[([\s\S]*?)\];/);
 assert(assetsMatch, 'sw.js defines ASSETS array');
@@ -52,7 +55,7 @@ for (const ref of uniqueRefs) {
 }
 
 // Vendor bundle completeness
-for (const vendor of ['vue.global.prod.js', 'bootstrap.min.css', 'chart.min.js']) {
+for (const vendor of ['vue.global.prod.js', 'bootstrap.min.css', 'chart.min.js', 'pdf.min.js', 'pdf.worker.min.js']) {
   assert(fs.existsSync(path.join(root, 'vendor', vendor)), `vendor/${vendor} present`);
 }
 
@@ -64,7 +67,7 @@ assert(
 const cdnScripts = [...indexHtml.matchAll(/https?:\/\/[^"']+/g)].map((m) => m[0]);
 for (const url of cdnScripts) {
   assert(
-    url.includes('unpkg.com/vue') || url.includes('cdn.jsdelivr.net/npm/chart'),
+    url.includes('unpkg.com/vue') || url.includes('cdn.jsdelivr.net/npm/chart') || url.includes('cdnjs.cloudflare.com/ajax/libs/pdf.js'),
     `CDN URL is Vue/Chart conditional fallback only: ${url}`
   );
 }
@@ -74,5 +77,9 @@ assert(
   'activate handler evicts stale caches'
 );
 assert(swSource.includes('unpkg.com'), 'fetch handler skips unpkg CDN');
+assert(swSource.includes('isStaleWhileRevalidateAsset'), 'SW uses stale-while-revalidate for static code assets');
 
-console.log(`SW cache smoke: CACHE_NAME and ${assets.length} ASSETS OK; offline refs verified`);
+// index.html script block must use manifest markers
+assert(indexHtml.includes('@generated script-tags'), 'index.html has generated script markers');
+
+console.log(`SW cache smoke: CACHE_NAME=${expectedCache}, ${assets.length} ASSETS OK; offline refs verified`);

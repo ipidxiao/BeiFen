@@ -12,6 +12,32 @@ window.CoCToolHandlerModules = window.CoCToolHandlerModules || {};
 window.CoCToolHandlerModules.combat = function(ctx) {
     const { gameState, Engine, addJournalEntry, startCombat, endCombat, updateEnemy, advanceTurn } = ctx;
 
+    const getKpEng = () => {
+        const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+        if (cfg && typeof cfg.getKpEngine === 'function') return cfg.getKpEngine();
+        if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
+        if (typeof window !== 'undefined' && window.CoCLondonKpEngine) return window.CoCLondonKpEngine;
+        return null;
+    };
+
+    const applyFirearmRealityBlock = (firearmCheck, shooter, enemyName) => {
+        if (!firearmCheck || !firearmCheck.blocked) return null;
+        gameState.chatHistory.push({
+            role: 'system',
+            isLocalOnly: true,
+            isAlert: true,
+            content: '现实扭曲：弹道未生效（引擎判定）'
+        });
+        const reasonLabel = firearmCheck.reason === 'spatial_error' ? '空间错位' : '弹道失效';
+        addJournalEntry({
+            type: 'combat',
+            charName: shooter.name,
+            summary: `现实扭曲：${reasonLabel} — 对 ${enemyName || '目标'} 开火无效`,
+            _realityDistortion: true
+        });
+        return `开火失败：现实扭曲（${reasonLabel}）`;
+    };
+
     const pushEnemyDamageNotice = (enemy, actualDmg) => {
         if (!enemy) return '';
         const damage = Math.max(0, Number(actualDmg) || 0);
@@ -48,10 +74,31 @@ window.CoCToolHandlerModules.combat = function(ctx) {
         }
     };
 
+    const readBackpackAmmo = (weaponStr) => {
+        const kpEng = getKpEng();
+        if (!kpEng || !kpEng.inferAmmoType || !kpEng.countBackpackAmmo) return null;
+        const ammoType = kpEng.inferAmmoType(weaponStr);
+        if (!ammoType) return null;
+        return { ammoType, count: kpEng.countBackpackAmmo(gameState, ammoType) };
+    };
+    const spendAmmo = (weaponStr, amount, ammoType) => {
+        const kpEng = getKpEng();
+        if (kpEng && kpEng.consumeBackpackAmmo && ammoType) {
+            kpEng.consumeBackpackAmmo(gameState, ammoType, amount);
+            return kpEng.countBackpackAmmo(gameState, ammoType);
+        }
+        return null;
+    };
+
     return {
         start_combat: (args) => {
-            startCombat(args.enemies || [], args.location, args.notes);
-            const names = (args.enemies || []).map(e => e.name).join('、');
+            let enemies = args.enemies || [];
+            const kp = getKpEng();
+            if (kp && kp.isEnabled && kp.isEnabled(gameState)) {
+                enemies = kp.onCombatStart(gameState, enemies);
+            }
+            startCombat(enemies, args.location, args.notes);
+            const names = enemies.map(e => e.name).join('、');
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚔️ [战斗开始] 敌人：${names}。战斗界面已激活，请查看战斗面板！` });
             return `战斗已开始，敌人：${names}`;
         },
@@ -65,6 +112,10 @@ window.CoCToolHandlerModules.combat = function(ctx) {
             const rawChange = Number(args.hp_change) || 0;
             const actualDmg = rawChange < 0 ? Math.max(0, (-rawChange) - (e.armor || 0)) : 0;
             updateEnemy(args.name, rawChange < 0 ? -actualDmg : rawChange, args.note);
+            const kpEng = getKpEng();
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && e.hp <= 0) {
+                kpEng.checkAntiOneShot(gameState, e);
+            }
             const msg = rawChange < 0 ? pushEnemyDamageNotice(e, actualDmg) : `${args.name} HP 已更新（HP: ${e.hp}/${e.maxHp}）`;
             return msg;
         },
@@ -89,18 +140,33 @@ window.CoCToolHandlerModules.combat = function(ctx) {
             const namedEnemy = args.enemy_name ? gameState.combat.enemies.find(e => e.name === args.enemy_name && !e.isDefeated) : null;
             if (args.enemy_name && !namedEnemy) return `找不到敌人: ${args.enemy_name}`;
             const enemy = namedEnemy || gameState.combat.enemies.find(e => !e.isDefeated) || { name: '未知敌人', hp: 10, maxHp: 10, isEnemy: true };
-            // Ammo is tracked in structured c.equipment.ammo; the [弹药:N] tag is kept in sync for compatibility.
+            const kpEng = getKpEng();
+            // Ammo: backpack inventory match by gun type (no chambered-state requirement)
             let weaponStr = (c.equipment || {}).weapon || '';
+            const inferredAmmoType = (kpEng && kpEng.inferAmmoType) ? kpEng.inferAmmoType(weaponStr) : null;
             const weaponBase = weaponStr.split('[')[0].trim() || '武器';
-            let ammo = readAmmo(c);
-            if (weaponStr.includes('枪') && ammo <= 0) {
-                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚠️ ${c.name} 的枪膛是空的！` });
-                return '开火失败：没有子弹。';
+            const backpackAmmo = readBackpackAmmo(weaponStr);
+            let ammo = backpackAmmo ? backpackAmmo.count : readAmmo(c);
+            const ammoType = backpackAmmo ? backpackAmmo.ammoType : inferredAmmoType;
+            const isFirearm = !!inferredAmmoType;
+            if (isFirearm && ammo <= 0) {
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚠️ ${c.name} 背包中没有匹配「${ammoType || '该枪型'}」的弹药！` });
+                return '开火失败：背包无匹配弹药。';
             }
             if (ammo > 0) {
-                ammo--;
-                writeAmmo(c, ammo, weaponBase);
-                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚠️ 砰！${c.name} 开火 [消耗 1 发子弹，剩余 ${ammo} 发]` });
+                const remaining = spendAmmo(weaponStr, 1, ammoType);
+                if (remaining != null) {
+                    ammo = remaining;
+                } else {
+                    ammo--;
+                    writeAmmo(c, ammo, weaponBase);
+                }
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `⚠️ 砰！${c.name} 开火 [消耗 1 发子弹，背包剩余 ${ammo} 发]` });
+            }
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.handleFirearmAttempt) {
+                const firearmCheck = kpEng.handleFirearmAttempt({ gameState });
+                const blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
+                if (blockedMsg) return blockedMsg;
             }
             const weaponObj = {
                 name: weaponBase,
@@ -111,6 +177,16 @@ window.CoCToolHandlerModules.combat = function(ctx) {
                 updateEnemy: (name, hp, note) => {
                     updateEnemy(name, hp, note);
                     const updated = gameState.combat.enemies.find(e => e.name === name);
+                    const kpEng = getKpEng();
+                    if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState)) {
+                        kpEng.recordCombatAction(gameState, 'attack:fire_weapon');
+                        if (updated && updated._kpImmunity && hp < 0) {
+                            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '🛡️ [KP引擎] 纯伤害策略触发敌人免疫，本次伤害无效化。' });
+                            updated.hp = Math.max(updated.hp, 1);
+                            return;
+                        }
+                        if (updated && hp < 0) kpEng.checkAntiOneShot(gameState, updated);
+                    }
                     if (updated && hp < 0) pushEnemyDamageNotice(updated, -hp);
                 },
                 update_character_status: (handlerArgs) => ctx.dispatch('update_character_status', handlerArgs)
@@ -143,11 +219,21 @@ window.CoCToolHandlerModules.combat = function(ctx) {
 
             var weaponStr = (c.equipment || {}).weapon || '';
             var weaponBase = weaponStr.split('[')[0].trim();
-            var ammo = readAmmo(c);
+            var kpEngAmmo = getKpEng();
+            var inferredAmmoType = (kpEngAmmo && kpEngAmmo.inferAmmoType) ? kpEngAmmo.inferAmmoType(weaponStr) : null;
+            var backpackAmmo = readBackpackAmmo(weaponStr);
+            var ammo = backpackAmmo ? backpackAmmo.count : readAmmo(c);
+            var ammoType = backpackAmmo ? backpackAmmo.ammoType : inferredAmmoType;
             var rounds = Math.max(1, Math.min(Number(args.rounds) || 3, ammo, 30));
+            var isFirearm = !!inferredAmmoType;
+
+            if (isFirearm && ammo <= 0) {
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '⚠️ 背包中没有匹配「' + (ammoType || '该枪型') + '」的弹药！' });
+                return '开火失败：背包无匹配弹药。';
+            }
 
             if (ammo < rounds) {
-                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '⚠️ 弹药不足！需要 ' + rounds + ' 发，仅剩 ' + ammo + ' 发。' });
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '⚠️ 弹药不足！需要 ' + rounds + ' 发，背包仅剩 ' + ammo + ' 发。' });
                 return '开火失败：弹药不足。';
             }
 
@@ -158,17 +244,35 @@ window.CoCToolHandlerModules.combat = function(ctx) {
             else if (weaponStr.includes('机枪')) weaponObj.skill = '机枪';
 
             var mode = args.mode || 'burst';
+            var kpEng = getKpEng();
+            if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.handleFirearmAttempt) {
+                var firearmCheck = kpEng.handleFirearmAttempt({ gameState });
+                var blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
+                if (blockedMsg) {
+                    ammo = spendAmmo(weaponStr, rounds, ammoType);
+                    if (ammo == null) {
+                        ammo -= rounds;
+                        writeAmmo(c, ammo, weaponBase);
+                    }
+                    gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + c.name + ' 连射 [' + rounds + ' 发] [背包剩余弹药:' + ammo + ']' });
+                    advanceTurn();
+                    return blockedMsg;
+                }
+            }
             var result = Engine.CombatEngine.resolveBurstFire(c, enemy, weaponObj, rounds, mode);
 
-            // Consume ammo via structured field (keeps the [弹药:N] tag in sync)
-            ammo -= rounds;
-            writeAmmo(c, ammo, weaponBase);
+            var remaining = spendAmmo(weaponStr, rounds, ammoType);
+            if (remaining != null) ammo = remaining;
+            else {
+                ammo -= rounds;
+                writeAmmo(c, ammo, weaponBase);
+            }
 
             // Apply damage to enemy
             if (result.totalDamage > 0) {
                 ctx.updateEnemy(enemy.name, -result.totalDamage, result.description);
             }
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + result.description + ' [剩余弹药:' + ammo + ']' });
+            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + result.description + ' [背包剩余弹药:' + ammo + ']' });
             advanceTurn();
             return result.description;
         }

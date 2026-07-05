@@ -1,0 +1,212 @@
+{
+  "id": "cc_white_widow_reef",
+  "title": "白寡妇号",
+  "subtitle": "漂向钻井平台的鬼船",
+  "author": "CoC Engine Community",
+  "license": "CC-BY 4.0",
+  "sourceUrl": "https://the-cargo-bay.itch.io/whitewidow",
+  "sourceTitle": "Twilight for the White Widow (The Cargo Bay)",
+  "tags": ["海事", "1920s", "鬼船", "社区模组"],
+  "description": "1928年墨西哥湾，废弃邮轮「白寡妇号」在风暴中漂向离岸钻井平台。船上爬满油渍尸骸，深海触须牵引它撞向活人的灯火。改编自 The Cargo Bay CC-BY 4.0 模组《Twilight for the White Widow》。",
+  "era": "1920s",
+  "estimatedMinutes": 32,
+  "startNode": "platform",
+  "initialLocation": "海星钻井平台·甲板",
+  "setup": {
+    "location": "海星钻井平台·甲板",
+    "atmosphere": { "level": "calm", "note": "墨西哥湾风暴前" },
+    "map": {
+      "title": "海星平台与白寡妇号",
+      "rooms": [
+        { "id": "platform", "name": "钻井平台甲板", "connections": ["radio", "launch"] },
+        { "id": "radio", "name": "无线电室", "connections": ["platform"] },
+        { "id": "launch", "name": "小艇码头", "connections": ["platform", "ship_deck"] },
+        { "id": "ship_deck", "name": "白寡妇号甲板", "connections": ["launch", "salon", "engine"] },
+        { "id": "salon", "name": "头等沙龙", "connections": ["ship_deck", "bridge"] },
+        { "id": "bridge", "name": "舰桥", "connections": ["salon"] },
+        { "id": "engine", "name": "轮机舱", "connections": ["ship_deck", "hold"] },
+        { "id": "hold", "name": "货舱", "connections": ["engine"] }
+      ],
+      "currentRoomId": "platform"
+    },
+    "journal": "协助海星平台阻止漂来的鬼船白寡妇号撞击钻井设施。"
+  },
+  "nodes": {
+    "platform": {
+      "narrative": "海星钻井平台在墨西哥湾中央摇晃。无线电员报告：一艘无应答邮轮正以异常速度漂来——船名「白寡妇号」，1923年失踪。海面油膜反射磷光，像某种东西在水下牵引船体。",
+      "choices": [
+        { "id": "radio", "label": "进入无线电室", "next": "radio" },
+        { "id": "launch", "label": "准备小艇登船", "next": "launch" },
+        { "id": "scope", "label": "用望远镜观察鬼船", "next": "scope_check", "skillCheck": { "skill": "侦查" } }
+      ]
+    },
+    "scope_check": {
+      "narrative": "望远镜中……",
+      "branch": { "success": "scope_ok", "failure": "radio" }
+    },
+    "scope_ok": {
+      "narrative": "白寡妇号甲板爬满油渍人形——它们以僵硬节奏向平台方向挥手，像在致意。船首有人形轮廓站在栏杆后，穿1920年代婚纱，头纱在水风中飘动却从不被吹乱。",
+      "effects": {
+        "clues": [{ "id": "cww_scope", "title": "望远镜观察", "content": "甲板尸骸整齐挥手；船首婚纱人形。", "type": "witness" }],
+        "san": 1
+      },
+      "choices": [{ "id": "go", "label": "准备登船", "next": "launch" }]
+    },
+    "radio": {
+      "narrative": "无线电室收到白寡妇号最后一条自动报文——日期1923年：「引擎失效。货舱有东西在呼吸。不要打开货舱。」随后是摩尔斯重复：「寡妇要嫁人了。」",
+      "effects": {
+        "location": "无线电室",
+        "mapRoom": "radio",
+        "clues": [{ "id": "cww_morse", "title": "自动报文", "content": "1923年报文；货舱有东西呼吸；寡妇要嫁人了。", "type": "signal" }],
+        "journal": "货舱可能是关键。"
+      },
+      "choices": [
+        { "id": "launch2", "label": "登船", "next": "launch" },
+        { "id": "warn", "label": "向岸基发送求救", "next": "warn_check", "skillCheck": { "skill": "电气维修" } }
+      ]
+    },
+    "warn_check": {
+      "narrative": "发送求救信号……",
+      "branch": { "success": "warn_ok", "failure": "launch" }
+    },
+    "warn_ok": {
+      "narrative": "岸基回复：最近救援船需六小时抵达。平台主管命令：必须在撞击前改变白寡妇号航向或凿沉它。",
+      "effects": { "journal": "六小时内必须解决鬼船。" },
+      "choices": [{ "id": "lb", "label": "登船", "next": "launch" }]
+    },
+    "launch": {
+      "narrative": "小艇穿越油膜，靠近白寡妇号。登船梯垂在水面，梯上沾满黑色油污。船体传来有节奏的撞击声——像巨大心脏在货舱跳动。",
+      "effects": { "location": "小艇码头", "mapRoom": "launch" },
+      "choices": [
+        { "id": "board", "label": "攀爬登船", "next": "ship_deck" },
+        { "id": "tow", "label": "尝试用缆绳牵引改向", "next": "tow_check", "skillCheck": { "skill": "机械维修" } }
+      ]
+    },
+    "tow_check": {
+      "narrative": "抛缆牵引……",
+      "branch": { "success": "tow_partial", "failure": "ship_deck" }
+    },
+    "tow_partial": {
+      "narrative": "缆绳短暂改变航向，但水下某物猛拉——小艇差点倾覆。缆绳末端沾满黑色触须残片，仍在蠕动。",
+      "effects": {
+        "clues": [{ "id": "cww_tentacle", "title": "触须残片", "content": "水下存在牵引船体的触须生物。", "type": "physical" }],
+        "san": 1
+      },
+      "choices": [{ "id": "bd", "label": "登船", "next": "ship_deck" }]
+    },
+    "ship_deck": {
+      "narrative": "甲板上，油渍尸骸停止挥手，齐刷刷转向你。它们面部被油膜覆盖，只露出空洞眼窝。船首婚纱人形未动，但头纱下传来湿腻呼吸。",
+      "effects": { "location": "白寡妇号甲板", "mapRoom": "ship_deck", "san": 2, "atmosphere": { "level": "dread", "note": "油渍尸骸" } },
+      "choices": [
+        { "id": "salon", "label": "进入头等沙龙", "next": "salon" },
+        { "id": "engine", "label": "下轮机舱", "next": "engine" },
+        { "id": "bride", "label": "接近船首婚纱人形", "next": "bride_check", "skillCheck": { "skill": "心理学" } }
+      ]
+    },
+    "bride_check": {
+      "narrative": "你靠近船首……",
+      "branch": { "success": "bride_ok", "failure": "bride_fail" }
+    },
+    "bride_ok": {
+      "narrative": "婚纱人形是蜡像——内部空心，蜡壳下塞满人类牙齿。牙齿排列成摩尔斯：「货舱。」",
+      "effects": {
+        "clues": [{ "id": "cww_wax", "title": "蜡像牙齿", "content": "蜡像内塞满牙齿；摩尔斯指向货舱。", "type": "physical" }]
+      },
+      "choices": [{ "id": "eng", "label": "下轮机舱", "next": "engine" }]
+    },
+    "bride_fail": {
+      "narrative": "蜡像突然倾覆，油渍尸骸向你涌来。",
+      "effects": { "san": 2 },
+      "choices": [
+        { "id": "sal2", "label": "撤入沙龙", "next": "salon" },
+        { "id": "eng2", "label": "冲下轮机舱", "next": "engine" }
+      ]
+    },
+    "salon": {
+      "narrative": "沙龙仍保持着1923年晚宴布置。每具尸骸坐在位子上，面前是凝固的油污「食物」。中央留有一个空位，椅背上挂着「新郎」名牌——名牌下是一滩正在蒸发的油。",
+      "effects": {
+        "location": "头等沙龙",
+        "mapRoom": "salon",
+        "clues": [{ "id": "cww_groom", "title": "空位新郎", "content": "婚礼布置；新郎位为空；油污蒸发。", "type": "physical" }]
+      },
+      "choices": [
+        { "id": "bridge", "label": "上舰桥", "next": "bridge" },
+        { "id": "log", "label": "查阅航海日志", "next": "log" }
+      ]
+    },
+    "log": {
+      "narrative": "航海日志最后一页：「货舱货物不是石油。是卵。它在等婚礼。我是新郎。」签名被油渍抹掉，但笔迹与你平台主管相同。",
+      "effects": {
+        "clues": [{ "id": "cww_log", "title": "航海日志", "content": "货舱为卵；等待婚礼；签名似平台主管。", "type": "document" }],
+        "journal": "货舱卵与婚礼仪式相关；主管笔迹可疑。"
+      },
+      "choices": [{ "id": "br", "label": "上舰桥", "next": "bridge" }]
+    },
+    "bridge": {
+      "narrative": "舰桥无人，但舵轮自行转动，将船首对准钻井平台。雷达屏显示水下巨大阴影与船体同步移动——触须缠绕龙骨。",
+      "effects": { "location": "舰桥", "mapRoom": "bridge", "san": 2 },
+      "choices": [
+        { "id": "helm", "label": "强行夺舵", "next": "helm_check", "skillCheck": { "skill": "力量" } },
+        { "id": "hold", "label": "下货舱", "next": "engine" }
+      ]
+    },
+    "helm_check": {
+      "narrative": "夺舵……",
+      "branch": { "success": "helm_ok", "failure": "engine" }
+    },
+    "helm_ok": {
+      "narrative": "你短暂改变航向，但舵轮下伸出黑色触须缠住手腕。对讲机传来平台主管声音：「别阻止婚礼。我是自愿的。」",
+      "effects": { "journal": "平台主管与鬼船有关联。" },
+      "choices": [{ "id": "hd", "label": "下货舱", "next": "engine" }]
+    },
+    "engine": {
+      "narrative": "轮机舱引擎早已停转，但货舱门随某种心跳节奏脉动。门缝渗出黑色油膜，温度比周围低得多。",
+      "effects": { "location": "轮机舱", "mapRoom": "engine", "san": 1 },
+      "choices": [
+        { "id": "open", "label": "打开货舱门", "next": "hold" },
+        { "id": "charge", "label": "设置炸药凿沉船体", "next": "charge_check", "skillCheck": { "skill": "爆破" } }
+      ]
+    },
+    "charge_check": {
+      "narrative": "布置炸药……",
+      "branch": { "success": "ending_scuttle", "failure": "hold" }
+    },
+    "hold": {
+      "narrative": "货舱中央堆满黑色巨卵，每颗卵表面有人类面孔浮雕。平台主管站在卵堆前，穿1923年新郎礼服，下半身的触须与卵堆融为一体。他微笑：「婚礼需要见证人。你来了，太好了。」",
+      "effects": { "location": "货舱", "mapRoom": "hold", "san": 4, "atmosphere": { "level": "terror", "note": "深海卵巢" } },
+      "choices": [
+        { "id": "shoot", "label": "射击主管", "next": "shoot_check", "skillCheck": { "skill": "射击" } },
+        { "id": "eggs", "label": "破坏巨卵", "next": "eggs_check", "skillCheck": { "skill": "力量" } },
+        { "id": "wedding", "label": "接受见证婚礼", "next": "ending_wedding" }
+      ]
+    },
+    "shoot_check": {
+      "narrative": "开枪……",
+      "branch": { "success": "eggs_check", "failure": "ending_wedding" }
+    },
+    "eggs_check": {
+      "narrative": "砸向巨卵……",
+      "branch": { "success": "ending_win", "failure": "ending_wounded" }
+    },
+    "ending_win": {
+      "narrative": "巨卵碎裂，黑色油膜喷涌后迅速凝固。触须松开龙骨，白寡妇号开始下沉。平台主管化为油渍人形倒在甲板上——早已死亡多时。钻井平台得救，但墨西哥湾海面此后常年漂浮无法解释的油污。\n\n【结局：婚礼取消】",
+      "effects": { "journal": "摧毁卵巢，白寡妇号沉没。" },
+      "end": true
+    },
+    "ending_wounded": {
+      "narrative": "你只破坏部分卵。爆炸将小艇掀翻，你被渔船救起，但每夜梦见婚纱头纱下自己的脸。平台被毁，幸存者不足半数。\n\n【结局：生还·寡妇未亡】",
+      "effects": { "san": 6 },
+      "end": true
+    },
+    "ending_scuttle": {
+      "narrative": "炸药引爆，白寡妇号与卵巢一同沉入深海。触须在沉没中拽走数名平台工人。海面恢复平静，但无线电仍偶尔收到：「寡妇要嫁人了。」\n\n【结局：凿沉·低语残留】",
+      "effects": { "san": 3 },
+      "end": true
+    },
+    "ending_wedding": {
+      "narrative": "你作为见证人出席婚礼。触须将平台主管与婚纱蜡像缝合，所有油渍尸骸齐声鼓掌。你的意识被拖入深海——数周后，海面上多了一艘向平台挥手的小艇。\n\n【结局：成为见证人】",
+      "effects": { "san": 10 },
+      "end": true
+    }
+  }
+}

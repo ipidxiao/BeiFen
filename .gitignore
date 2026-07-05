@@ -1,3 +1,6 @@
+# Generated browser .js: COMMITTED (not ignored). Authoritative source is .mjs;
+# run `npm run build:js` after editing .mjs. Exceptions: scripts/BROWSER_ONLY.md
+
 node_modules/
 *.zip
 .DS_Store

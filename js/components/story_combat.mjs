@@ -85,13 +85,17 @@ export const StoryCombat = {
 
                   <!-- Quick Actions -->
                   <div class="px-3 pb-2 border-top border-secondary pt-2 combat-actions-bar">
-                      <div class="text-muted mb-2 combat-actions-label">快速指令（点击后发送）</div>
+                      <div class="text-muted mb-2 combat-actions-label">快速指令（CoC 7e 行动菜单 — 点击后发送）</div>
                       <div class="d-flex flex-wrap gap-1">
-                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我向最近的敌人发起攻击！')">🗡️ 近战攻击</button>
-                          <button class="btn btn-sm btn-outline-warning py-0 px-2 combat-quick-btn" @click="quickAction('我开枪射击！')">🔫 开枪</button>
-                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn" @click="quickAction('我尝试躲避并寻找掩体。')">🛡️ 规避</button>
-                          <button class="btn btn-sm btn-outline-success py-0 px-2 combat-quick-btn" @click="quickAction('我对' + firstWoundedChar + '进行急救。')">💊 急救</button>
-                          <button class="btn btn-sm btn-outline-secondary py-0 px-2 combat-quick-btn" @click="quickAction('我们撤退！')">🏃 撤退</button>
+                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我向最近的敌人发起近战攻击！')">🗡️ 近战</button>
+                          <button class="btn btn-sm btn-outline-warning py-0 px-2 combat-quick-btn" @click="quickAction('我开枪射击！')">🔫 射击</button>
+                          <button class="btn btn-sm btn-outline-danger py-0 px-2 combat-quick-btn" @click="quickAction('我放弃闪避，对攻击者进行反击！')">⚔️ 反击</button>
+                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn" @click="quickAction('我尝试闪避并寻找掩体。')">🛡️ 生存</button>
+                          <button class="btn btn-sm btn-outline-secondary py-0 px-2 combat-quick-btn" @click="quickAction('我们撤退！')">🏃 逃脱</button>
+                          <button class="btn btn-sm btn-outline-light py-0 px-2 combat-quick-btn" @click="quickAction('我尝试擒抱最近的敌人！')">🤼 擒抱</button>
+                          <button class="btn btn-sm btn-outline-success py-0 px-2 combat-quick-btn" @click="quickAction('我对' + firstWoundedChar + '进行急救。')">💊 技能</button>
+                          <button class="btn btn-sm btn-outline-primary py-0 px-2 combat-quick-btn" @click="quickAction('我尝试威吓敌人！')">🗣️ 交涉</button>
+                          <button class="btn btn-sm btn-outline-info py-0 px-2 combat-quick-btn" @click="quickAction('我利用周围的环境（家具/障碍物）获取掩护！')">🏚️ 环境</button>
                       </div>
                   </div>
 

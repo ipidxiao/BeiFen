@@ -1,0 +1,88 @@
+{
+  "startedAt": "2026-07-05T05:40:00.000Z",
+  "updatedAt": "2026-07-05T06:00:00.000Z",
+  "status": "done",
+  "sitesSearched": [
+    "https://chaosium.itch.io/scritch-scratch",
+    "https://chaosium.itch.io/the-derelict",
+    "https://chaosium.itch.io/dead-light-and-other-dark-turns",
+    "https://www.chaosium.com/cthulhu-adventures",
+    "https://www.chaosium.com/fan-material-policy/",
+    "https://www.drivethrurpg.com/cc/16/Miskatonic",
+    "https://www.rpg.net/reviews/archive/18/18573.phtml",
+    "https://the-cargo-bay.itch.io/whitewidow",
+    "https://gegi-bisi.itch.io/mystery-of-mayvale-manor",
+    "https://alextok.itch.io/faces-of-the-green-man"
+  ],
+  "sitesFound": [
+    {
+      "url": "https://chaosium.itch.io/the-derelict",
+      "title": "The Derelict (Chaosium official)",
+      "license": "Chaosium proprietary (free download, no redistribution)",
+      "usable": false,
+      "reason": "Official freebie; not CC-licensed; cannot convert/redistribute"
+    },
+    {
+      "url": "https://chaosium.itch.io/scritch-scratch",
+      "title": "Scritch Scratch (Chaosium official)",
+      "license": "Chaosium proprietary",
+      "usable": false,
+      "reason": "Free RPG Day official content; proprietary license"
+    },
+    {
+      "url": "https://www.drivethrurpg.com/cc/16/Miskatonic",
+      "title": "Miskatonic Repository",
+      "license": "Per-creator (Chaosium community program)",
+      "usable": false,
+      "reason": "Individual entries require per-author license verification; no blanket CC"
+    },
+    {
+      "url": "https://the-cargo-bay.itch.io/whitewidow",
+      "title": "Twilight for the White Widow",
+      "license": "CC-BY 4.0",
+      "usable": true,
+      "reason": "Maritime horror seed; CC-BY 4.0 confirmed on itch.io page via WebFetch"
+    },
+    {
+      "url": "https://gegi-bisi.itch.io/mystery-of-mayvale-manor",
+      "title": "Mystery of Mayvale Manor",
+      "license": "CC-BY-SA 4.0",
+      "usable": true,
+      "reason": "Manor blizzard mystery; CC-BY-SA 4.0 confirmed on itch.io page via WebFetch"
+    },
+    {
+      "url": "https://alextok.itch.io/faces-of-the-green-man",
+      "title": "Faces of the Green Man",
+      "license": "CC-BY 4.0",
+      "usable": true,
+      "reason": "1925 Somerset folk horror; CC-BY 4.0 confirmed on itch.io page via WebFetch"
+    }
+  ],
+  "scenariosAdded": [
+    {
+      "id": "cc_green_vicar",
+      "title": "绿衣教士",
+      "sourceUrl": "https://alextok.itch.io/faces-of-the-green-man",
+      "license": "CC-BY 4.0",
+      "nodeCount": 24
+    },
+    {
+      "id": "cc_white_widow_reef",
+      "title": "白寡妇号",
+      "sourceUrl": "https://the-cargo-bay.itch.io/whitewidow",
+      "license": "CC-BY 4.0",
+      "nodeCount": 22
+    },
+    {
+      "id": "cc_mayvale_blizzard",
+      "title": "梅维尔庄园暴雪",
+      "sourceUrl": "https://gegi-bisi.itch.io/mystery-of-mayvale-manor",
+      "license": "CC-BY-SA 4.0",
+      "nodeCount": 21
+    }
+  ],
+  "scenariosFailed": [],
+  "currentStep": "Complete — 3 scenarios integrated, 24/24 tests pass",
+  "percentEstimate": 100,
+  "nextActions": []
+}

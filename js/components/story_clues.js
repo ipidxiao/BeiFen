@@ -53,6 +53,7 @@ window.StoryClues = {
                       <option value="solved">已解释</option>
                   </select>
                   <span class="badge ms-auto clue-count-badge">{{ gameState.clueBoard.clues.length }} 条线索</span>
+                  <span v-if="gameState.kpEngine?.enabled" class="badge ms-1" style="background:#2a1a0a;color:#ffc107;font-size:0.65rem;">调查路径 真 {{ scenePathTrue }}/3 假 {{ scenePathFalse }}</span>
               </div>
 
               <!-- CARD VIEW -->
@@ -169,7 +170,9 @@ window.StoryClues = {
               );
           },
           webW() { return Math.max(300, Math.ceil(Math.sqrt(this.gameState.clueBoard.clues.length)) * 110 + 60); },
-          webH() { return Math.max(200, Math.ceil(this.gameState.clueBoard.clues.length / Math.ceil(Math.sqrt(this.gameState.clueBoard.clues.length))) * 100 + 60); }
+          webH() { return Math.max(200, Math.ceil(this.gameState.clueBoard.clues.length / Math.ceil(Math.sqrt(this.gameState.clueBoard.clues.length))) * 100 + 60); },
+          scenePathTrue() { return this.gameState.kpEngine?.scenePaths?.truePathCount ?? 0; },
+          scenePathFalse() { return this.gameState.kpEngine?.scenePaths?.falsePathCount ?? 0; }
       },
       methods: {
           typeIcon(t) { return {physical:'🔑',testimony:'💬',document:'📄',location:'📍',event:'⚡',person:'👤',supernatural:'🌀'}[t]||'🔍'; },

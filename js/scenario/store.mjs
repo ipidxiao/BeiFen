@@ -5,6 +5,9 @@
 const IDB_NAME = 'coc_engine';
 const IDB_STORE = 'scenarios';
 const LS_KEY = 'coc_scenarios_downloaded';
+const PUBLIC_CATALOG_BASE_KEY = 'coc_public_catalog_base';
+const PKG_REL_PATH = 'js/data/scenarios/packages/';
+const LS_FALLBACK_MAX_BYTES = 4_000_000;
 
 const BUILTIN_IDS = [
     'tutorial', 'deep_one_shadow', 'abandoned_asylum', 'midnight_museum',
@@ -35,10 +38,35 @@ function isBundledPackageUrl(url) {
     return typeof url === 'string' && url.includes('/scenarios/packages/');
 }
 
-/** Resolve catalog entry into ordered download chain: primary → mirrors → fallback. */
+/** User-configured public static site base (empty = same-origin only). */
+function getPublicCatalogBase() {
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') return '';
+    return (localStorage.getItem(PUBLIC_CATALOG_BASE_KEY) || '').trim();
+}
+
+function setPublicCatalogBase(base) {
+    if (typeof localStorage === 'undefined') return;
+    const trimmed = (base || '').trim();
+    if (trimmed) {
+        localStorage.setItem(PUBLIC_CATALOG_BASE_KEY, trimmed.replace(/\/?$/, '/'));
+    } else {
+        localStorage.removeItem(PUBLIC_CATALOG_BASE_KEY);
+    }
+}
+
+/** Build absolute package URL from public catalog base + scenario id. */
+function publicPackageUrl(id) {
+    const base = getPublicCatalogBase();
+    if (!base || !id) return null;
+    return base.replace(/\/?$/, '/') + PKG_REL_PATH + id + '.json';
+}
+
+/**
+ * Download chain: user public base (if set) → catalog mirrorUrls → same-origin bundled fallback.
+ * No GitHub or jsDelivr gh mirrors.
+ */
 function resolveDownloadChain(entry) {
     const fallback = entry.fallbackUrl || entry.packageUrl;
-    const primary = entry.url || entry.packageUrl || fallback;
     const mirrors = Array.isArray(entry.mirrorUrls) ? entry.mirrorUrls : [];
     const chain = [];
     const seen = new Set();
@@ -47,10 +75,10 @@ function resolveDownloadChain(entry) {
         seen.add(url);
         chain.push({ url, source });
     };
-    const primarySource = (primary === fallback || isBundledPackageUrl(primary)) ? 'fallback' : 'remote';
-    push(primary, primarySource);
+    const pubUrl = publicPackageUrl(entry.id);
+    if (pubUrl) push(pubUrl, 'public');
     mirrors.forEach((u) => push(u, 'mirror'));
-    push(fallback, 'fallback');
+    push(fallback, 'bundled');
     return chain;
 }
 
@@ -71,6 +99,16 @@ function getRemoteCatalog() {
 function getBuiltin(id) {
     const fn = BUILTIN_GETTERS[id];
     return fn ? fn() || null : null;
+}
+
+function assertLocalStorageWithinQuota(payload) {
+    if (!_useLocalStorage) return;
+    const size = JSON.stringify(payload).length;
+    if (size > LS_FALLBACK_MAX_BYTES) {
+        throw new Error(
+            '已下载模组总大小超过 localStorage 安全上限（约 4MB）。请使用支持 IndexedDB 的现代浏览器，或删除部分已下载模组后重试。'
+        );
+    }
 }
 
 function metaFromScenario(scenario, extra = {}) {
@@ -154,11 +192,10 @@ async function persistDownload(id, scenario, downloadSource) {
     }
     const db = await openDB();
     if (!db || _useLocalStorage) {
+        const payload = { data: _downloaded, meta: _downloadMeta };
+        assertLocalStorageWithinQuota(payload);
         try {
-            localStorage.setItem(LS_KEY, JSON.stringify({ data: _downloaded, meta: _downloadMeta }));
-            if (_useLocalStorage && JSON.stringify(_downloaded).length > 4_000_000) {
-                console.warn('[ScenarioStore] localStorage fallback may exceed quota; prefer IndexedDB.');
-            }
+            localStorage.setItem(LS_KEY, JSON.stringify(payload));
         } catch (e) {
             throw new Error('存储空间不足，无法保存下载模组');
         }
@@ -186,9 +223,25 @@ async function deleteFromIDB(id) {
     });
 }
 
+/** True when catalog entry is official link-only (no bundled JSON). */
+function isImportOnlyEntry(entry) {
+    return !!(entry && (entry.importOnly === true || entry.redistributable === false && entry.officialUrl));
+}
+
+/** True when entry supports one-click PDF → scenario conversion. */
+function isOfficialPdfEntry(entry) {
+    return !!(entry && entry.importType === 'official_pdf' && entry.convertToScenario === true);
+}
+
+function getPdfImportApi() {
+    return (typeof window !== 'undefined' && window.CoCScenarioPdfImport) || null;
+}
+
 function resolveStatus(id) {
     if (getBuiltin(id)) return 'builtin';
     if (_downloaded[id]) return 'downloaded';
+    const remote = getRemoteCatalog().get(id);
+    if (remote && isImportOnlyEntry(remote)) return 'official';
     return 'available';
 }
 
@@ -202,6 +255,14 @@ export const CoCScenarioStore = {
 
     usesLocalStorageFallback() {
         return _useLocalStorage;
+    },
+
+    getPublicCatalogBase() {
+        return getPublicCatalogBase();
+    },
+
+    setPublicCatalogBase(base) {
+        setPublicCatalogBase(base);
     },
 
     listCatalog() {
@@ -220,14 +281,22 @@ export const CoCScenarioStore = {
             const status = resolveStatus(entry.id);
             const meta = _downloadMeta[entry.id] || {};
             const dlSource = meta.downloadSource || (_downloaded[entry.id] && _downloaded[entry.id]._downloadSource) || null;
+            const importOnly = isImportOnlyEntry(entry);
+            const pdfConvert = isOfficialPdfEntry(entry);
             merged.push({
                 ...entry,
                 playTime: entry.playTime || entry.estimatedMinutes || null,
                 estimatedMinutes: entry.estimatedMinutes || entry.playTime || null,
-                nodeCount: entry.nodeCount || 0,
-                source: 'remote',
+                nodeCount: entry.nodeCount || (_downloaded[entry.id] && _downloaded[entry.id].nodes
+                    ? Object.keys(_downloaded[entry.id].nodes).length : 0),
+                source: importOnly ? 'official' : 'remote',
                 status,
-                downloadable: status === 'available',
+                downloadable: !importOnly && status === 'available',
+                importOnly,
+                pdfConvert,
+                personalUseOnly: !!(_downloaded[entry.id] && _downloaded[entry.id]._personalUseOnly),
+                convertedFromPdf: dlSource === 'official_pdf_converted',
+                redistributable: entry.redistributable !== false,
                 downloadSource: status === 'downloaded' ? dlSource : null
             });
         });
@@ -249,8 +318,13 @@ export const CoCScenarioStore = {
         if (_downloaded[id]) return _downloaded[id];
 
         const remote = getRemoteCatalog().get(id);
-        const fallback = remote && (remote.fallbackUrl || remote.packageUrl);
-        if (!remote || !fallback) throw new Error(`模组「${id}」不在下载目录中`);
+        if (!remote) throw new Error(`模组「${id}」不在下载目录中`);
+        if (isImportOnlyEntry(remote)) {
+            throw new Error('该模组为 Chaosium 官方专有内容，请从官方页面下载后使用「导入本地」');
+        }
+
+        const fallback = remote.fallbackUrl || remote.packageUrl;
+        if (!fallback) throw new Error(`模组「${id}」不在下载目录中`);
 
         const chain = resolveDownloadChain(remote);
         let scenario = null;
@@ -289,6 +363,113 @@ export const CoCScenarioStore = {
         delete _downloaded[id];
         await deleteFromIDB(id);
         return true;
+    },
+
+    /**
+     * Import user-owned scenario JSON (e.g. self-authored or Chaosium-licensed conversion).
+     * @param {File|string|object} input — File, JSON string, or parsed object
+     * @param {{ expectedId?: string }} options — optional catalog id to match
+     */
+    async importScenarioFromFile(input, options = {}) {
+        let scenario = null;
+        if (input && typeof input === 'object' && typeof input.text === 'function') {
+            const text = await input.text();
+            scenario = JSON.parse(text);
+        } else if (typeof input === 'string') {
+            scenario = JSON.parse(input);
+        } else if (input && typeof input === 'object') {
+            scenario = input;
+        } else {
+            throw new Error('无效的导入文件');
+        }
+
+        const catalog = getCatalogApi();
+        if (catalog && catalog.validate) {
+            const v = catalog.validate(scenario);
+            if (!v.ok) throw new Error('模组格式无效: ' + (v.errors || []).join(', '));
+        }
+
+        const expectedId = options.expectedId;
+        if (expectedId && scenario.id !== expectedId) {
+            throw new Error(`模组 ID 不匹配：文件为「${scenario.id}」，期望「${expectedId}」`);
+        }
+
+        const id = scenario.id;
+        if (!id) throw new Error('模组缺少 id 字段');
+
+        scenario._downloadSource = 'import';
+        _downloaded[id] = scenario;
+        await persistDownload(id, scenario, 'import');
+        return scenario;
+    },
+
+    /** Import JSON for an official catalog entry (validates expected id). */
+    async importOfficialPack(catalogId, file) {
+        const entry = getRemoteCatalog().get(catalogId);
+        if (!entry || !isImportOnlyEntry(entry)) {
+            throw new Error('该条目不是官方链接模组');
+        }
+        return this.importScenarioFromFile(file, { expectedId: catalogId });
+    },
+
+    /**
+     * One-click: fetch official PDF, convert client-side, save to IndexedDB.
+     * @param {string} catalogId
+     * @param {(step: string, detail?: object) => void} [onProgress]
+     * @param {{ arrayBuffer?: ArrayBuffer, forceRuleBased?: boolean }} [options]
+     */
+    async importOfficialOneClick(catalogId, onProgress, options = {}) {
+        const entry = getRemoteCatalog().get(catalogId);
+        if (!entry || !isOfficialPdfEntry(entry)) {
+            throw new Error('该条目不支持 PDF 一键转换');
+        }
+
+        const pdfImport = getPdfImportApi();
+        if (!pdfImport || !pdfImport.importOfficialPdfOneClick) {
+            throw new Error('PDF 转换模块未加载');
+        }
+
+        const scenario = await pdfImport.importOfficialPdfOneClick(entry, onProgress, options);
+
+        const catalog = getCatalogApi();
+        if (catalog && catalog.validate) {
+            const v = catalog.validate(scenario);
+            if (!v.ok) throw new Error('转换结果无效: ' + (v.errors || []).join(', '));
+        }
+        if (!scenario.nodes || Object.keys(scenario.nodes).length < 1) {
+            throw new Error('转换结果缺少剧情节点');
+        }
+        if (scenario.id !== catalogId) scenario.id = catalogId;
+
+        scenario._downloadSource = 'official_pdf_converted';
+        scenario._personalUseOnly = true;
+
+        _downloaded[catalogId] = scenario;
+        await persistDownload(catalogId, scenario, 'official_pdf_converted');
+        return scenario;
+    },
+
+    /** True when user has a PDF-converted official scenario in local storage. */
+    isOfficialImported(id) {
+        if (!_downloaded[id]) return false;
+        const src = _downloadMeta[id]?.downloadSource || _downloaded[id]._downloadSource;
+        return src === 'official_pdf_converted';
+    },
+
+    isOfficialPdfEntry(entryOrId) {
+        if (typeof entryOrId === 'string') {
+            const entry = getRemoteCatalog().get(entryOrId);
+            return isOfficialPdfEntry(entry);
+        }
+        return isOfficialPdfEntry(entryOrId);
+    },
+
+    isImportOnlyEntry(entryOrId) {
+        if (typeof entryOrId === 'string') {
+            const entry = getRemoteCatalog().get(entryOrId);
+            return isImportOnlyEntry(entry);
+        }
+        return isImportOnlyEntry(entryOrId);
     },
 
     isAvailable(id) {

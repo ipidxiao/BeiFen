@@ -8,15 +8,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    GENERATE_PAIRS,
+    BROWSER_ONLY_GENERATE,
+} from './asset_manifest.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 
-const BROWSER_ONLY = new Set([
-    'js/ai/worker.js', 'js/ai/worker_client.js', 'js/audio/sfx.js',
-    'js/components/dice_canvas.js', 'js/components/sanity_effects.js',
-    'js/state/accessor.js', 'js/coc.js', 'js/audio/sfx.mjs', 'js/components/dice_canvas.mjs',
-]);
+const BROWSER_ONLY = BROWSER_ONLY_GENERATE;
 
 const HANDLER_EXPORTS = new Set(['character', 'inventory', 'dice', 'clues', 'map', 'combat', 'mythos', 'npc', 'system']);
 
@@ -42,14 +42,7 @@ const WINDOW_GLOBAL_PATTERNS = [
 ];
 
 function loadGeneratePairs() {
-    const src = fs.readFileSync(path.join(ROOT, 'scripts/build_browser.mjs'), 'utf8');
-    const block = src.match(/const GENERATE_PAIRS = \[([\s\S]*?)\];/);
-    if (!block) throw new Error('GENERATE_PAIRS not found in build_browser.mjs');
-    const pairs = [];
-    for (const m of block[1].matchAll(/\['([^']+)',\s*'([^']+)'\]/g)) {
-        pairs.push([m[1], m[2]]);
-    }
-    return pairs;
+    return GENERATE_PAIRS;
 }
 
 function parseMjsExports(src) {

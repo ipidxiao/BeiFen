@@ -7,7 +7,7 @@
 // ===============================================
 
 window.ViewLobby = {
-      data() { return { autoSave: null, saveSlots: [], modules: [], newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', storeLoading: false, storeError: '' }; },
+      data() { return { autoSave: null, saveSlots: [], modules: [], newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', storeLoading: false, storeError: '', publicCatalogBase: '', storeImportStep: '', storeImportDetail: '' }; },
       template: `
           <div>
               <!-- ===== 模组选择界面 ===== -->
@@ -75,6 +75,18 @@ window.ViewLobby = {
                   <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold" @click="openScenarios">📜 本地剧本模式</button>
                   <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold" @click="openScenarioStore">📚 模组库</button>
                   <button class="btn btn-outline-info mb-3 p-3 w-100" @click="switchScreen('settings')">⚙️ AI 引擎设置</button>
+                  <div class="mb-3 p-3 border rounded text-start" :class="gameState.kpEngine?.enabled ? 'border-warning' : 'border-secondary'" style="background:#111;">
+                      <div class="form-check form-switch mb-2">
+                          <input class="form-check-input" type="checkbox" id="kpEngineToggle" :checked="gameState.kpEngine?.enabled" @change="toggleKpEngine($event)">
+                          <label class="form-check-label text-warning fw-bold" for="kpEngineToggle">⚙️ KP 协议引擎</label>
+                      </div>
+                      <div class="text-muted" style="font-size:0.72rem;">规则在代码层强制执行（行动校验、缩放、输出协议等）。与战役存档独立，可单独开启。</div>
+                      <div v-if="gameState.kpEngine?.enabled" class="text-info mt-2" style="font-size:0.72rem;">
+                          注意力 {{ gameState.londonKpState?.ATTENTION_LEVEL ?? gameState.kpEngine?.global?.attention ?? 0 }} ·
+                          战力 {{ gameState.londonKpState?.PLAYER_POWER ?? gameState.kpEngine?.global?.playerPower ?? 0 }} ·
+                          阶段 {{ gameState.londonKpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}
+                      </div>
+                  </div>
                   <div class="row g-2 mb-2">
                       <div class="col-6"><button class="btn btn-outline-secondary p-2 w-100" @click="switchScreen('saves')">💾 存档管理</button></div>
                       <div class="col-6"><button class="btn btn-outline-warning p-2 w-100" @click="backToModules">📚 切换模组</button></div>
@@ -105,7 +117,16 @@ window.ViewLobby = {
                       <h3 class="text-warning m-0">📚 模组库</h3>
                       <button class="btn btn-outline-secondary btn-sm" @click="switchScreen('lobby')">← 返回</button>
                   </div>
-                  <div class="text-muted small mb-3">浏览内置与可下载模组。点击「下载到本地」后存入浏览器 IndexedDB，完全离线可玩。全部为原创免费内容，不含 Chaosium 商业模组。</div>
+                  <div class="text-muted small mb-3">浏览内置、可下载与 Chaosium 官方模组。官方 PDF 可「一键导入并转换」为本地剧本（仅存 IndexedDB，个人使用）。亦可自行导入 JSON。详见 <code>docs/CHAOSIUM_LICENSING.md</code>。</div>
+                  <div class="alert alert-secondary py-2 small mb-3">ℹ️ Chaosium 官方模组版权归 Chaosium。转换在浏览器本地完成，请勿再分发转换后的剧情 JSON。</div>
+                  <div class="mb-3 p-2 border border-secondary rounded" style="background:#101010;">
+                      <label class="form-label text-muted small mb-1">公开资源基址（可选）</label>
+                      <div class="input-group input-group-sm">
+                          <input class="form-control bg-dark text-light border-secondary" v-model="publicCatalogBase" placeholder="https://example.com/coc-engine/" @keyup.enter="savePublicCatalogBase">
+                          <button class="btn btn-outline-info" type="button" @click="savePublicCatalogBase">保存</button>
+                      </div>
+                      <div class="text-secondary mt-1" style="font-size:0.72rem;">可将引擎 ZIP 部署到任意公开静态网站，在此填写基址 URL 即可下载扩展模组。留空则仅使用同域包（完全离线）。</div>
+                  </div>
                   <div v-if="storeUsesFallback" class="alert alert-warning py-2 small mb-3">⚠️ IndexedDB 不可用，已降级为 localStorage（容量有限）。</div>
                   <div class="row g-2 mb-3">
                       <div class="col-md-6">
@@ -125,7 +146,11 @@ window.ViewLobby = {
                                   <div class="p-2 border rounded h-100" :class="selectedStoreId === item.id ? 'border-warning' : 'border-secondary'" style="background:#111;cursor:pointer;" @click="selectStoreItem(item.id)">
                                       <div class="d-flex justify-content-between align-items-start gap-1">
                                           <div class="fw-bold text-warning small">{{ item.title }}</div>
-                                          <span class="badge flex-shrink-0" :class="storeStatusBadge(item.status)">{{ storeStatusLabel(item.status) }}</span>
+                                      <span v-if="item.importOnly && item.status === 'downloaded' && item.convertedFromPdf" class="badge flex-shrink-0 bg-success" style="font-size:0.6rem;">已转换 · 个人使用</span>
+                                      <span v-else-if="item.importOnly && item.status === 'downloaded'" class="badge flex-shrink-0 bg-success" style="font-size:0.6rem;">已导入</span>
+                                      <span v-else-if="item.pdfConvert" class="badge flex-shrink-0 bg-info text-dark" style="font-size:0.6rem;">官方 PDF · 可本地转换</span>
+                                      <span v-else-if="item.importOnly" class="badge flex-shrink-0 bg-info text-dark" style="font-size:0.6rem;">官方 · 需自行下载</span>
+                                      <span v-else class="badge flex-shrink-0" :class="storeStatusBadge(item.status)">{{ storeStatusLabel(item.status) }}</span>
                                       </div>
                                       <div class="text-muted" style="font-size:0.7rem;">{{ item.author }} · {{ item.license }}</div>
                                       <div class="text-secondary mt-1" style="font-size:0.72rem;line-height:1.3;">{{ (item.description || '').slice(0, 60) }}…</div>
@@ -149,13 +174,14 @@ window.ViewLobby = {
                                       <span class="badge bg-dark border border-secondary">{{ selectedStoreItem.license }}</span>
                                       <a v-if="selectedStoreItem.licenseUrl" :href="selectedStoreItem.licenseUrl" target="_blank" rel="noopener noreferrer" class="badge bg-info text-dark text-decoration-none" style="font-size:0.65rem;">许可详情 ↗</a>
                                   </div>
-                                  <div v-if="selectedStoreItem.sourceUrl">
-                                      <span class="text-secondary">来源：</span>
-                                      <a :href="selectedStoreItem.sourceUrl" target="_blank" rel="noopener noreferrer" class="text-info small">查看来源 ↗</a>
+                                  <div v-if="selectedStoreItem.source === 'remote' || selectedStoreItem.source === 'official'">
+                                      <span class="text-secondary">资源：</span>
+                                      <span v-if="selectedStoreItem.importOnly" class="badge bg-info text-dark">官方链接（无再分发）</span>
+                                      <span v-else class="badge bg-secondary">{{ publicCatalogBase ? '公开网站 + 同域包' : '同域包（离线可用）' }}</span>
                                   </div>
-                                  <div v-if="selectedStoreItem.source === 'remote'">
-                                      <span class="text-secondary">远程源：</span>
-                                      <span class="badge bg-secondary">同域包（离线可用）</span>
+                                  <div v-if="selectedStoreItem.officialUrl">
+                                      <span class="text-secondary">官方页面：</span>
+                                      <a :href="selectedStoreItem.officialUrl" target="_blank" rel="noopener noreferrer" class="small">{{ selectedStoreItem.officialUrl }}</a>
                                   </div>
                                   <div v-if="selectedStoreItem.status === 'downloaded' && selectedStoreItem.downloadSource">
                                       <span class="text-secondary">下载自：</span>
@@ -168,12 +194,34 @@ window.ViewLobby = {
                                   <span v-for="t in (selectedStoreItem.tags || [])" :key="t" class="badge me-1 mb-1" style="background:#2a2a3a;">{{ t }}</span>
                               </div>
                               <div v-if="storeError" class="text-danger small mt-2">{{ storeError }}</div>
+                              <div v-if="storeImportStep" class="text-info small mt-2">{{ importProgressLabel(storeImportStep, storeImportDetail) }}</div>
                               <div class="d-flex flex-wrap gap-2 mt-3">
-                                  <button v-if="selectedStoreItem.status === 'available'" class="btn btn-sm btn-success fw-bold" :disabled="storeLoading" @click="doDownloadScenario(selectedStoreItem.id)">
+                                  <button v-if="selectedStoreItem.pdfConvert && selectedStoreItem.status !== 'downloaded'" class="btn btn-sm btn-warning fw-bold" :disabled="storeLoading" @click="doImportOfficialOneClick(selectedStoreItem.id)">
+                                      {{ storeLoading ? importProgressLabel(storeImportStep, storeImportDetail) || '处理中…' : '⚡ 一键导入并转换' }}
+                                  </button>
+                                  <label v-if="selectedStoreItem.pdfConvert && selectedStoreItem.status !== 'downloaded'" class="btn btn-sm btn-outline-warning mb-0" style="cursor:pointer;">
+                                      📄 选择 PDF 转换
+                                      <input type="file" accept=".pdf,application/pdf" style="display:none" @change="doImportOfficialPdfFile($event, selectedStoreItem.id)">
+                                  </label>
+                                  <button v-if="selectedStoreItem.importOnly && selectedStoreItem.officialUrl" class="btn btn-sm btn-outline-info" @click="openOfficialUrl(selectedStoreItem.officialUrl)">
+                                      ↗ 前往官方页面
+                                  </button>
+                                  <label v-if="selectedStoreItem.importOnly && selectedStoreItem.status !== 'downloaded' && !selectedStoreItem.pdfConvert" class="btn btn-sm btn-outline-warning mb-0" style="cursor:pointer;">
+                                      📥 我已下载，导入本地 JSON
+                                      <input type="file" accept=".json,application/json" style="display:none" @change="doImportOfficialPack($event, selectedStoreItem.id)">
+                                  </label>
+                                  <label v-if="selectedStoreItem.importOnly && selectedStoreItem.status !== 'downloaded' && selectedStoreItem.pdfConvert" class="btn btn-sm btn-outline-secondary mb-0" style="cursor:pointer;">
+                                      📥 导入 JSON
+                                      <input type="file" accept=".json,application/json" style="display:none" @change="doImportOfficialPack($event, selectedStoreItem.id)">
+                                  </label>
+                                  <button v-if="selectedStoreItem.downloadable && selectedStoreItem.status === 'available'" class="btn btn-sm btn-success fw-bold" :disabled="storeLoading" @click="doDownloadScenario(selectedStoreItem.id)">
                                       {{ storeLoading ? '下载中…' : '⬇ 下载到本地' }}
                                   </button>
                                   <button v-if="selectedStoreItem.status === 'downloaded'" class="btn btn-sm btn-outline-danger" :disabled="storeLoading" @click="doRemoveDownload(selectedStoreItem.id)">移除下载</button>
                                   <button v-if="selectedStoreItem.status !== 'available'" class="btn btn-sm btn-warning fw-bold" @click="startLocalScenario(selectedStoreItem.id)">开始剧本 ▶</button>
+                              </div>
+                              <div v-if="selectedStoreItem.pdfConvert && selectedStoreItem.status !== 'downloaded'" class="text-secondary mt-2" style="font-size:0.68rem;line-height:1.4;">
+                                  个人使用 · 版权归 Chaosium · 请勿再分发。转换在您的浏览器内完成，不会上传至引擎服务器。
                               </div>
                           </div>
                           <div v-else class="text-muted text-center py-5 border border-secondary rounded" style="background:#0a0a0a;">← 选择左侧模组查看详情</div>
@@ -227,11 +275,15 @@ window.ViewLobby = {
                   <div class="mb-3"><label class="form-label" style="color:#cccccc;">模型名称</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model"></div>
                   <div class="mb-3">
                       <label class="form-label" style="color:#cccccc;">守秘人难度</label>
-                      <select class="form-select bg-dark text-light border-secondary" v-model="gameState.aiSettings.difficultyPreset">
+                      <select class="form-select bg-dark text-light border-secondary" v-model="gameState.aiSettings.difficultyPreset" @change="onDifficultyPresetChange($event)">
                           <option value="merciful">仁慈 — 宽容线索与判定</option>
                           <option value="standard">标准 — CoC 7e 默认</option>
                           <option value="brutal">致命 — 残酷后果</option>
+                          <option value="divine_war">神战 — 神话战争级严苛模式</option>
                       </select>
+                      <div v-if="gameState.aiSettings.difficultyPreset === 'divine_war' && !gameState.kpEngine?.enabled" class="alert alert-warning py-2 small mt-2 mb-0" style="font-size:0.72rem;line-height:1.4;">
+                          ⚠️ 神战预设建议启用 KP 协议引擎（大厅开关），以获得注意力、敌对组织与五段输出协议的完整 enforcement。
+                      </div>
                   </div>
                   <div class="mb-3 form-check">
                         <input class="form-check-input" type="checkbox" id="rememberKey" v-model="rememberKey" style="background:#111;border-color:#555;">
@@ -422,8 +474,21 @@ window.ViewLobby = {
                   window.CoCState.showToast && window.CoCState.showToast('模组库未加载。', 'danger');
                   return;
               }
+              this.loadPublicCatalogBase();
               this.refreshScenarioStore();
               CoCStateAccessor.switchScreen('scenario_store');
+          },
+          loadPublicCatalogBase() {
+              const store = window.CoCScenarioStore;
+              if (store && store.getPublicCatalogBase) {
+                  this.publicCatalogBase = store.getPublicCatalogBase() || '';
+              }
+          },
+          savePublicCatalogBase() {
+              const store = window.CoCScenarioStore;
+              if (!store || !store.setPublicCatalogBase) return;
+              store.setPublicCatalogBase(this.publicCatalogBase);
+              window.CoCState.showToast && window.CoCState.showToast('公开资源基址已保存。', 'success');
           },
           refreshStore() {
               const store = window.CoCScenarioStore;
@@ -438,16 +503,100 @@ window.ViewLobby = {
               this.storeError = '';
           },
           storeStatusLabel(status) {
-              return { builtin: '已内置', downloaded: '已下载', available: '可下载' }[status] || status;
+              return { builtin: '已内置', downloaded: '已下载', available: '可下载', official: '官方链接' }[status] || status;
           },
           storeStatusBadge(status) {
-              return { builtin: 'bg-warning text-dark', downloaded: 'bg-success', available: 'bg-secondary' }[status] || 'bg-secondary';
+              return { builtin: 'bg-warning text-dark', downloaded: 'bg-success', available: 'bg-secondary', official: 'bg-info text-dark' }[status] || 'bg-secondary';
           },
           downloadSourceLabel(source) {
-              return { remote: '远程', mirror: '镜像', fallback: '本地包' }[source] || source;
+              return { public: '公开网站', mirror: '公开网站', bundled: '同域包', fallback: '同域包', remote: '公开网站', import: '本地导入', official_pdf_converted: 'PDF 本地转换' }[source] || source;
           },
           downloadSourceBadge(source) {
-              return { remote: 'bg-primary', mirror: 'bg-info text-dark', fallback: 'bg-secondary' }[source] || 'bg-secondary';
+              return { public: 'bg-info text-dark', mirror: 'bg-info text-dark', bundled: 'bg-secondary', fallback: 'bg-secondary', remote: 'bg-info text-dark', import: 'bg-warning text-dark', official_pdf_converted: 'bg-warning text-dark' }[source] || 'bg-secondary';
+          },
+          importProgressLabel(step, detail) {
+              const labels = { download: '下载中…', parse: '解析 PDF…', convert: '生成剧情…', ai_chunk: 'AI 转换中…', done: '完成' };
+              if (step === 'ai_chunk' && detail && detail.total) {
+                  return `AI 转换中… (${detail.index || '?'}/${detail.total})`;
+              }
+              return labels[step] || step || '';
+          },
+          openOfficialUrl(url) {
+              if (url) window.open(url, '_blank', 'noopener,noreferrer');
+          },
+          async doImportOfficialOneClick(catalogId) {
+              const store = window.CoCScenarioStore;
+              if (!store || !store.importOfficialOneClick) {
+                  window.CoCState.showToast && window.CoCState.showToast('PDF 转换功能未加载。', 'danger');
+                  return;
+              }
+              this.storeLoading = true;
+              this.storeError = '';
+              this.storeImportStep = 'download';
+              this.storeImportDetail = '';
+              try {
+                  await store.importOfficialOneClick(catalogId, (step, detail) => {
+                      this.storeImportStep = step;
+                      this.storeImportDetail = detail || {};
+                  });
+                  this.refreshStore();
+                  window.CoCState.showToast && window.CoCState.showToast('已导入，可在本地剧本模式游玩', 'success');
+              } catch (e) {
+                  this.storeError = String(e.message || e);
+                  window.CoCState.showToast && window.CoCState.showToast('转换失败：' + this.storeError, 'danger');
+              } finally {
+                  this.storeLoading = false;
+                  this.storeImportStep = '';
+                  this.storeImportDetail = '';
+              }
+          },
+          async doImportOfficialPdfFile(event, catalogId) {
+              const file = event.target.files && event.target.files[0];
+              event.target.value = '';
+              if (!file) return;
+              const store = window.CoCScenarioStore;
+              if (!store || !store.importOfficialOneClick) return;
+              this.storeLoading = true;
+              this.storeError = '';
+              this.storeImportStep = 'parse';
+              try {
+                  const arrayBuffer = await file.arrayBuffer();
+                  await store.importOfficialOneClick(catalogId, (step, detail) => {
+                      this.storeImportStep = step;
+                      this.storeImportDetail = detail || {};
+                  }, { arrayBuffer, forceRuleBased: true });
+                  this.refreshStore();
+                  window.CoCState.showToast && window.CoCState.showToast('已导入，可在本地剧本模式游玩', 'success');
+              } catch (e) {
+                  this.storeError = String(e.message || e);
+                  window.CoCState.showToast && window.CoCState.showToast('转换失败：' + this.storeError, 'danger');
+              } finally {
+                  this.storeLoading = false;
+                  this.storeImportStep = '';
+                  this.storeImportDetail = '';
+              }
+          },
+          async doImportOfficialPack(event, catalogId) {
+              const file = event.target.files && event.target.files[0];
+              event.target.value = '';
+              if (!file) return;
+              const store = window.CoCScenarioStore;
+              if (!store || !store.importOfficialPack) {
+                  window.CoCState.showToast && window.CoCState.showToast('导入功能未加载。', 'danger');
+                  return;
+              }
+              this.storeLoading = true;
+              this.storeError = '';
+              try {
+                  await store.importOfficialPack(catalogId, file);
+                  this.refreshStore();
+                  window.CoCState.showToast && window.CoCState.showToast('官方模组 JSON 已导入本地。', 'success');
+              } catch (e) {
+                  this.storeError = String(e.message || e);
+                  window.CoCState.showToast && window.CoCState.showToast('导入失败：' + this.storeError, 'danger');
+              } finally {
+                  this.storeLoading = false;
+              }
           },
           async doDownloadScenario(id) {
               const store = window.CoCScenarioStore;
@@ -496,6 +645,39 @@ window.ViewLobby = {
               this.pendingScenarioId = null;
               CoCStateAccessor.switchScreen('story');
               window.CoCState.scrollToBottom && window.CoCState.scrollToBottom();
+          },
+          toggleKpEngine(event) {
+              const eng = window.KpExecutionEngine || window.CoCLondonKpEngine;
+              if (!eng || !eng.setKpEngineEnabled) {
+                  window.CoCState.showToast && window.CoCState.showToast('KP 引擎模块未加载。', 'danger');
+                  if (event && event.target) event.target.checked = false;
+                  return;
+              }
+              const gs = window.CoCState.gameState;
+              const enabled = !!(event && event.target && event.target.checked);
+              eng.setKpEngineEnabled(gs, enabled);
+              if (!enabled) gs.londonKpState = null;
+              if (window.CoCKpConfig && window.CoCKpConfig.saveKpPreference) {
+                  window.CoCKpConfig.saveKpPreference(gs.activeModuleId, enabled);
+              }
+              if (enabled && window.KpGameLoop) {
+                  window.KpGameLoop.register(gs);
+              } else if (window.KpGameLoop) {
+                  window.KpGameLoop.unregister();
+              }
+              window.CoCState.showToast && window.CoCState.showToast(
+                  enabled ? 'KP 协议引擎已启用。' : 'KP 协议引擎已关闭。',
+                  enabled ? 'success' : 'secondary'
+              );
+          },
+          onDifficultyPresetChange(event) {
+              const preset = event && event.target ? event.target.value : '';
+              if (preset === 'divine_war' && !window.CoCState.gameState.kpEngine?.enabled) {
+                  window.CoCState.showToast && window.CoCState.showToast(
+                      '神战预设建议启用 KP 协议引擎（大厅开关）。',
+                      'warning'
+                  );
+              }
           }
       },
       mounted() { this.refreshData(); },

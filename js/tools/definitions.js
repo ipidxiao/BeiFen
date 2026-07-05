@@ -69,11 +69,13 @@ window.CoCToolDefinitions = (function() {
             }
         },
         update_inventory: {
-            description: '【必须调用】当玩家拾取、发现或获得物品时调用。枪弹必须分开为两个物品。',
+            description: '【必须调用】当玩家拾取、发现或获得物品时调用。枪械与弹药须分为两个独立物品；开火时从背包匹配弹药。',
             parameters: {
                 type: 'object',
                 properties: {
-                    items: { type: 'array', minItems: 1, items: { type: 'string' }, singleAsArray: true }
+                    items: { type: 'array', minItems: 1, items: { type: 'string' }, singleAsArray: true },
+                    source: { type: 'string', description: '物品获取来源（KP引擎启用时必填）' },
+                    acquisition_source: { type: 'string', description: '同 source，获取记录' }
                 },
                 required: ['items']
             }
@@ -150,7 +152,7 @@ window.CoCToolDefinitions = (function() {
             }
         },
         start_combat: {
-            description: '【必须调用】当剧情进入激烈战斗时调用，激活回合制战斗界面。',
+            description: '【必须调用】当剧情进入激烈战斗时调用，激活回合制战斗界面。叙事须呈现 CoC 7e 完整行动菜单：防御（生存/逃脱/打断/保护）、攻击（近战/射击/反击）、战技（缴械/擒抱/推搡/击倒）、技能与环境、神秘学施法。',
             parameters: {
                 type: 'object',
                 properties: {

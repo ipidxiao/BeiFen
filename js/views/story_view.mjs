@@ -26,6 +26,14 @@ window.ViewStory = {
           <div class="d-flex flex-column bg-dark" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;">
               <div class="d-flex align-items-center w-100 border-bottom border-secondary shadow-sm" style="background-color: #1a1a1a; padding: 4px 6px; gap: 4px; overflow-x: auto;">
                   <button class="btn btn-sm btn-outline-light flex-shrink-0" style="padding:4px 6px;" @click="switchScreen('lobby')" title="返回模组大厅">⬅️</button>
+                  <div v-if="gameState.kpEngine?.enabled" class="flex-shrink-0 px-2 py-1 rounded border border-danger" style="background:#1a0808;font-size:0.65rem;line-height:1.2;">
+                      <span class="badge bg-danger" style="font-size:0.55rem;">KP</span>
+                      <span class="text-warning">注意力{{ gameState.londonKpState?.ATTENTION_LEVEL ?? gameState.kpEngine?.global?.attention ?? 0 }}</span>
+                      <span class="text-muted">·</span>
+                      <span class="text-info">战力{{ gameState.londonKpState?.PLAYER_POWER ?? gameState.kpEngine?.global?.playerPower ?? 0 }}</span>
+                      <span class="text-muted">·</span>
+                      <span class="text-light">{{ gameState.londonKpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}</span>
+                  </div>
                   <div class="btn-group flex-shrink-0">
                       <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'chat' ? 'btn-warning' : 'btn-outline-secondary'" @click="activeStoryTab = 'chat'">📖 剧情</button>
                       <button class="btn btn-sm fw-bold" :class="activeStoryTab === 'character' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'character'">👤 人物</button>
@@ -179,7 +187,14 @@ window.ViewStory = {
           };
           this.saveSlots = CoCStateAccessor.getSaveSlots();
           CoCStateAccessor.getStorageStatus('slot1', '预估存档');
+          const gs = window.CoCState && window.CoCState.gameState;
+          if (gs && gs.kpEngine && gs.kpEngine.enabled && window.KpGameLoop) {
+              window.KpGameLoop.register(gs);
+          }
       },
-      unmounted() { window._refreshStorySaveSlots = null; }
+      unmounted() {
+          window._refreshStorySaveSlots = null;
+          if (window.KpGameLoop) window.KpGameLoop.unregister();
+      }
   };
 window.ViewStory = ViewStory;

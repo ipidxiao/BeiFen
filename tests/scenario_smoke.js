@@ -60,7 +60,12 @@ vm.runInNewContext(remoteSrc, remoteCtx, { filename: 'remote_catalog.js' });
 const remote = remoteCtx.window.CoCScenarioRemoteCatalog;
 assert(remote && remote.entries.length >= 5, 'remote catalog has downloadable entries');
 
-for (const entry of remote.entries) {
+const redistributable = remote.entries.filter((e) => !(e.category === 'officialChaosium' || e.importOnly === true));
+const official = remote.entries.filter((e) => e.category === 'officialChaosium' || e.importOnly === true);
+assert(redistributable.length >= 5, 'at least 5 redistributable remote entries');
+assert(official.length >= 5, 'at least 5 official link-only entries');
+
+for (const entry of redistributable) {
     const pkgRel = (entry.fallbackUrl || entry.packageUrl).replace('./', '');
     const pkgPath = path.join(root, pkgRel.replace(/\//g, path.sep));
     assert(fs.existsSync(pkgPath), `package exists: ${entry.fallbackUrl || entry.packageUrl}`);
@@ -68,6 +73,16 @@ for (const entry of remote.entries) {
     const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
     const v = catalog.validate(pkg);
     assert(v.ok, `validate package ${entry.id}: ${(v.errors || []).join(', ')}`);
+}
+
+for (const entry of official) {
+    assert(entry.officialUrl, `${entry.id} has officialUrl`);
+    assert(entry.redistributable === false, `${entry.id} not redistributable`);
+    if (entry.importType === 'official_pdf') {
+        assert(entry.officialDownloadUrl, `${entry.id} has officialDownloadUrl`);
+        assert(entry.officialUploadId, `${entry.id} has officialUploadId`);
+    }
+    assert(!fs.existsSync(path.join(root, 'js/data/scenarios/packages', `${entry.id}.json`)), `${entry.id} no local package`);
 }
 
 const storePath = path.join(root, 'js/scenario/store.js');
@@ -80,4 +95,4 @@ const runnerPath = path.join(root, 'js/scenario/runner.js');
 assert(fs.existsSync(runnerPath), 'runner.js generated');
 assert(fs.readFileSync(runnerPath, 'utf8').includes('CoCScenarioRunner'), 'runner exports CoCScenarioRunner');
 
-console.log(`Scenario smoke: ${catalog.list().length} built-in + ${remote.entries.length} remote; store API OK`);
+console.log(`Scenario smoke: ${catalog.list().length} built-in + ${redistributable.length} redistributable + ${official.length} official link-only; store API OK`);

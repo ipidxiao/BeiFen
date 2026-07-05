@@ -2,6 +2,33 @@
 // 归属：【策划】 游戏数据 / AI 守秘人提示词 (ESM)
 // ===============================================
 
+import { buildKpRulesPromptBlock, buildCombatActionsPromptBlock } from './campaigns/masks_london_kp_rules.mjs';
+import { buildAntagonistPromptBlock } from './campaigns/masks_london_antagonist_rules.mjs';
+import { buildCampaignContextSummary } from '../campaign/campaign_loader.mjs';
+
+function _kpRulesBlock() {
+    if (typeof buildKpRulesPromptBlock === 'function') return buildKpRulesPromptBlock();
+    if (typeof window !== 'undefined' && window.CoCMasksLondonKpRulesPrompt) return window.CoCMasksLondonKpRulesPrompt();
+    return '';
+}
+function _combatActionsBlock() {
+    if (typeof buildCombatActionsPromptBlock === 'function') return buildCombatActionsPromptBlock();
+    if (typeof window !== 'undefined' && window.CoC7eCombatActionsPrompt) return window.CoC7eCombatActionsPrompt();
+    return '';
+}
+function _antagonistBlock(antState) {
+    if (typeof buildAntagonistPromptBlock === 'function') return buildAntagonistPromptBlock(antState);
+    if (typeof window !== 'undefined' && window.CoCMasksLondonAntagonistPrompt) return window.CoCMasksLondonAntagonistPrompt(antState);
+    return '';
+}
+function _campaignSummary(gameState) {
+    if (typeof buildCampaignContextSummary === 'function') return buildCampaignContextSummary(gameState);
+    if (typeof window !== 'undefined' && window.CoCCampaignLoader && window.CoCCampaignLoader.buildCampaignContextSummary) {
+        return window.CoCCampaignLoader.buildCampaignContextSummary(gameState);
+    }
+    return '';
+}
+
 /** @type {typeof window.CoCAIPromptConfig} */
 export const CoCAIPromptConfig = (function() {
 
@@ -9,9 +36,9 @@ export const CoCAIPromptConfig = (function() {
 
 【系统绝对法则】：
 
-1. 枪弹分离：发枪必须发空枪，子弹独立发放。
+1. 枪弹分离：枪械与弹药分属不同物品；开火时引擎检查背包是否有匹配枪型的弹药（不要求上膛状态）。
 
-2. 装备与弹药：严格读取每个人的装备槽，没写[弹药:X]绝对是空枪。开火必须调用 fire_weapon，并优先指定 shooter_name 与 enemy_name！
+2. 装备与弹药：读取装备槽中的枪械型号，从背包 inventory 匹配对应弹药；开火必须调用 fire_weapon，并优先指定 shooter_name 与 enemy_name！
 
 3. 伤害结算：遭到攻击立刻调用 update_character_status。必须指定 target_name。若玩家否认必须无情反驳！
 
@@ -21,7 +48,9 @@ export const CoCAIPromptConfig = (function() {
 
 6. NPC记录铁律：有名字的NPC初次出场立即调用 register_npc；NPC死亡/失踪/疯狂立即调用 update_npc_status。
 
-  7. 战斗铁律：激烈肢体冲突开始时调用 start_combat；调查员攻击命中后调用 update_enemy；敌人攻击时调用 enemy_attack；战斗结束调用 end_combat。
+  7. 战斗铁律：激烈肢体冲突开始时调用 start_combat；调查员攻击命中后调用 update_enemy；敌人攻击时调用 enemy_attack；战斗结束调用 end_combat。每回合叙事须呈现 CoC 7e 完整行动菜单（防御/攻击/战技/技能与环境/神秘学），不可仅循环纯伤害选项。
+
+  7a. CoC 7e 战斗行动参考：防御（生存/逃脱/打断/保护）；攻击（近战、射击含瞄准/抵近/连射、反击）；战技（缴械/擒抱/推搡/击倒）；技能与环境（急救/维修/锁匠、威吓/话术/说服、利用家具掩体/断电/致盲物）；神秘学（多回合施法，受伤可打断）。连续纯伤害碾压触发引擎敌人免疫。
 
   8. 地图铁律：进入新建筑/场景时调用 create_map 绘制房间布局；调查员移动到新房间时调用 set_position；发现危险/隐藏房间时调用 update_room。
 
@@ -53,7 +82,7 @@ export const CoCAIPromptConfig = (function() {
 
      工具：手电筒 / 急救箱 / 绳索 / 撬棍 / 双筒望远镜 / 照相机 / 无线电
 
-     弹药必须与枪械分开发放(如:["左轮手枪","6发子弹"])。禁止凭空制造枪弹合一的武器。]`;
+     弹药必须与枪械分开发放(如:["左轮手枪","6发左轮子弹"])。开火时系统从背包扣除匹配弹药，不要求[弹药:N]上膛标记。]`;
 
     var KEYWORD_INTERCEPTS = [
         {
@@ -70,7 +99,7 @@ export const CoCAIPromptConfig = (function() {
         },
         {
             keywords: ['拾起', '拿', '捡', '带走', '收起'],
-            suffix: '\n\n⚠️⚠️⚠️【物品获取拦截】：检测到玩家试图拿取物品！你必须立刻调用 update_inventory 工具将物品发放到系统背包！如果是枪和子弹，必须分为两个独立物品发放(如:["左轮手枪","3发子弹"])！'
+            suffix: '\n\n⚠️⚠️⚠️【物品获取拦截】：检测到玩家试图拿取物品！你必须立刻调用 update_inventory 工具将物品发放到系统背包！枪械与弹药须分为两个独立物品(如:["左轮手枪","3发左轮子弹"])！'
         }
     ];
 
@@ -89,12 +118,41 @@ export const CoCAIPromptConfig = (function() {
             id: 'brutal',
             label: '致命',
             injection: '\n\n【守秘人难度：致命】严格执行 CoC 残酷规则，不轻易施舍线索，失败后果严重，调查员与 NPC 均可能迅速死亡。'
+        },
+        divine_war: {
+            id: 'divine_war',
+            label: '神战',
+            injection: '\n\n【守秘人难度：神战】神话战争级严苛模式。启用 KP 协议引擎与注意力/敌对组织规则；严格执行五段输出协议，失败后果极端，敌人随调查员战力与注意力动态升级。'
         }
     };
 
-    function buildSystemInjection(teamDetails, difficultyPreset) {
-        var preset = DIFFICULTY_PRESETS[difficultyPreset] || DIFFICULTY_PRESETS.standard;
-        return '\n\n\n[【当前行动小队状态】：\n\n' + teamDetails + (preset.injection || '') + SYSTEM_RULES_BLOCK;
+    /** Legacy preset ids → canonical id (masks_london_kp === divine_war). */
+    var DIFFICULTY_PRESET_ALIASES = {
+        masks_london_kp: 'divine_war'
+    };
+
+    function resolveDifficultyPreset(id) {
+        var key = DIFFICULTY_PRESET_ALIASES[id] || id;
+        return DIFFICULTY_PRESETS[key] || DIFFICULTY_PRESETS.standard;
+    }
+
+    function buildCampaignInjection(gameState) {
+        const kpOn = gameState && gameState.kpEngine && gameState.kpEngine.enabled;
+        const campaignOn = gameState && gameState.activeCampaign === 'masks_london';
+        if (!kpOn && !campaignOn) return '';
+        var parts = [
+            '\n\n' + _kpRulesBlock(),
+            '\n\n' + _combatActionsBlock(),
+            '\n\n' + _antagonistBlock(gameState.londonKpState && gameState.londonKpState.antagonist)
+        ];
+        if (campaignOn) parts.push('\n\n' + _campaignSummary(gameState));
+        return parts.join('');
+    }
+
+    function buildSystemInjection(teamDetails, difficultyPreset, gameState) {
+        var preset = resolveDifficultyPreset(difficultyPreset);
+        var campaignBlock = buildCampaignInjection(gameState);
+        return '\n\n\n[【当前行动小队状态】：\n\n' + teamDetails + (preset.injection || '') + campaignBlock + SYSTEM_RULES_BLOCK;
     }
 
     function matchKeywordIntercept(content) {
@@ -112,6 +170,9 @@ export const CoCAIPromptConfig = (function() {
         SYSTEM_RULES_BLOCK,
         KEYWORD_INTERCEPTS,
         DIFFICULTY_PRESETS,
+        DIFFICULTY_PRESET_ALIASES,
+        resolveDifficultyPreset,
+        buildCampaignInjection,
         buildSystemInjection,
         matchKeywordIntercept
     };

@@ -10,6 +10,14 @@
 export function map(ctx) {
     const { gameState, createMap, updateRoom, setPosition } = ctx;
 
+    const getKpEng = () => {
+        const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+        if (cfg && typeof cfg.getKpEngine === 'function') return cfg.getKpEngine();
+        if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
+        if (typeof window !== 'undefined' && window.CoCLondonKpEngine) return window.CoCLondonKpEngine;
+        return null;
+    };
+
     return {
         create_map: (args) => {
             createMap(args.title, args.rooms || []);
@@ -22,7 +30,13 @@ export function map(ctx) {
         },
         set_position: (args) => {
             const ok = setPosition(args.room_id);
-            if (ok) gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `🚶 [移动] 进入：${gameState.currentLocation}` });
+            if (ok) {
+                const kpEng = getKpEng();
+                if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.initScenePaths) {
+                    kpEng.initScenePaths(gameState, gameState.currentLocation);
+                }
+                gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `🚶 [移动] 进入：${gameState.currentLocation}` });
+            }
             return ok ? `当前位置：${gameState.currentLocation}` : `找不到房间：${args.room_id}`;
         }
     };

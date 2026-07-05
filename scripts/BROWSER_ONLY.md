@@ -1,5 +1,7 @@
 # Browser-only files (excluded from `npm run build:js`)
 
+**Build policy:** `.mjs` is authoritative source; `npm run build:js` emits sibling `.js` files that are **committed** (see `.gitignore` header and `docs/ARCHITECTURE.md`).
+
 | File | Reason |
 |------|--------|
 | `js/ai/worker.js` | Web Worker — separate thread, cannot be ESM-bundled into main bundle |

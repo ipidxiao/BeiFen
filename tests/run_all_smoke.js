@@ -42,7 +42,12 @@ const SUITES = [
     'idb_backup_smoke.mjs',
     'sw_cache_smoke.js',
     'scenario_smoke.js',
+    'pdf_import_smoke.js',
     'scenario_store_smoke.js',
+    'masks_london_smoke.js',
+    'kp_execution_smoke.js',
+    'kp_semantics_smoke.js',
+    'batch4_robustness_smoke.js',
   ]},
 
   // Phase 2 — 核心引擎与规则

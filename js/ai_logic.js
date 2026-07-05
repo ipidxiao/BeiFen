@@ -9,6 +9,31 @@
 
 
 
+
+
+
+const _getLanguageFilter = () => {
+    if (typeof CoCLanguageFilter !== 'undefined') return CoCLanguageFilter;
+    if (typeof window !== 'undefined' && window.CoCLanguageFilter) return window.CoCLanguageFilter;
+    return null;
+};
+const _getKpEngine = () => {
+    if (typeof KpExecutionEngine !== 'undefined') return KpExecutionEngine;
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    if (cfg && typeof cfg.getKpEngine === 'function') {
+        const eng = cfg.getKpEngine();
+        if (eng) return eng;
+    }
+    if (typeof window !== 'undefined' && window.KpExecutionEngine) return window.KpExecutionEngine;
+    if (typeof window !== 'undefined' && window.CoCLondonKpEngine) return window.CoCLondonKpEngine;
+    return { isEnabled: () => false, isActive: () => false, runAntagonistTick: () => null, onPlayerAction: () => ({ validated: true }) };
+};
+const _getOutputProtocol = () => {
+    if (typeof restructureOrReject === 'function') return { restructureOrReject };
+    if (typeof window !== 'undefined' && window.CoCOutputProtocol) return window.CoCOutputProtocol;
+    return null;
+};
+
 /**
  * CoC AI Logic Module (Stable V16 Pro + JSDoc)
  * 
@@ -76,6 +101,16 @@ window.CoCAI = (function(State, Engine) {
                 scrollToBottom(); return;
             }
 
+            const kpEng = _getKpEngine();
+            const actionText = playerInput.value.trim();
+            if (kpEng.isEnabled && kpEng.isEnabled(gameState)) {
+                const pre = kpEng.onPlayerAction ? kpEng.onPlayerAction(gameState, actionText) : kpEng.validatePlayerAction(actionText, { era: gameState.roster[0]?.era });
+                if (pre && pre.validated === false) {
+                    gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: `🚫 [KP引擎] 行动被拒绝：${pre.reason || '不符合规则'}` });
+                    scrollToBottom(); return;
+                }
+            }
+
             const scenarioRunner = window.CoCScenarioRunner;
             if (scenarioRunner && scenarioRunner.isActive && scenarioRunner.isActive()) {
                 const text = playerInput.value.trim();
@@ -85,7 +120,7 @@ window.CoCAI = (function(State, Engine) {
                 return;
             }
             
-            gameState.chatHistory.push({ role: 'user', content: playerInput.value.trim() });
+            gameState.chatHistory.push({ role: 'user', content: actionText });
             playerInput.value = ""; scrollToBottom(); 
             await triggerAI();
         } catch (err) {
@@ -93,48 +128,86 @@ window.CoCAI = (function(State, Engine) {
         }
     };
 
+    /** Narrative auto-clue patterns — titleIdx points at the capture group for clue title. */
+    const NARRATIVE_CLUE_PATTERNS = [
+        { re: /发现(了)?(?:一张|一个|一段|关于)?(.+?)(?:线索|证据|照片|信件|日记|笔记|钥匙|物品|道具|武器)/, titleIdx: 2 },
+        { re: /调查(?:到|出)(.+?)(?:真相|内幕|线索|秘密)/, titleIdx: 1 },
+        { re: /捡(?:到|起)(了)?(.+?)(?:物品|道具|钥匙|武器|信件|日记|笔记)/, titleIdx: 2 },
+        { re: /(?:找到|获得|得到)(了)?(.+?)(?:线索|物品|道具|钥匙|信件|笔记)/, titleIdx: 2 }
+    ];
+
+    /** Explicit movement verbs only — no sensory weak matches (AUDIT-P1-14). */
+    const NARRATIVE_MOVE_PATTERNS = [
+        { re: /(?:走进|进入|来到|到达)(了)?(.+?)(?:房间|大厅|走廊|地下室|办公室|密室|洞穴)/, nameIdx: 2, suffixIdx: null },
+        { re: /(?:爬上|爬下|钻入|跳下|推开)(了)?(.+?)(?:楼梯|地道|悬崖|门|通道)/, nameIdx: 2, suffixIdx: null }
+    ];
+
+    const _narrativeClueTitleExists = (title) => {
+        const t = String(title || '').trim();
+        if (t.length < 2) return true;
+        return gameState.clueBoard.clues.some((c) => {
+            const existing = String(c.title || '').trim();
+            return existing.includes(t) || t.includes(existing);
+        });
+    };
+
+    /** Route auto clues through tool handler (KP canAddClue); skip silently on reject. */
+    const _tryNarrativeAddClue = (title, content, type = 'physical') => {
+        const trimmed = String(title || '').trim().slice(0, 20);
+        if (trimmed.length < 2 || _narrativeClueTitleExists(trimmed)) return;
+        if (!toolHandlers.add_clue) return;
+        const args = {
+            id: 'auto_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            title: trimmed,
+            content: content || trimmed,
+            type
+        };
+        const result = toolHandlers.add_clue(args);
+        if (String(result).startsWith('错误')) {
+            CoCLog.debug('[narrativeListener] auto clue skipped:', result);
+        }
+    };
+
+    const _resolveNarrativeRoom = (hint) => {
+        const name = String(hint || '').trim();
+        if (name.length < 2) return null;
+        const rooms = gameState.sceneMap?.rooms;
+        if (!Array.isArray(rooms) || !rooms.length) return null;
+        return rooms.find((r) => {
+            const rname = String(r.name || '').trim();
+            return rname.length >= 2 && rname.includes(name);
+        }) || null;
+    };
+
+    const _tryNarrativeMove = (roomHint) => {
+        const room = _resolveNarrativeRoom(roomHint);
+        if (!room || gameState.currentLocation === room.name) return;
+        if (!toolHandlers.set_position) return;
+        toolHandlers.set_position({ room_id: room.id });
+    };
+
     /**
-     * 叙事监听器：扫描 AI 文本，自动触发系统更新
+     * 叙事监听器：扫描 AI 文本，自动触发系统更新（经 KP 校验，弱匹配不写入）
      * @param {string} text - AI 生成的文本内容
      */
     const narrativeListener = (text) => {
         if (!text) return;
-        
-        // 1. 线索发现监听 (关键词：发现、调查到、找到、得知)
-        const clueKeywords = [
-            /发现(了)?(一张|一个|一段|关于)?(.*?)(线索|证据|照片|信件|日记|笔记|钥匙|物品|道具|武器)/,
-            /调查(到|出)(.*?)(真相|内幕|线索|秘密)/,
-            /捡(到|起)(了)?(.*?)(物品|道具|钥匙|武器|信件|日记|笔记)/,
-            /(找到|获得|得到)(了)?(.*?)(线索|物品|道具|钥匙|信件|笔记)/
-        ];
-        clueKeywords.forEach(regex => {
-            const match = text.match(regex);
-            if (match && match[3]) {
-                const title = match[3].trim().slice(0, 10);
-                if (!gameState.clueBoard.clues.some(c => c.title.includes(title))) {
-                    toolHandlers.add_clue({ id: 'auto_' + Date.now(), title: title, content: match[0], type: 'physical' });
-                }
-            }
-        });
 
-        // 2. 场景切换监听 (关键词：走进、来到、进入、到达)
-        const mapKeywords = [
-            /走进(了)?(.*?)(房间|大厅|走廊|地下室|办公室|密室|洞穴)/,
-            /来到(了)?(.*?)(门口|前台|深处|入口|出口)/,
-            /(爬上|爬下|钻入|跳下|推开)(了)?(.*?)(楼梯|地道|悬崖|门|通道)/,
-            /(听到|闻到|感觉到|触摸到|察觉到)(了)?(.*?)(声音|气味|震动|凉意|异常)/
-        ];
-        mapKeywords.forEach(regex => {
-            const match = text.match(regex);
-            if (match) {
-                const roomName = (match[2] || match[1] || "").trim();
-                if (!roomName) return;
-                const room = gameState.sceneMap.rooms.find(r => r.name.includes(roomName) || roomName.includes(r.name));
-                if (room) {
-                    toolHandlers.set_position({ room_id: room.id });
-                }
-            }
-        });
+        for (const { re, titleIdx } of NARRATIVE_CLUE_PATTERNS) {
+            const match = text.match(re);
+            if (!match || !match[titleIdx]) continue;
+            const title = match[titleIdx].trim();
+            if (title.length >= 2) _tryNarrativeAddClue(title, match[0]);
+        }
+
+        for (const { re, nameIdx, suffixIdx } of NARRATIVE_MOVE_PATTERNS) {
+            const match = text.match(re);
+            if (!match || !match[nameIdx]) continue;
+            const hint = suffixIdx != null && match[suffixIdx]
+                ? (match[nameIdx] + match[suffixIdx]).trim()
+                : match[nameIdx].trim();
+            if (hint.length >= 2) _tryNarrativeMove(hint);
+        }
     };
 
     /**
@@ -171,6 +244,20 @@ window.CoCAI = (function(State, Engine) {
             return false;
         }
 
+        const apiKey = (gameState.aiSettings && gameState.aiSettings.apiKey || '').trim();
+        if (!apiKey) {
+            gameState.chatHistory.push({
+                role: 'system',
+                isLocalError: true,
+                isAlert: true,
+                content: '🔑 请配置 API Key：在设置中填入密钥后再使用 AI 守秘人。'
+            });
+            gameState._aiBusyCount = Math.max(0, (gameState._aiBusyCount || 1) - 1);
+            gameState.isLoading = gameState._aiBusyCount > 0;
+            try { scrollToBottom(); } catch (e) {}
+            return false;
+        }
+
         const contextSource = (window.CoCContextManager && window.CoCContextManager.buildApiMessages)
             ? window.CoCContextManager.buildApiMessages(gameState.chatHistory)
             : gameState.chatHistory.filter(m => !m.isLocalError && !m.isLocalOnly);
@@ -197,7 +284,15 @@ window.CoCAI = (function(State, Engine) {
                     return `【${c.name}】(HP:${c.hp}/${c.derived.hp}, SAN:${c.sanity}, 装备:${eStr})`;
                 }).join("\n");
                 
-                cleanMsg.content += CoCAIPromptConfig.buildSystemInjection(teamDetails, gameState.aiSettings.difficultyPreset || 'standard');
+                cleanMsg.content += CoCAIPromptConfig.buildSystemInjection(teamDetails, gameState.aiSettings.difficultyPreset || 'standard', gameState);
+                const kpEng = _getKpEngine();
+                if (kpEng.isEnabled && kpEng.isEnabled(gameState)) {
+                    kpEng.runAntagonistTick(gameState, { type: 'observe' });
+                    if (kpEng.adaptStrategy) {
+                        const strat = kpEng.adaptStrategy(gameState);
+                        if (strat) cleanMsg.content += `\n\n[KP敌对策略权重] ALERT=${strat.alertLevel} KNOW=${strat.knowledgeLevel} misinfo=${strat.weights.misinformation}`;
+                    }
+                }
                 const intercept = CoCAIPromptConfig.matchKeywordIntercept(m.content);
                 if (intercept) cleanMsg.content += intercept;
             }
@@ -223,6 +318,42 @@ window.CoCAI = (function(State, Engine) {
             }
             const aiMsg = data.choices && data.choices[0] && data.choices[0].message;
             if (!aiMsg) throw new Error('AI返回格式缺少 choices[0].message');
+            if (aiMsg.content) {
+                const kpEng = _getKpEngine();
+                const kpOn = kpEng.isEnabled && kpEng.isEnabled(gameState);
+                const langFilter = _getLanguageFilter();
+                if (langFilter && kpOn) {
+                    const detailed = langFilter.runDetailed ? langFilter.runDetailed(aiMsg.content) : { text: langFilter.run(aiMsg.content), ok: true };
+                    if (detailed.rejected) {
+                        // Policy: never show raw forbidden phrasing — apply safeFallback mask when rewrite fails.
+                        const fallback = langFilter.safeFallback
+                            ? langFilter.safeFallback(aiMsg.content)
+                            : (detailed.text || '（叙事含禁用句式，已替换为安全表述。）');
+                        gameState.chatHistory.push({
+                            role: 'system',
+                            isLocalOnly: true,
+                            isHidden: true,
+                            content: '🚫 [KP引擎] 叙事含禁用句式，自动改写失败，已应用安全降级文本（不展示原文）。'
+                        });
+                        aiMsg.content = fallback;
+                    } else {
+                        aiMsg.content = detailed.text || aiMsg.content;
+                    }
+                    if (gameState.kpEngine && detailed.rewritten) {
+                        gameState.kpEngine.lastLanguageRewritten = true;
+                    }
+                }
+                const outProto = _getOutputProtocol();
+                if (outProto && kpOn && outProto.restructureOrReject) {
+                    const out = outProto.restructureOrReject(aiMsg.content, { autoFix: true });
+                    if (out.restructured) {
+                        aiMsg.content = out.text;
+                        gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '📝 [KP引擎] 叙事已按五段协议自动重组。' });
+                    } else if (!out.ok) {
+                        gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isHidden: true, content: out.repromptMessage || '输出协议校验未通过' });
+                    }
+                }
+            }
             aiMsg._toolRound = toolRound;
             gameState.chatHistory.push(aiMsg);
             

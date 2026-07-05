@@ -1,0 +1,182 @@
+{
+  "id": "cc_mayvale_blizzard",
+  "title": "梅维尔庄园暴雪",
+  "subtitle": "落基山脉预览之夜的灾难",
+  "author": "CoC Engine Community",
+  "license": "CC-BY-SA 4.0",
+  "sourceUrl": "https://gegi-bisi.itch.io/mystery-of-mayvale-manor",
+  "sourceTitle": "Mystery of Mayvale Manor (Gegi Bisi)",
+  "tags": ["庄园", "1920s", "暴风雪", "社区模组"],
+  "description": "1926年科罗拉多落基山脉，历史庄园梅维尔即将开业为旅店。受邀预览的客人在暴雪中受困，不可告人的灾难与庄园往事浮出水面。改编自 Gegi Bisi CC-BY-SA 4.0 模组《Mystery of Mayvale Manor》。",
+  "era": "1920s",
+  "estimatedMinutes": 30,
+  "startNode": "driveway",
+  "initialLocation": "梅维尔庄园·车道",
+  "setup": {
+    "location": "梅维尔庄园·车道",
+    "atmosphere": { "level": "calm", "note": "暴雪将至" },
+    "map": {
+      "title": "梅维尔庄园",
+      "rooms": [
+        { "id": "driveway", "name": "车道", "connections": ["foyer"] },
+        { "id": "foyer", "name": "门厅", "connections": ["driveway", "library", "dining", "stairs"] },
+        { "id": "library", "name": "图书馆", "connections": ["foyer"] },
+        { "id": "dining", "name": "餐厅", "connections": ["foyer", "kitchen"] },
+        { "id": "kitchen", "name": "厨房", "connections": ["dining", "cellar"] },
+        { "id": "stairs", "name": "主楼梯", "connections": ["foyer", "attic"] },
+        { "id": "attic", "name": "阁楼", "connections": ["stairs"] },
+        { "id": "cellar", "name": "地窖", "connections": ["kitchen"] }
+      ],
+      "currentRoomId": "driveway"
+    },
+    "journal": "受邀参加梅维尔庄园预览之夜，在暴雪中调查离奇灾难。"
+  },
+  "nodes": {
+    "driveway": {
+      "narrative": "你的汽车沿落基山雪道抵达梅维尔庄园。维多利亚式三层建筑正在翻修，脚手架尚未拆除。管家在门口迎接：「欢迎参加预览。暴风雪两小时内抵达——今夜各位将在此过夜。」",
+      "choices": [
+        { "id": "foyer", "label": "进入门厅", "next": "foyer" },
+        { "id": "car", "label": "检查汽车能否离开", "next": "car_check", "skillCheck": { "skill": "机械维修" } }
+      ]
+    },
+    "car_check": {
+      "narrative": "检查引擎……",
+      "branch": { "success": "car_ok", "failure": "foyer" }
+    },
+    "car_ok": {
+      "narrative": "引擎正常，但雪道已被预先放置的路障封锁——路障木牌写着「Mayvale 家族」徽记。像是有人刻意阻止客人离开。",
+      "effects": {
+        "clues": [{ "id": "cmb_barricade", "title": "路障", "content": "Mayvale 徽记；刻意阻止离开。", "type": "physical" }]
+      },
+      "choices": [{ "id": "in", "label": "进入庄园", "next": "foyer" }]
+    },
+    "foyer": {
+      "narrative": "门厅 chandelier 尚未安装，只用煤油灯照明。五名预览客人与管家在场——所有人神情紧张。墙上挂着 Mayvale 家族肖像，其中一幅被刀划花了眼睛。",
+      "effects": { "location": "门厅", "mapRoom": "foyer" },
+      "choices": [
+        { "id": "library", "label": "进入图书馆", "next": "library" },
+        { "id": "dining", "label": "前往餐厅", "next": "dining" },
+        { "id": "portrait", "label": "检查被划肖像", "next": "portrait_check", "skillCheck": { "skill": "侦查" } }
+      ]
+    },
+    "portrait_check": {
+      "narrative": "肖像背后……",
+      "branch": { "success": "portrait_ok", "failure": "library" }
+    },
+    "portrait_ok": {
+      "narrative": "被划肖像后藏有一张1889年报纸剪报：「梅维尔矿难：37名矿工被活埋。Mayvale 家族拒绝赔偿。」剪报边缘有新鲜指纹。",
+      "effects": {
+        "clues": [{ "id": "cmb_clipping", "title": "矿难剪报", "content": "1889年37名矿工活埋；Mayvale 拒绝赔偿。", "type": "document" }],
+        "journal": "庄园与1889矿难有关。"
+      },
+      "choices": [{ "id": "lib", "label": "进入图书馆", "next": "library" }]
+    },
+    "library": {
+      "narrative": "图书馆藏有 Mayvale 家族账簿。其中一页记录：「1926预览夜——以37名客人抵37名矿工债。」字迹与管家相同。窗外开始飘雪。",
+      "effects": {
+        "location": "图书馆",
+        "mapRoom": "library",
+        "clues": [{ "id": "cmb_ledger", "title": "账簿", "content": "37客人抵37矿工债；管家笔迹。", "type": "document" }],
+        "san": 1
+      },
+      "choices": [
+        { "id": "dining2", "label": "前往餐厅", "next": "dining" },
+        { "id": "stairs", "label": "上主楼梯", "next": "stairs" }
+      ]
+    },
+    "dining": {
+      "narrative": "餐厅已摆好七人晚宴。每份餐盘下压着一张矿工身份牌——姓名与1889矿难名单一致。一名客人尖叫着掀开盘盖：盘中是煤灰与牙齿混合物。",
+      "effects": { "location": "餐厅", "mapRoom": "dining", "san": 2, "atmosphere": { "level": "dread", "note": "矿难晚宴" } },
+      "choices": [
+        { "id": "kitchen", "label": "冲进厨房", "next": "kitchen" },
+        { "id": "butler", "label": "质问管家", "next": "butler_check", "skillCheck": { "skill": "说服" } }
+      ]
+    },
+    "butler_check": {
+      "narrative": "质问管家……",
+      "branch": { "success": "butler_ok", "failure": "kitchen" }
+    },
+    "butler_ok": {
+      "narrative": "管家面如死灰：「Mayvale 家族与矿难灵魂订约——每代以37人献祭换庄园繁荣。今夜是_preview 献祭。我试图阻止……但地窖门已开。」",
+      "effects": {
+        "clues": [{ "id": "cmb_butler", "title": "管家证词", "content": "37人献祭换繁荣；地窖门已开。", "type": "witness" }],
+        "journal": "地窖是仪式核心。"
+      },
+      "choices": [{ "id": "kit", "label": "进入厨房", "next": "kitchen" }]
+    },
+    "kitchen": {
+      "narrative": "厨房后门被暴雪封死。地窖门半开，从中涌出煤灰与低语——37个声音重叠计数：「一、二、三……」",
+      "effects": { "location": "厨房", "mapRoom": "kitchen", "san": 1 },
+      "choices": [
+        { "id": "cellar", "label": "进入地窖", "next": "cellar" },
+        { "id": "attic_via", "label": "从主楼梯上阁楼", "next": "stairs" }
+      ]
+    },
+    "stairs": {
+      "narrative": "主楼梯墙纸上，人影随脚步移动——但队伍中只有你一人。二楼走廊照片全部变成矿难现场：37具被煤灰覆盖的躯体。",
+      "effects": { "location": "主楼梯", "mapRoom": "stairs", "san": 2 },
+      "choices": [
+        { "id": "attic", "label": "上阁楼", "next": "attic" },
+        { "id": "cellar2", "label": "返回厨房进地窖", "next": "cellar" }
+      ]
+    },
+    "attic": {
+      "narrative": "阁楼堆满1889年矿难遗物——安全帽、镐、一封未寄出的集体诉讼信。信末署名37名矿工，最后一行新添：「我们接受_preview 替代。」",
+      "effects": {
+        "location": "阁楼",
+        "mapRoom": "attic",
+        "clues": [{ "id": "cmb_lawsuit", "title": "集体诉讼信", "content": "37矿工署名；接受preview替代。", "type": "document" }]
+      },
+      "choices": [
+        { "id": "seal", "label": "用诉讼信作为和解凭证", "next": "seal_check", "skillCheck": { "skill": "说服" } },
+        { "id": "cellar3", "label": "下地窖", "next": "cellar" }
+      ]
+    },
+    "seal_check": {
+      "narrative": "宣读诉讼信……",
+      "branch": { "success": "ending_negotiate", "failure": "cellar" }
+    },
+    "cellar": {
+      "narrative": "地窖中央，37具煤灰人形从墙壁渗出，向预览客人伸出双手。Mayvale 家族现任继承人站在阴影中，穿1889年矿工服：「庄园需要37人。你们 volunteered——通过预览邀请函。」",
+      "effects": { "location": "地窖", "mapRoom": "cellar", "san": 3, "atmosphere": { "level": "terror", "note": "矿难灵魂" } },
+      "choices": [
+        { "id": "fight", "label": "攻击继承人", "next": "fight_check", "skillCheck": { "skill": "斗殴" } },
+        { "id": "collapse", "label": "引爆厨房煤气", "next": "collapse_check", "skillCheck": { "skill": "爆破" } },
+        { "id": "sacrifice", "label": "自愿替代一名客人", "next": "ending_sacrifice" }
+      ]
+    },
+    "fight_check": {
+      "narrative": "搏斗……",
+      "branch": { "success": "collapse_check", "failure": "ending_captured" }
+    },
+    "collapse_check": {
+      "narrative": "引爆煤气……",
+      "branch": { "success": "ending_win", "failure": "ending_wounded" }
+    },
+    "ending_win": {
+      "narrative": "爆炸震塌地窖，煤灰人形在烈焰中化为普通煤渣。暴雪停息，路障消失。管家递上钥匙：「Mayvale 家族到此为止。」庄园将被改作矿难纪念馆。\n\n【结局：债务清偿】",
+      "effects": { "journal": "摧毁献祭仪式，庄园改作纪念馆。" },
+      "end": true
+    },
+    "ending_negotiate": {
+      "narrative": "你宣读37矿工的诉讼信，煤灰人形停止前进。继承人在低语中化为煤渣。管家解释：「他们不要血，只要承认。」庄园将建立矿难赔偿基金。\n\n【结局：和解】",
+      "effects": { "journal": "以诉讼信达成和解。" },
+      "end": true
+    },
+    "ending_wounded": {
+      "narrative": "爆炸只部分成功。你带伤逃出，但三名客人被煤灰人形拖入地窖。Mayvale 庄园翌年报导「预览夜意外」，再无人敢入住。\n\n【结局：生还·债务未清】",
+      "effects": { "san": 5 },
+      "end": true
+    },
+    "ending_sacrifice": {
+      "narrative": "你自愿走入煤灰人形队列。预览客人得救，但落基山脉风雪中永远多出一个呼唤37的数字。\n\n【结局：一人替代】",
+      "effects": { "san": 8 },
+      "end": true
+    },
+    "ending_captured": {
+      "narrative": "煤灰人形将你拖入地窖。意识消散前，你成为第37个名字——被写入 Mayvale 账簿，换庄园又一代繁荣。\n\n【结局：成为债项】",
+      "effects": { "san": 10 },
+      "end": true
+    }
+  }
+}

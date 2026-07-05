@@ -4,6 +4,16 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+function _applyKpPreferenceToGameState(gameState) {
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    if (cfg && cfg.applyKpPreferenceToGameState) cfg.applyKpPreferenceToGameState(gameState);
+}
+
+function _saveKpPreference(moduleId, enabled) {
+    const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
+    if (cfg && cfg.saveKpPreference) cfg.saveKpPreference(moduleId, enabled);
+}
+
 const SAVE_SCHEMA_VERSION = 7;
     const SAVE_IDB_THRESHOLD_BYTES = 512 * 1024;
     const SAVE_IDB_QUOTA_RATIO = 0.85;
@@ -99,6 +109,27 @@ export const CoCStatePersistence = (function() {
             Object.assign(gameState.atmosphere, { level: 'calm', note: '' });
             gameState.clueBoard.clues.splice(0); gameState.clueBoard.links.splice(0);
             gameState.knownLocations.splice(0, gameState.knownLocations.length, "未知的房间");
+            Object.assign(gameState.scenarioRunner, {
+                active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null,
+                choices: [], ended: false, flags: {}, pendingBranch: null
+            });
+            gameState.activeCampaign = null;
+            gameState.campaignArchive = null;
+            if (typeof window !== 'undefined' && window.KpGameLoop && window.KpGameLoop.unregister) {
+                window.KpGameLoop.unregister(gameState);
+            }
+            if (gameState.kpEngine) {
+                Object.assign(gameState.kpEngine, {
+                    systemName: 'COC_LONDON_KP_ENGINE_V2',
+                    global: { attention: 0, playerPower: 0, phase: 'CALM', doomClock: 0, alertLevel: 0, knowledgeLevel: 0 },
+                    rules: null,
+                    sessionStartedAt: null,
+                    lastEventInjectionAt: null,
+                    recentInjectionTypes: [],
+                    combatStrategyLog: []
+                });
+            }
+            gameState.londonKpState = null;
             const sysPrompt = gameState.chatHistory.find(m => m.role === 'system' && m.isHidden);
             gameState.chatHistory.splice(0);
             if (sysPrompt) gameState.chatHistory.push(sysPrompt);
@@ -107,7 +138,35 @@ export const CoCStatePersistence = (function() {
                 meta.lastPlayed = new Date().toISOString();
                 _safeLocalStorageSetItem(MOD_META_PRE + id + '_meta', JSON.stringify(meta), '模组最后游玩时间');
             } catch(e) {}
+            _applyKpPreferenceToGameState(gameState);
+            if (gameState.kpEngine && gameState.kpEngine.enabled && typeof window !== 'undefined' && window.KpExecutionEngine) {
+                window.KpExecutionEngine.loadLondonRulesPreset(gameState);
+            } else if (gameState.kpEngine && !gameState.kpEngine.enabled) {
+                gameState.londonKpState = null;
+            }
             switchScreen('lobby');
+        };
+
+        /**
+         * Normalize kpEngine on load: legacy saves without the field stay off;
+         * explicit enabled true/false is preserved.
+         * @param {object} rawSave
+         * @param {object} d migrated.data
+         */
+        const migrateKpEngineField = (rawSave, d) => {
+            const hadKey = rawSave.kpEngine !== undefined
+                || (rawSave.data && rawSave.data.kpEngine !== undefined);
+            if (!hadKey) {
+                d.kpEngine = { enabled: false };
+                return;
+            }
+            if (d.kpEngine === null || d.kpEngine === undefined) {
+                d.kpEngine = { enabled: false };
+                return;
+            }
+            if (typeof d.kpEngine === 'object') {
+                d.kpEngine.enabled = d.kpEngine.enabled === undefined ? false : !!d.kpEngine.enabled;
+            }
         };
 
         // ── Save Migration ──
@@ -138,6 +197,10 @@ export const CoCStatePersistence = (function() {
                     diceHistory: migrated.diceHistory || [],
                     atmosphere: migrated.atmosphere || { level: 'calm', note: '' },
                     scenarioRunner: migrated.scenarioRunner || { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null },
+                    activeCampaign: migrated.activeCampaign || null,
+                    campaignArchive: migrated.campaignArchive || null,
+                    londonKpState: migrated.londonKpState || null,
+                    kpEngine: migrated.kpEngine || null,
                     selectedCharIndex: migrated.selectedCharIndex || 0
                 };
             }
@@ -186,6 +249,10 @@ export const CoCStatePersistence = (function() {
             d.clueBoard.clues = Array.isArray(d.clueBoard.clues) ? d.clueBoard.clues : [];
             d.clueBoard.links = Array.isArray(d.clueBoard.links) ? d.clueBoard.links : [];
             d.atmosphere = d.atmosphere || { level: 'calm', note: '' };
+            d.activeCampaign = d.activeCampaign || null;
+            d.campaignArchive = d.campaignArchive || null;
+            d.londonKpState = d.londonKpState || null;
+            migrateKpEngineField(save, d);
             d.selectedCharIndex = Number.isFinite(Number(d.selectedCharIndex)) ? Math.max(0, Math.floor(Number(d.selectedCharIndex))) : 0;
             migrated.location = migrated.location || d.currentLocation || '未知的房间';
             migrated.charNames = migrated.charNames || d.roster.map(r => r && r.name).filter(Boolean).join('、');
@@ -221,6 +288,17 @@ export const CoCStatePersistence = (function() {
                     diceHistory: safeJsonClone(gameState.diceHistory, []),
                     atmosphere: safeJsonClone(gameState.atmosphere, { level: 'calm', note: '' }),
                     scenarioRunner: safeJsonClone(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null }),
+                    activeCampaign: gameState.activeCampaign || null,
+                    campaignArchive: safeJsonClone(gameState.campaignArchive, null),
+                    londonKpState: safeJsonClone(gameState.londonKpState, null),
+                    kpEngine: gameState.kpEngine ? safeJsonClone({
+                        enabled: gameState.kpEngine.enabled,
+                        systemName: gameState.kpEngine.systemName,
+                        global: gameState.kpEngine.global,
+                        sessionStartedAt: gameState.kpEngine.sessionStartedAt,
+                        lastEventInjectionAt: gameState.kpEngine.lastEventInjectionAt,
+                        combatStrategyLog: gameState.kpEngine.combatStrategyLog
+                    }, null) : null,
                     selectedCharIndex: gameState.selectedCharIndex,
                     contextMeta: { runtimeChatMessages: gameState.chatHistory.length, savedChatMessages: chatToSave.length }
                 }
@@ -311,6 +389,18 @@ export const CoCStatePersistence = (function() {
             if (d.atmosphere) Object.assign(gameState.atmosphere, d.atmosphere);
             if (d.scenarioRunner) Object.assign(gameState.scenarioRunner, d.scenarioRunner);
             else Object.assign(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null });
+            gameState.activeCampaign = d.activeCampaign || null;
+            gameState.campaignArchive = d.campaignArchive ? safeJsonClone(d.campaignArchive, null) : null;
+            gameState.londonKpState = d.londonKpState ? safeJsonClone(d.londonKpState, null) : null;
+            gameState.kpEngine = d.kpEngine ? safeJsonClone(d.kpEngine, null) : gameState.kpEngine;
+            if (gameState.kpEngine) {
+                _saveKpPreference(gameState.activeModuleId, gameState.kpEngine.enabled);
+            }
+            if (gameState.kpEngine && gameState.kpEngine.enabled && typeof window !== 'undefined' && window.KpExecutionEngine) {
+                window.KpExecutionEngine.loadLondonRulesPreset(gameState);
+            } else if (gameState.kpEngine && !gameState.kpEngine.enabled) {
+                gameState.londonKpState = null;
+            }
             gameState.selectedCharIndex = d.selectedCharIndex || 0;
             clampSelectedCharIndex(gameState);
             if (core && core.cleanupInitiativeOrder) core.cleanupInitiativeOrder();

@@ -3,114 +3,43 @@
  * build_browser.mjs — Generate browser IIFE .js from ESM .mjs sources.
  *
  * Mechanical transform only (no esbuild): strips imports, maps exports to window.*.
- * Browser-only files are excluded (see BROWSER_ONLY below).
+ * Asset lists (GENERATE_PAIRS, index.html scripts, sw.js ASSETS/CACHE_NAME) live in
+ * scripts/asset_manifest.mjs — this script syncs them on every run.
  *
- * Usage: node scripts/build_browser.mjs [--check]
- *   --check  Exit 1 if generated output would differ (CI drift guard).
+ * LIMITATIONS (regex transform — not a bundler):
+ * - Does not resolve or bundle imports; load order in index.html must satisfy deps.
+ * - Re-exports (`export { x } from './y'`) and `export default` are not supported.
+ * - Multiline export blocks or `export async function` may need manual follow-up.
+ * - Engine .mjs files use attach* heuristics; new engine shapes need builder updates.
+ * - Hand-maintained BROWSER_ONLY files are never overwritten.
+ *
+ * Usage:
+ *   node scripts/build_browser.mjs          — generate .js + sync sw.js + index.html
+ *   node scripts/build_browser.mjs --check  — exit 1 on any drift (CI guard)
+ *
+ * After adding window-visible exports: npm run test:exports
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    ROOT,
+    GENERATE_PAIRS,
+    BROWSER_ONLY_GENERATE,
+    getCacheName,
+    formatIndexScriptBlock,
+    formatSwAssetsArray,
+    discoverUnlistedMjs,
+} from './asset_manifest.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.join(__dirname, '..');
 
-/** Files kept hand-maintained — never overwrite from generator. */
-const BROWSER_ONLY = new Set([
-    'js/ai/worker.js',
-    'js/ai/worker_client.js',
-    'js/audio/sfx.js',
-    'js/components/dice_canvas.js',
-    'js/components/sanity_effects.js',
-    'js/state/accessor.js',
-    'js/coc.js',
-    'js/audio/sfx.mjs',
-    'js/components/dice_canvas.mjs',
-]);
+const BROWSER_ONLY = BROWSER_ONLY_GENERATE;
 
 const HANDLER_EXPORTS = new Set(['character', 'inventory', 'dice', 'clues', 'map', 'combat', 'mythos', 'npc', 'system']);
 
-/** [mjsRelative, jsRelative] — mirrors index.html load surface. */
-const GENERATE_PAIRS = [
-    ['js/data/skills.mjs', 'js/data/skills.js'],
-    ['js/data/jobs.mjs', 'js/data/jobs.js'],
-    ['js/data/experiences.mjs', 'js/data/experiences.js'],
-    ['js/data/items.mjs', 'js/data/items.js'],
-    ['js/data/dev_logs.mjs', 'js/data/dev_logs.js'],
-    ['js/data/scenarios/tutorial.mjs', 'js/data/scenarios/tutorial.js'],
-    ['js/data/scenarios/deep_one_shadow.mjs', 'js/data/scenarios/deep_one_shadow.js'],
-    ['js/data/scenarios/abandoned_asylum.mjs', 'js/data/scenarios/abandoned_asylum.js'],
-    ['js/data/scenarios/midnight_museum.mjs', 'js/data/scenarios/midnight_museum.js'],
-    ['js/data/scenarios/coastal_festival.mjs', 'js/data/scenarios/coastal_festival.js'],
-    ['js/data/scenarios/university_occult.mjs', 'js/data/scenarios/university_occult.js'],
-    ['js/data/scenarios/lighthouse_signal.mjs', 'js/data/scenarios/lighthouse_signal.js'],
-    ['js/data/scenarios/missing_child.mjs', 'js/data/scenarios/missing_child.js'],
-    ['js/data/scenarios/train_to_nowhere.mjs', 'js/data/scenarios/train_to_nowhere.js'],
-    ['js/data/scenarios/carnival_of_masks.mjs', 'js/data/scenarios/carnival_of_masks.js'],
-    ['js/data/scenarios/remote_catalog.mjs', 'js/data/scenarios/remote_catalog.js'],
-    ['js/data/scenarios/catalog.mjs', 'js/data/scenarios/catalog.js'],
-    ['js/scenario/store.mjs', 'js/scenario/store.js'],
-    ['js/scenario/runner.mjs', 'js/scenario/runner.js'],
-    ['js/data/logger.mjs', 'js/data/logger.js'],
-    ['js/data/utils.mjs', 'js/data/utils.js'],
-    ['js/data/ai_prompt_config.mjs', 'js/data/ai_prompt_config.js'],
-    ['js/data/injury_tables.mjs', 'js/data/injury_tables.js'],
-    ['js/data/insanity_tables.mjs', 'js/data/insanity_tables.js'],
-    ['js/data/mythos_tomes.mjs', 'js/data/mythos_tomes.js'],
-    ['js/data/npc_templates.mjs', 'js/data/npc_templates.js'],
-    ['js/data/spells.mjs', 'js/data/spells.js'],
-    ['js/engines/dice.mjs', 'js/engines/dice.js'],
-    ['js/engines/attributes.mjs', 'js/engines/attributes.js'],
-    ['js/engines/skills.mjs', 'js/engines/skills.js'],
-    ['js/engines/combat.mjs', 'js/engines/combat.js'],
-    ['js/engines/healing.mjs', 'js/engines/healing.js'],
-    ['js/engines/sanity.mjs', 'js/engines/sanity.js'],
-    ['js/engines/wound.mjs', 'js/engines/wound.js'],
-    ['js/engines/mythos.mjs', 'js/engines/mythos.js'],
-    ['js/engines/environmental.mjs', 'js/engines/environmental.js'],
-    ['js/engines/poison.mjs', 'js/engines/poison.js'],
-    ['js/state/core.mjs', 'js/state/core.js'],
-    ['js/state/ui.mjs', 'js/state/ui.js'],
-    ['js/state/gameplay.mjs', 'js/state/gameplay.js'],
-    ['js/state/persistence.mjs', 'js/state/persistence.js'],
-    ['js/state/state.mjs', 'js/state.js'],
-    ['js/tools/definitions.mjs', 'js/tools/definitions.js'],
-    ['js/tools/handlers/character.mjs', 'js/tools/handlers/character.js'],
-    ['js/tools/handlers/inventory.mjs', 'js/tools/handlers/inventory.js'],
-    ['js/tools/handlers/dice.mjs', 'js/tools/handlers/dice.js'],
-    ['js/tools/handlers/clues.mjs', 'js/tools/handlers/clues.js'],
-    ['js/tools/handlers/map.mjs', 'js/tools/handlers/map.js'],
-    ['js/tools/handlers/combat.mjs', 'js/tools/handlers/combat.js'],
-    ['js/tools/handlers/mythos.mjs', 'js/tools/handlers/mythos.js'],
-    ['js/tools/handlers/npc.mjs', 'js/tools/handlers/npc.js'],
-    ['js/tools/handlers/system.mjs', 'js/tools/handlers/system.js'],
-    ['js/tools/handlers/index.mjs', 'js/tools/handlers/index.js'],
-    ['js/core/context_manager.mjs', 'js/core/context_manager.js'],
-    ['js/ai/network.mjs', 'js/ai/network.js'],
-    ['js/ai/tool_dispatch.mjs', 'js/ai/tool_dispatch.js'],
-    ['js/ai_logic.mjs', 'js/ai_logic.js'],
-    ['js/components/char_creator.mjs', 'js/components/char_creator.js'],
-    ['js/components/story_chat.mjs', 'js/components/story_chat.js'],
-    ['js/components/story_char.mjs', 'js/components/story_char.js'],
-    ['js/components/story_inv.mjs', 'js/components/story_inv.js'],
-    ['js/components/story_equip.mjs', 'js/components/story_equip.js'],
-    ['js/components/canvas_chat.mjs', 'js/components/canvas_chat.js'],
-    ['js/components/story_store.mjs', 'js/components/story_store.js'],
-    ['js/components/story_journal.mjs', 'js/components/story_journal.js'],
-    ['js/components/story_npc.mjs', 'js/components/story_npc.js'],
-    ['js/components/story_combat.mjs', 'js/components/story_combat.js'],
-    ['js/components/story_growth.mjs', 'js/components/story_growth.js'],
-    ['js/components/story_map.mjs', 'js/components/story_map.js'],
-    ['js/components/story_clues.mjs', 'js/components/story_clues.js'],
-    ['js/components/story_dice.mjs', 'js/components/story_dice.js'],
-    ['js/components/ui_feedback.mjs', 'js/components/ui_feedback.js'],
-    ['js/views/lobby_view.mjs', 'js/views/lobby_view.js'],
-    ['js/views/creator_view.mjs', 'js/views/creator_view.js'],
-    ['js/views/story_view.mjs', 'js/views/story_view.js'],
-    ['js/views/dev_log_view.mjs', 'js/views/dev_log_view.js'],
-    ['js/chat_export.mjs', 'js/chat_export.js'],
-    ['js/app.mjs', 'js/app.js'],
-];
+const INDEX_MARKER_START = '<!-- @generated script-tags — do not edit; run: npm run build:js -->';
+const INDEX_MARKER_END = '<!-- @generated-end script-tags -->';
 
 const APP_BROWSER = `// GENERATED from js/app.mjs — do not edit; run: npm run build:js
 // Browser bootstrap — globals are set by prior <script> tags in index.html
@@ -154,9 +83,11 @@ function stripExports(src) {
         return '';
     });
     code = code.replace(/^export\s+default\s+/gm, '');
+    code = code.replace(/^export\s+async\s+function\s+(\w+)/gm, 'async function $1');
     code = code.replace(/^export\s+function\s+attach(\w+)\s*\(/gm, 'function attach$1(');
     code = code.replace(/^export\s+function\s+(\w+)/gm, 'function $1');
     code = code.replace(/^export\s+const\s+(\w+)\s*=/gm, 'const $1 =');
+    code = code.replace(/^export\s+class\s+(\w+)/gm, 'class $1');
     return { code, exportBlocks };
 }
 
@@ -244,6 +175,11 @@ function mjsToBrowserJs(src, relPath) {
         return APP_BROWSER;
     }
 
+    if (relPath.endsWith('campaign/london_kp_engine.mjs')) {
+        const banner = `// GENERATED from ${relPath.replace(/\\/g, '/')} — do not edit; run: npm run build:js\n`;
+        return `${banner}window.CoCLondonKpEngine = window.KpExecutionEngine;\n`;
+    }
+
     if (relPath.includes('js/engines/') && relPath.endsWith('.mjs') && !relPath.endsWith('index.mjs')) {
         const engineOut = transformEngineMjs(stripImports(src.replace(/^\uFEFF/, '')), relPath);
         if (engineOut) return engineOut;
@@ -256,8 +192,6 @@ function mjsToBrowserJs(src, relPath) {
 
     code = transformHandlers(code);
 
-    // export const Name = already handled by stripExports → const Name =
-    // Re-assign const exports that should be global
     const constExports = [...code.matchAll(/^const (CoC\w+|DevLogs|parseItemData|safeJsonParse|safeJsonClone|View\w+|Story\w+|CanvasChat|Coc\w+|generateNpcFromTemplate)\s*=/gm)].map(m => m[1]);
     for (const name of constExports) {
         if (!code.includes(`window.${name} =`)) {
@@ -276,8 +210,7 @@ function mjsToBrowserJs(src, relPath) {
         code = code.replace(/^const SAVE_SCHEMA_VERSION = \d+;\s*/m, '');
     }
 
-    // Components/views: ensure window assignment for export const pattern
-    for (const name of ['StoryInv', 'StoryChat', 'StoryChar', 'StoryEquip', 'StoryDice', 'StoryCombat', 'StoryMap', 'StoryClues', 'StoryStore', 'StoryNpc', 'StoryJournal', 'StoryGrowth', 'CanvasChat', 'ViewLobby', 'ViewCreator', 'ViewStory', 'ViewDevLog', 'CocToastLayer', 'CoCScenarioTutorial', 'CoCScenarioDeepOneShadow', 'CoCScenarioCatalog', 'CoCScenarioRunner', 'ChatExport']) {
+    for (const name of ['StoryInv', 'StoryChat', 'StoryChar', 'StoryEquip', 'StoryDice', 'StoryCombat', 'StoryMap', 'StoryClues', 'StoryStore', 'StoryNpc', 'StoryJournal', 'StoryGrowth', 'CanvasChat', 'ViewLobby', 'ViewCreator', 'ViewStory', 'ViewDevLog', 'CocToastLayer', 'CoCScenarioTutorial', 'CoCScenarioDeepOneShadow', 'CoCScenarioCatalog', 'CoCScenarioRunner', 'CoCScenarioPdfImport', 'ChatExport']) {
         if (code.includes(`const ${name} =`) && !code.includes(`window.${name} =`)) {
             code = code.replace(new RegExp(`^const ${name}\\s*=`, 'm'), `window.${name} =`);
         }
@@ -295,6 +228,59 @@ function mjsToBrowserJs(src, relPath) {
     }
 
     return code.trimEnd() + '\n';
+}
+
+function syncSwJs(checkOnly) {
+    const swPath = path.join(ROOT, 'sw.js');
+    let sw = fs.readFileSync(swPath, 'utf8');
+    const cacheName = getCacheName();
+    const cacheLine = `const CACHE_NAME = '${cacheName}';`;
+    const assetsBody = formatSwAssetsArray();
+    const assetsBlock = `const ASSETS = [\n${assetsBody}\n];`;
+
+    const nextCache = sw.replace(/const CACHE_NAME = '[^']+';/, cacheLine);
+    const next = nextCache.replace(/const ASSETS = \[[\s\S]*?\];/, assetsBlock);
+
+    if (next !== sw) {
+        if (!checkOnly) {
+            fs.writeFileSync(swPath, next, 'utf8');
+            console.log(`WROTE sw.js (CACHE_NAME=${cacheName}, ${getSwAssetsCount(next)} assets)`);
+        } else {
+            console.log('DRIFT sw.js');
+        }
+        return true;
+    }
+    return false;
+}
+
+function getSwAssetsCount(swSource) {
+    const m = swSource.match(/const ASSETS = \[([\s\S]*?)\];/);
+    if (!m) return 0;
+    return [...m[1].matchAll(/'([^']+)'/g)].length;
+}
+
+function syncIndexHtml(checkOnly) {
+    const indexPath = path.join(ROOT, 'index.html');
+    let html = fs.readFileSync(indexPath, 'utf8');
+    if (!html.includes(INDEX_MARKER_START) || !html.includes(INDEX_MARKER_END)) {
+        console.warn('WARN index.html missing @generated script-tags markers — skipping sync');
+        return false;
+    }
+    const block = `${INDEX_MARKER_START}\n${formatIndexScriptBlock()}\n    ${INDEX_MARKER_END}`;
+    const pattern = new RegExp(
+        `${INDEX_MARKER_START.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${INDEX_MARKER_END.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`
+    );
+    const next = html.replace(pattern, block);
+    if (next !== html) {
+        if (!checkOnly) {
+            fs.writeFileSync(indexPath, next, 'utf8');
+            console.log('WROTE index.html script-tags');
+        } else {
+            console.log('DRIFT index.html');
+        }
+        return true;
+    }
+    return false;
 }
 
 const checkOnly = process.argv.includes('--check');
@@ -328,6 +314,14 @@ for (const [mjsRel, jsRel] of GENERATE_PAIRS) {
         }
     }
     generated++;
+}
+
+if (syncSwJs(checkOnly)) changed++;
+if (syncIndexHtml(checkOnly)) changed++;
+
+const unlisted = discoverUnlistedMjs();
+if (unlisted.length) {
+    console.warn(`WARN unlisted .mjs (not in GENERATE_PAIRS): ${unlisted.join(', ')}`);
 }
 
 console.log(`\nbuild_browser: ${generated} targets, ${changed} ${checkOnly ? 'drifted' : 'written'}, ${skipped} skipped (browser-only)`);

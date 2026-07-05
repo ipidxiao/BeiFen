@@ -10,10 +10,22 @@
     <link rel="manifest" href="./manifest.json">
     <title>🌑 克苏鲁的呼唤 · CoC 7th 引擎 — 沉浸式 TRPG 跑团助手</title>
     <link href="./vendor/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // CDN fallback when bundled vendor is missing — createElement injection (no document.write)
+        function cocLoadCdnFallback(isLoaded, url) {
+            if (isLoaded()) return;
+            var s = document.createElement('script');
+            s.src = url;
+            document.head.appendChild(s);
+        }
+    </script>
     <script src="./vendor/vue.global.prod.js"></script>
-<script>window.Vue || document.write('<script src="https://unpkg.com/vue@3/dist/vue.global.js"><\/script>')</script>
+    <script>cocLoadCdnFallback(function () { return window.Vue; }, 'https://unpkg.com/vue@3/dist/vue.global.js');</script>
     <script src="./vendor/chart.min.js"></script>
-<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>')</script>
+    <script>cocLoadCdnFallback(function () { return window.Chart; }, 'https://cdn.jsdelivr.net/npm/chart.js');</script>
+    <script src="./vendor/pdf.min.js"></script>
+    <script>cocLoadCdnFallback(function () { return window.pdfjsLib; }, 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');</script>
+    <script>if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js'; }</script>
     <link rel="stylesheet" href="./css/style.css">
     <noscript><style>#app::before{content:"⚠️ 请启用 JavaScript 以运行 CoC 引擎";display:block;color:#ffcc00;text-align:center;padding:2rem;font-size:1.2rem;}</style></noscript>
     <link rel="modulepreload" href="./js/coc.js">
@@ -97,6 +109,7 @@
         <coc-confirm-dialog :dialog="gameState?.ui?.confirmDialog"></coc-confirm-dialog>
     </div>
 
+    <!-- @generated script-tags — do not edit; run: npm run build:js -->
     <script src="./js/data/jobs.js"></script>
     <script src="./js/data/experiences.js"></script>
     <script src="./js/data/items.js"></script>
@@ -114,15 +127,24 @@
     <script src="./js/data/scenarios/carnival_of_masks.js"></script>
     <script src="./js/data/scenarios/remote_catalog.js"></script>
     <script src="./js/data/scenarios/catalog.js"></script>
+    <script src="./js/scenario/pdf_import.js"></script>
     <script src="./js/scenario/store.js"></script>
-    
-        <script src="./js/data/mythos_tomes.js"></script>
+    <script src="./js/data/mythos_tomes.js"></script>
     <script src="./js/data/spells.js"></script>
     <script src="./js/data/injury_tables.js"></script>
     <script src="./js/data/npc_templates.js"></script>
     <script src="./js/data/insanity_tables.js"></script>
+    <script src="./js/data/campaigns/masks_london_kp_rules.js"></script>
+    <script src="./js/data/campaigns/masks_london_antagonist_rules.js"></script>
+    <script src="./js/data/campaigns/language_self_correction.js"></script>
+    <script src="./js/data/campaigns/masks_london_master_state.js"></script>
+    <script src="./js/data/campaigns/masks_london_catalog.js"></script>
+    <script src="./js/state/kp_config.js"></script>
+    <script src="./js/campaign/kp_execution_engine.js"></script>
+    <script src="./js/campaign/london_kp_engine.js"></script>
+    <script src="./js/campaign/kp_game_loop.js"></script>
+    <script src="./js/campaign/campaign_loader.js"></script>
     <script src="./js/coc.js"></script>
-    <!-- P0-2: 引擎模块 (从coc.js拆分, 均挂载到 window.CoCEngine) -->
     <script src="./js/engines/dice.js"></script>
     <script src="./js/engines/attributes.js"></script>
     <script src="./js/engines/skills.js"></script>
@@ -142,7 +164,6 @@
     <script src="./js/state/gameplay.js"></script>
     <script src="./js/state/persistence.js"></script>
     <script src="./js/state.js"></script>
-    <!-- V18.1: CoCState 访问器 (解耦层) -->
     <script src="./js/state/accessor.js"></script>
     <script src="./js/tools/handlers/character.js"></script>
     <script src="./js/tools/handlers/inventory.js"></script>
@@ -157,17 +178,17 @@
     <script src="./js/components/char_creator.js"></script>
     <script src="./js/ai/network.js"></script>
     <script src="./js/ai/tool_dispatch.js"></script>
+    <script src="./js/ai/language_filter.js"></script>
+    <script src="./js/ai/output_protocol.js"></script>
     <script src="./js/data/ai_prompt_config.js"></script>
     <script src="./js/ai_logic.js"></script>
     <script src="./js/scenario/runner.js"></script>
-    
     <script src="./js/components/story_chat.js"></script>
     <script src="./js/components/story_char.js"></script>
     <script src="./js/components/story_inv.js"></script>
     <script src="./js/components/story_equip.js"></script>
     <script src="./js/components/canvas_chat.js"></script>
     <script src="./js/components/story_store.js"></script>
-
     <script src="./js/views/lobby_view.js"></script>
     <script src="./js/views/creator_view.js"></script>
     <script src="./js/components/story_journal.js"></script>
@@ -176,7 +197,7 @@
     <script src="./js/components/story_growth.js"></script>
     <script src="./js/components/story_map.js"></script>
     <script src="./js/components/story_clues.js"></script>
-        <script src="./js/audio/sfx.js"></script>
+    <script src="./js/audio/sfx.js"></script>
     <script src="./js/components/dice_canvas.js"></script>
     <script src="./js/components/story_dice.js"></script>
     <script src="./js/chat_export.js"></script>
@@ -184,8 +205,8 @@
     <script src="./js/views/dev_log_view.js"></script>
     <script src="./js/components/sanity_effects.js"></script>
     <script src="./js/components/ui_feedback.js"></script>
-    
     <script src="./js/app.js"></script>
+    <!-- @generated-end script-tags -->
     <!-- Testing suites are packaged under ./tests/ and run manually; release UI should not auto-run tests. -->
 
     <script>
