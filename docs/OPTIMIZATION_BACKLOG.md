@@ -41,13 +41,13 @@
 
 | ID | 模块 | 描述 | commit |
 |----|------|------|--------|
-| [x] OPT-005 | 大厅/安全 | 设置页补一行"API Key 仅存于本机浏览器"隐私提示 | *pending* |
-| [x] OPT-006 | 大厅/KP | KP 开关加 hover tooltip 说明"默认开启+伦敦规则为底层协议" | *pending* |
-| [x] OPT-007 | 大厅 | 模组卡片显示 KP 开启状态徽标 | *pending* |
-| [x] OPT-008 | 叙事 Story | 长对话经 `trimForSave` 裁剪后 UI toast「历史已压缩」 | *pending* |
-| [x] OPT-009 | 存档 | `loadGame` IDB 异步恢复补 loading 态 + Promise 化 | *pending* |
-| [x] OPT-010 | 场景/战役 Store | 下载失败 toast 含「改用本地 PDF 转换」引导 | *pending* |
-| [x] OPT-011 | 场景/战役 Store | `LS_FALLBACK_MAX_BYTES` 超限更清晰清理指引 | *pending* |
+| [x] OPT-005 | 大厅/安全 | 设置页补一行"API Key 仅存于本机浏览器"隐私提示 | `53ec8f6` |
+| [x] OPT-006 | 大厅/KP | KP 开关加 hover tooltip 说明"默认开启+伦敦规则为底层协议" | `53ec8f6` |
+| [x] OPT-007 | 大厅 | 模组卡片显示 KP 开启状态徽标 | `53ec8f6` |
+| [x] OPT-008 | 叙事 Story | 长对话经 `trimForSave` 裁剪后 UI toast「历史已压缩」 | `53ec8f6` |
+| [x] OPT-009 | 存档 | `loadGame` IDB 异步恢复补 loading 态 + Promise 化 | `53ec8f6` |
+| [x] OPT-010 | 场景/战役 Store | 下载失败 toast 含「改用本地 PDF 转换」引导 | `53ec8f6` |
+| [x] OPT-011 | 场景/战役 Store | `LS_FALLBACK_MAX_BYTES` 超限更清晰清理指引 | `53ec8f6` |
 
 ## P3 中期质量（测试深度 + 局部体验）
 
