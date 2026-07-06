@@ -20,10 +20,10 @@
 
 | ID | 模块 | 描述 | commit |
 |----|------|------|--------|
-| [x] OPT-001 | PWA/构建 | README + PRE_RELEASE 顶部醒目标注「必须 `python build.py`」 | TBD |
-| [x] OPT-002 | CI/构建 | `scripts/verify_sw_cache.mjs` + 接入 `ci:smoke` | TBD |
-| [x] OPT-003 | QA/无障碍 | PRE_RELEASE 清单扩充 Tab/窄屏/离线/PWA/vendor 人工步骤（未声称已测） | TBD |
-| [x] OPT-004 | 发布说明 | `docs/RELEASE_NOTES_DRAFT.md` + `prepare_release_notes.mjs` wontfix 模板 | TBD |
+| [x] OPT-001 | PWA/构建 | README + PRE_RELEASE 顶部醒目标注「必须 `python build.py`」 | `4f03246` |
+| [x] OPT-002 | CI/构建 | `scripts/verify_sw_cache.mjs` + 接入 `ci:smoke` | `4f03246` |
+| [x] OPT-003 | QA/无障碍 | PRE_RELEASE 清单扩充 Tab/窄屏/离线/PWA/vendor 人工步骤（未声称已测） | `4f03246` |
+| [x] OPT-004 | 发布说明 | `docs/RELEASE_NOTES_DRAFT.md` + `prepare_release_notes.mjs` wontfix 模板 | `4f03246` |
 
 ## P2 发布后尽快
 
