@@ -1,92 +1,82 @@
-# CoC 7th 引擎 — V17 开发路线图
+# CoC 7th 引擎 — 开发路线图
 
-> V16.4 AUDITFIX8 Final — 全部 P0-P3 计划任务已完成。
-
-## ✅ 已完成
-
-### 架构清理
-- [x] `ground_truth_canvas.md` 重写（移除 Linux 路径）
-- [x] `docs/internal/` 移除
-- [x] `ENGINEERING.md` + `humanpending.md` 重写
-- [x] `docs/audit/README.md` 审计索引
-
-### 模块拆分
-- [x] `ai_logic.js` → `ai/network.js` + `ai/tool_dispatch.js` + `ai_logic.js` (577→113+122+426)
-- [x] `state.js` → `state/core.js` + `ui.js` + `gameplay.js` + `persistence.js` + `state.js` (920→73+92+340+418+147)
-- [x] `coc.js` BaseSkills → `js/data/skills.js` (490→443)
-
-### 质量提升
-- [x] 15 核心函数 JSDoc 补全
-- [x] 11 组件内联样式 → CSS 类提取（style.css 107→521 行）
-- [x] `engine_tests.js` 扩展（11→34 assertions）
-- [x] `tests/run_all_smoke.js` 统一测试入口
-
-### ESM 迁移（第一阶段）
-- [x] `js/esm/` 包装层（15 个 .mjs 文件，安全桥接 `window.*` → ESM `import`）
-- [x] `js/app.mjs` ESM 入口点（与 `js/app.js` 并行）
-- [x] `js/esm/README.md` 迁移路径文档
-
-### 基础设施
-- [x] `.github/workflows/test.yml` CI 配置
-- [x] `docs/cdn-evaluation.md` CDN 离线化方案
-- [x] `docs/a11y-audit.md` 无障碍审查
-- [x] `docs/ROADMAP.md` 本文件
+> **当前版本：18.1.0**（以 `package.json` 为准）· 门禁 **39/39** smoke · AUDIT6 **CLOSED**  
+> 架构演进详见 [ROADMAP_V18.md](./ROADMAP_V18.md) · 可选增强见 [OPTIONAL_ENHANCEMENTS.md](./OPTIONAL_ENHANCEMENTS.md)
 
 ---
 
-## ⬜ V17 剩余（下一迭代窗口）
+## ✅ V18.1 当前状态（2026-07-06）
 
-> **2026-07-06 可选增强已启动** — 见下方「已启动」各节。
+### 发布就绪
+- [x] 单源 `.mjs` → `build:js` 生成浏览器 `.js`（`build:js:check` + `verify_browser_exports` CI 门禁）
+- [x] 39/39 smoke 套件（`npm test`）+ `ci:smoke`（全量 smoke + build drift + exports）
+- [x] AUDIT6 七轮审计 **7/7 完成**（见 [AUDIT6_BATCHES.md](./AUDIT6_BATCHES.md)）
+- [x] PWA 离线：SW scope 相对路径、iOS meta、内联 icons（`file://`）、vendor 本地化
+- [x] 模组库：10 内置 + 8 可下载（含 CC 社区改编），IndexedDB 缓存
+- [x] 存档迁移 v1–v7 + IndexedDB 溢出兜底
 
-### ESM 迁移（第二阶段） — 🔄 进行中
-将实际逻辑移入 `.mjs` 文件，消除 `window.*` 全局：
+### 可选增强（2026-07-06 批次）
+| # | 项 | 状态 |
+|---|-----|------|
+| 1 | CDN 本地化（方案 C） | ✅ 完成 |
+| 2 | 无障碍 P1/P2 | ✅ 完成 |
+| 3 | jsdom / E2E 覆盖（VM 层） | ✅ 完成 |
+| 4 | ESM Phase 2 首片 | 🔄 进行中（`?esm=1` 引导；数据层 `.mjs` 为权威源） |
 
-1. 数据文件迁移（skills/jobs/experiences/items/dev_logs → data/*.mjs）
-2. 引擎迁移（coc.mjs）
-3. 工具系统迁移（tools/*.mjs）
-4. 状态管理迁移（state/*.mjs）
-5. AI 模块迁移（ai/*.mjs）
-6. 组件/视图迁移（components/*.mjs, views/*.mjs）
-7. `index.html` 切换为单一 `<script type="module" src="js/app.mjs">`
-8. Smoke 测试重写为 ESM import
-
-**工期**: 2-3d | **风险**: 高（需同步更新全部测试）
-
-**已启动 (2026-07-06)**:
-- [x] `?esm=1` 可选引导：`index.html` 设置 `__COC_ESM_BOOT__`，`app.mjs` 条件挂载
-- [x] `tests/esm_phase2_boot_smoke.mjs` 门禁
-- [ ] 数据/引擎/状态/AI 逻辑完全脱离 `window.*`（进行中）
-- [ ] `index.html` 默认切换为单一 `<script type="module">`（未做，保留 IIFE 回退）
-
-### CDN 本地化 — ✅ 已完成（方案 C）
-- [x] `vendor/vue.global.prod.js` + `vendor/bootstrap.min.css` 本地化
-- [x] Chart.js / PDF.js 本地化 + CDN `cocLoadCdnFallback` 回退
-- [x] `sw.js` ASSETS 含 vendor；`tests/sw_cache_smoke.js` 门禁
-- [x] 车卡雷达图 Chart 不可用时的文本降级（`chartUnavailable`）
-
-### 无障碍修复 — ✅ 已完成（P1/P2）
-- [x] 聊天 `aria-live`、骰子 `aria-label`、地图/线索/战斗键盘焦点
-- [x] `tests/a11y_smoke.js` 回归门禁
-
-### 无障碍修复（原文档）
-- P1: 聊天容器 `aria-live`（5 min）
-- P2: SVG 组件键盘焦点（40 min）
-- 详见 `docs/a11y-audit.md`
-
-### 测试覆盖增强 — 🔄 进行中
-- [x] `coverage_gap_smoke.js`（HealingEngine / age / enemy / validateToolArguments）
-- [x] `esm_state.mjs` / `esm_ai.mjs`（jsdom/browser-mock）
-- [x] `esm_utils_logger.mjs` / `esm_tool_dispatch.mjs`
-- [x] `flow_lobby_combat_smoke.js` E2E flow
-- [ ] Playwright 真浏览器 E2E（未引入，沿用 Node VM flow smoke）
+### 进行中 / 延后
+- [ ] ESM Phase 2 完全脱离 `window.*`（`index.html` 仍保留 IIFE 回退）
+- [ ] Playwright 真浏览器 E2E（沿用 Node VM `flow_lobby_combat_smoke.js`）
 - [ ] 组件层 jsdom 全量（需完整 Vue 环境，延后）
+- [ ] `window.*` 全局命名统一（ROADMAP_V18 Phase 2–4）
+
+### 已知设计取舍（wontfix，非缺陷）
+- 战斗动作菜单为**引导**而非每回合强制校验
+- KP 协议引擎**默认开启**，伦敦规则为全局底层协议
 
 ---
 
 ## 📦 当前交付物
 
 ```
-CoC_Engine_V16_4_AUDITFIX8_VERIFIED_SKILLVIS_REVIEWFIX_FILECHECK.zip
-  80 files / 194 KB
-  12/12 smoke PASS  |  34 engine assertions  |  0 internal docs
+CoC_Engine_V18.1.0
+  版本: package.json → 18.1.0
+  门禁: 39/39 smoke PASS · deep_verify 0/179
+  发布: python build.py（自动 build:js + SW 内容哈希注入）
 ```
+
+**快速验证：**
+```bash
+npm test              # 39/39 smoke
+npm run ci:smoke      # smoke + build:js:check + exports
+python build.py       # 发布 ZIP
+```
+
+---
+
+## 📋 发布前检查
+
+详见 [PRE_RELEASE_AUDIT.md](./PRE_RELEASE_AUDIT.md)（就绪度 8.5/10 · 零阻塞项）。
+
+---
+
+## 📚 历史归档（V16–V17）
+
+<details>
+<summary>V16.4 AUDITFIX8 / V17 迭代（点击展开）</summary>
+
+### V16.4 已完成
+- 架构清理：`ground_truth_canvas.md`、`ENGINEERING.md`、`docs/audit/` 索引
+- 模块拆分：`ai_logic.js`、`state.js`、`coc.js` BaseSkills
+- 质量提升：JSDoc、CSS 提取、`engine_tests.js` 扩展
+- ESM 迁移第一阶段：`js/esm/` 包装层 + `app.mjs` 并行入口
+- 基础设施：`.github/workflows/test.yml`、CDN/无障碍评估文档
+
+### V17 已完成
+- CDN 本地化（vendor + SW ASSETS + Chart 文本降级）
+- 无障碍修复（`aria-live`、键盘焦点、`a11y_smoke.js`）
+- 测试覆盖增强（`coverage_gap_smoke.js`、ESM 套件、`flow_lobby_combat_smoke.js`）
+- ESM Phase 2 启动：`?esm=1` 引导 + `esm_phase2_boot_smoke.mjs`
+
+> V17 原文档中的「12/12 smoke」「V16.4 交付物 ZIP」已过时；以本文 V18.1 节为准。
+
+</details>
