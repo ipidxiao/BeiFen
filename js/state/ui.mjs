@@ -95,7 +95,6 @@ export const CoCStateUI = (function() {
             if (ok) core.switchScreen('character');
             return ok;
         };
-        const formatText = (text) => text ? text.replace(/\*\*/g, '').replace(/\n/g, '<br>') : '';
 
         // rAF batched rendering for chat messages
         let _batchQueue = [];
@@ -119,7 +118,7 @@ export const CoCStateUI = (function() {
         };
         const flushMessagesNow = () => { if (_batchScheduled) flushBatch(); };
 
-        return { showToast, confirmAction, resolveConfirm, compactChatHistory, _pushSystemNotice, _safeLocalStorageSetItem, saveSettings, formatText, _formatStorageError, _isQuotaExceeded, pushMessageBatched, flushMessagesNow };
+        return { showToast, confirmAction, resolveConfirm, compactChatHistory, _pushSystemNotice, _safeLocalStorageSetItem, saveSettings, _formatStorageError, _isQuotaExceeded, pushMessageBatched, flushMessagesNow };
     };
     return { create };
 })();

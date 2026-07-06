@@ -35,7 +35,7 @@ export const StoryMap = {
                           stroke="#2a2a4a" stroke-width="2" />
                       <!-- Room rects -->
                       <g v-for="room in gameState.sceneMap.rooms" :key="room.id"
-                          tabindex="0" role="button" :aria-label="room.name" style="cursor:pointer;" @keydown.enter="goToRoom(room)" @keydown.space.prevent="goToRoom(room)" @click="selectedRoom = (selectedRoom && selectedRoom.id===room.id) ? null : room">
+                          tabindex="0" role="button" :aria-label="room.name" style="cursor:pointer;" @keydown.enter="toggleRoomDetail(room)" @keydown.space.prevent="toggleRoomDetail(room)" @click="toggleRoomDetail(room)">
                           <rect :x="roomX(room)" :y="roomY(room)" :width="RW" :height="RH" rx="4"
                               :fill="roomFill(room)" :stroke="room===selectedRoom ? '#88aaff' : roomStroke(room)" stroke-width="1.5"/>
                           <!-- Status icon -->
@@ -143,6 +143,9 @@ export const StoryMap = {
           roomName(id) {
               const r = this.gameState.sceneMap.rooms.find(rm => rm.id === id);
               return r ? r.name : id;
+          },
+          toggleRoomDetail(room) {
+              this.selectedRoom = (this.selectedRoom && this.selectedRoom.id === room.id) ? null : room;
           },
           goToRoom(room) {
               if (window.CoCAI && window.CoCAI.moveToLocation) window.CoCAI.moveToLocation(room.name);

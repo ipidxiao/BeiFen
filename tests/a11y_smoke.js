@@ -13,6 +13,8 @@ const checks = [
   ['js/components/story_chat.mjs', /aria-live="polite"/],
   ['js/components/story_chat.mjs', /aria-atomic="false"/],
   ['js/components/story_dice.mjs', /:aria-label="'掷 ' \+ diceCount \+ 'd' \+ sides"/],
+  ['js/components/story_clues.mjs', /toggleClueDetail\(clue\)/],
+  ['js/components/story_map.mjs', /toggleRoomDetail\(room\)/],
   ['js/components/story_map.mjs', /tabindex="0" role="button"/],
   ['js/components/story_map.mjs', /@keydown\.enter/],
   ['js/components/story_clues.mjs', /tabindex="0" role="button"/],

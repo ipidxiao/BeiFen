@@ -203,6 +203,9 @@ export const StoryClues = {
                   .map(l => l.from===clue.id ? l.to : l.from);
               return this.gameState.clueBoard.clues.filter(c => linked.includes(c.id));
           },
+          toggleClueDetail(clue) {
+              this.selectedClue = (this.selectedClue && this.selectedClue.id === clue.id) ? null : clue;
+          },
           setStatus(clue, status) { window.CoCState.markClueStatus(clue.id, status); },
           startNote(clue) { this.addingNote=true; this.noteText=clue.note||''; },
           saveNote(clue) { window.CoCState.markClueStatus(clue.id, null, this.noteText); this.addingNote=false; }

@@ -95,7 +95,6 @@ export const CoCState = (function(Vue) {
         resolveConfirm: uiMod.resolveConfirm,
         compactChatHistory: uiMod.compactChatHistory,
         saveSettings: uiMod.saveSettings,
-        formatText: uiMod.formatText,
         formatStorageBytes: persistMod.formatStorageBytes,
         getStorageStatus: persistMod.getStorageStatus,
         saveGame: persistMod.saveGame,
