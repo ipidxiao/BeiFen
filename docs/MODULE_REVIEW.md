@@ -1,5 +1,7 @@
 # 各模块功能完善度与优化建议
 
+> 可执行优化项清单（OPT-001–036）见 [OPTIMIZATION_BACKLOG.md](./OPTIMIZATION_BACKLOG.md)。
+
 > 版本 **V18.1.0** · HEAD `cd111d7` · 基线门禁 **39/39 smoke PASS** · 性质：只读顾问审查
 
 ## 一、总览矩阵（模块 × 完善度 × 优先级）
