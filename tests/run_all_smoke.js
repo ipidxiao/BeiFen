@@ -59,9 +59,12 @@ const SUITES = [
     'auditfix5_smoke.js',
     'auditfix6_smoke.js',
     'coverage_gap_smoke.js',
+    'a11y_smoke.js',
     'test_v18_engines.mjs',
     'ui/component_helpers_smoke.mjs',
     'ui/dom_parse_smoke.mjs',
+    'esm_utils_smoke.mjs',
+    'esm_tool_dispatch.mjs',
   ]},
 
   // Phase 3 — 重构验证（迁移 + Handler + 浏览器模拟）
@@ -87,6 +90,7 @@ const SUITES = [
     'esm_engine.mjs',
     'esm_state.mjs',
     'esm_ai.mjs',
+    'esm_phase2_boot_smoke.mjs',
     'deep_verify.mjs',
   ]},
 ];
@@ -112,10 +116,11 @@ for (const { phase, tests } of SUITES) {
     }
 
     try {
+      const timeoutMs = /\.mjs$/.test(testFile) && testFile.includes('dom_parse') ? 60000 : 30000;
       const output = execSync(`node "${fullPath}"`, {
         cwd: ROOT,
         encoding: 'utf8',
-        timeout: 30000,
+        timeout: timeoutMs,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
       console.log(`  ✓ PASS  ${testFile}`);

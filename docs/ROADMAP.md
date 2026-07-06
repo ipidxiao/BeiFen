@@ -36,7 +36,9 @@
 
 ## ⬜ V17 剩余（下一迭代窗口）
 
-### ESM 迁移（第二阶段）
+> **2026-07-06 可选增强已启动** — 见下方「已启动」各节。
+
+### ESM 迁移（第二阶段） — 🔄 进行中
 将实际逻辑移入 `.mjs` 文件，消除 `window.*` 全局：
 
 1. 数据文件迁移（skills/jobs/experiences/items/dev_logs → data/*.mjs）
@@ -50,14 +52,34 @@
 
 **工期**: 2-3d | **风险**: 高（需同步更新全部测试）
 
-### CDN 本地化
-- 推荐方案 C：Vue + Bootstrap 本地化，Chart.js 保持 CDN + 回退
-- 详见 `docs/cdn-evaluation.md`
+**已启动 (2026-07-06)**:
+- [x] `?esm=1` 可选引导：`index.html` 设置 `__COC_ESM_BOOT__`，`app.mjs` 条件挂载
+- [x] `tests/esm_phase2_boot_smoke.mjs` 门禁
+- [ ] 数据/引擎/状态/AI 逻辑完全脱离 `window.*`（进行中）
+- [ ] `index.html` 默认切换为单一 `<script type="module">`（未做，保留 IIFE 回退）
 
-### 无障碍修复
+### CDN 本地化 — ✅ 已完成（方案 C）
+- [x] `vendor/vue.global.prod.js` + `vendor/bootstrap.min.css` 本地化
+- [x] Chart.js / PDF.js 本地化 + CDN `cocLoadCdnFallback` 回退
+- [x] `sw.js` ASSETS 含 vendor；`tests/sw_cache_smoke.js` 门禁
+- [x] 车卡雷达图 Chart 不可用时的文本降级（`chartUnavailable`）
+
+### 无障碍修复 — ✅ 已完成（P1/P2）
+- [x] 聊天 `aria-live`、骰子 `aria-label`、地图/线索/战斗键盘焦点
+- [x] `tests/a11y_smoke.js` 回归门禁
+
+### 无障碍修复（原文档）
 - P1: 聊天容器 `aria-live`（5 min）
 - P2: SVG 组件键盘焦点（40 min）
 - 详见 `docs/a11y-audit.md`
+
+### 测试覆盖增强 — 🔄 进行中
+- [x] `coverage_gap_smoke.js`（HealingEngine / age / enemy / validateToolArguments）
+- [x] `esm_state.mjs` / `esm_ai.mjs`（jsdom/browser-mock）
+- [x] `esm_utils_logger.mjs` / `esm_tool_dispatch.mjs`
+- [x] `flow_lobby_combat_smoke.js` E2E flow
+- [ ] Playwright 真浏览器 E2E（未引入，沿用 Node VM flow smoke）
+- [ ] 组件层 jsdom 全量（需完整 Vue 环境，延后）
 
 ---
 

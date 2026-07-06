@@ -76,4 +76,4 @@ if (window.CocToastLayer) app.component('coc-toast-layer', window.CocToastLayer)
 if (window.CocConfirmDialog) app.component('coc-confirm-dialog', window.CocConfirmDialog);
 if (window.CocIcon) app.component('coc-icon', window.CocIcon);
 
-app.mount('#app');
+if (!window.__COC_ESM_BOOT__) app.mount('#app');

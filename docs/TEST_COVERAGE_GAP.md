@@ -88,7 +88,16 @@
 | UI 纯函数 | `tests/ui/component_helpers_smoke.mjs` | combat_ui_helpers + chat_format_helpers |
 | jsdom DOM 解析 | `tests/ui/dom_parse_smoke.mjs` | 最小 jsdom 依赖验证（AUDIT4-P3-08） |
 
-运行：`npm test` 或单独 `npm run test:e2e`。
+## 六、2026-07-06 补充
+
+| 套件 | 路径 | 覆盖 |
+|------|------|------|
+| utils/logger ESM | `tests/esm_utils_smoke.mjs` | safeJsonParse/Clone + CoCLog |
+| tool_dispatch 边界 | `tests/esm_tool_dispatch.mjs` | normalizeToolValue 类型强制 |
+| a11y 回归 | `tests/a11y_smoke.js` | P1/P2 模式存在于 .mjs 源码 |
+| ESM Phase 2 引导 | `tests/esm_phase2_boot_smoke.mjs` | `?esm=1` 门闩 + coc.mjs 导入 |
+
+运行：`npm test`（**39 suites**）或单独 `npm run test:e2e`。
 
 ## 四、工具建议
 

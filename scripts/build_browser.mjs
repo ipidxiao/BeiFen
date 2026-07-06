@@ -68,7 +68,7 @@ else throw new Error("找不到确认对话框组件！");
 if (window.CocIcon) app.component('coc-icon', window.CocIcon);
 else throw new Error("找不到图标组件！");
 
-app.mount('#app');
+if (!window.__COC_ESM_BOOT__) app.mount('#app');
 `;
 
 function stripImports(src) {
