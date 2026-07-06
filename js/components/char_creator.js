@@ -348,6 +348,10 @@ window.CoCCreator = (function(State, Engine, Vue) {
       const cancelImport = () => { importPreview.value = null; };
 
       const saveDraftCharacter = () => {
+        if (pointStats.value.occRemain !== 0 || pointStats.value.perRemain !== 0) {
+            notify(`请分配完所有技能点后再登记（剩余：本职 ${pointStats.value.occRemain}，兴趣 ${pointStats.value.perRemain}）。`, 'warning');
+            return;
+        }
         let finalSkills = {};
         for (let s of dynamicSkillNames.value) finalSkills[s] = getSkillTotal(s);
         const derivedData = JSON.parse(JSON.stringify(draftChar.derived));

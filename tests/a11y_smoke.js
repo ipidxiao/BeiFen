@@ -13,7 +13,7 @@ const checks = [
   ['js/components/story_chat.mjs', /aria-live="polite"/],
   ['js/components/story_chat.mjs', /aria-atomic="false"/],
   ['js/components/story_dice.mjs', /:aria-label="'掷 ' \+ diceCount \+ 'd' \+ sides"/],
-  ['js/components/story_clues.mjs', /toggleClueDetail\(clue\)/],
+  ['js/components/story_clues.mjs', /@click="toggleClueDetail\(clue\)"/],
   ['js/components/story_map.mjs', /toggleRoomDetail\(room\)/],
   ['js/components/story_map.mjs', /tabindex="0" role="button"/],
   ['js/components/story_map.mjs', /@keydown\.enter/],
@@ -21,6 +21,7 @@ const checks = [
   ['js/components/story_combat.mjs', /combat-initiative-toggle.*tabindex="0"/s],
   ['js/components/ui_feedback.mjs', /aria-live="polite"/],
   ['js/views/creator_view.mjs', /chartUnavailable/],
+  ['js/views/creator_view.mjs', /须将本职与兴趣技能点全部分配完毕/],
 ];
 
 for (const [file, pattern] of checks) {

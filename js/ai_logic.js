@@ -551,6 +551,13 @@ window.CoCAI = (function(State, Engine) {
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `【${c.name}】进行【${skillName}】检定${tool.isPushed ? '（推动·更高风险）' : ''}：骰出 ${res.rolledValue}/${tv}，${res.level}。` }); 
             addJournalEntry({ type: 'skill_check', charName: c.name, summary: `${skillName} 检定 ${res.level}（${res.rolledValue}/${tv}）${tool.isPushed ? ' [推动]' : ''}`, isSuccess: res.rolledValue <= tv });
             
+            let toolResultSuffix = '';
+            if (tool.isPushed && !res.success) {
+                toolResultSuffix = res.level === '大失败'
+                    ? ' 【引擎提示】推动检定大失败——须描写比初次失败更严重的不可逆后果（伤亡、暴露、物品损毁等）。'
+                    : ' 【引擎提示】推动检定失败——须描写比初次失败更严峻的后果，不可轻描淡写。';
+            }
+
             if (res.rolledValue <= res.skillValue) {
                 if (!c.skillsUsedThisSession) c.skillsUsedThisSession = [];
                 if (!c.skillsUsedThisSession.some(s => s.name === skillName)) {
@@ -561,14 +568,14 @@ window.CoCAI = (function(State, Engine) {
             const scenarioRunner = window.CoCScenarioRunner;
             const isScenarioCheck = msg._scenarioCheck || (scenarioRunner && scenarioRunner.isSkillCheckMessage && scenarioRunner.isSkillCheckMessage(msg));
             if (isScenarioCheck && scenarioRunner && scenarioRunner.onSkillCheckResult) {
-                gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${res.skillValue}）。` });
+                gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${res.skillValue}）。${toolResultSuffix}` });
                 if (msg.tool_calls.every(t => t.isResolved)) msg.isResolved = true;
                 scenarioRunner.onSkillCheckResult(res.rolledValue <= res.skillValue, skillName);
                 scrollToBottom();
                 return;
             }
             
-            gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${res.skillValue}）。继续叙事，禁废话。` });
+            gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${res.skillValue}）。继续叙事，禁废话。${toolResultSuffix}` });
             if (msg.tool_calls.every(t => t.isResolved)) { msg.isResolved = true; await triggerAI((msg._toolRound || 0) + 1); }
         } catch(err) {
             CoCLog.error("executeSkillCheck Error:", err);
@@ -597,5 +604,5 @@ window.CoCAI = (function(State, Engine) {
     };
 
 
-    return { getSafeSkillName, moveToLocation, handlePlayerAction, executeSkillCheck, narrativeListener, triggerAI, validateToolArguments, buildAiToolDefinitions, dispatchToolHandler, getToolHandlers: () => toolHandlers, getToolCatalogNames: () => (window.CoCToolDefinitions && window.CoCToolDefinitions.getNames ? window.CoCToolDefinitions.getNames() : []), getRegisteredToolNames: () => Object.keys(toolHandlers) };
+    return { getSafeSkillName, moveToLocation, handlePlayerAction, executeSkillCheck, narrativeListener, triggerAI, processTools, validateToolArguments, buildAiToolDefinitions, dispatchToolHandler, getToolHandlers: () => toolHandlers, getToolCatalogNames: () => (window.CoCToolDefinitions && window.CoCToolDefinitions.getNames ? window.CoCToolDefinitions.getNames() : []), getRegisteredToolNames: () => Object.keys(toolHandlers) };
 })(window.CoCState, window.CoCEngine);

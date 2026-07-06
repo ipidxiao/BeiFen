@@ -74,15 +74,15 @@ assert.strictEqual(Engine.getSkillValue({ attrs: { DEX: 50 }, skillAllocations: 
 
 Object.assign(State.draftChar.attrs, { STR: 50, CON: 50, SIZ: 50, DEX: 50, APP: 50, INT: 50, POW: 50, EDU: 50, LUCK: 50 });
 State.draftChar.name = '技能复核员';
-State.draftChar.job = { name: '测试职业', classSkillsString: '射击，侦查', calcPoints: () => 200 };
-State.draftChar.skillAllocations = { '手枪': { occ: 10, per: 5 }, '射击': { occ: 50, per: 0 } };
+State.draftChar.job = { name: '测试职业', classSkillsString: '射击，侦查', calcPoints: () => 50 };
+State.draftChar.skillAllocations = { '手枪': { occ: 40, per: 39 }, '侦查': { occ: 10, per: 61 } };
 State.draftChar.derived = Engine.calculateDerived(State.draftChar.attrs);
-assert.strictEqual(Creator.getSkillTotal('手枪'), 35, 'creator getSkillTotal returns numeric base+occ+per for 手枪');
+assert.strictEqual(Creator.getSkillTotal('手枪'), 99, 'creator getSkillTotal returns numeric base+occ+per for 手枪');
 assert(!String(Creator.getSkillTotal('手枪')).includes('[object Object]'), 'creator total is not string-corrupted');
 Creator.saveDraftCharacter();
 const savedChar = State.gameState.roster.find(c => c.name === '技能复核员');
 assert(savedChar, 'creator saved the character');
-assert.strictEqual(savedChar.skills['手枪'], 35, 'saved character stores numeric final skill value');
+assert.strictEqual(savedChar.skills['手枪'], 99, 'saved character stores numeric final skill value');
 assert.strictEqual(typeof savedChar.skills['手枪'], 'number', 'saved skill value type is number');
 assert(!('射击' in savedChar.skills), 'hidden stale parent 射击 is not saved as a visible skill');
 

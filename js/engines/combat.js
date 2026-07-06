@@ -89,7 +89,10 @@ window.CoCEngine.CombatEngine = {
         if (!weapon || weapon.type !== 'firearm') return { jammed: false };
         if (attackResult.level === '大失败') {
             var mal = parseInt(weapon.malfunction || '00');
-            if (Math.floor(Math.random()*100)+1 <= mal) {
+            const malRoll = (window.CoCEngine._rollD100 && typeof window.CoCEngine._rollD100 === 'function')
+                ? window.CoCEngine._rollD100()
+                : Math.floor(Math.random() * 100) + 1;
+            if (malRoll <= mal) {
                 return { jammed: true, desc: '火器故障！' + (weapon.name||'武器') + '卡壳了！' };
             }
         }

@@ -96,4 +96,24 @@ window.CoCState.gameState.roster.push({
 });
 check(typeof CoCAI.executeSkillCheck === 'function', 'executeSkillCheck available');
 
+// OPT-019: processTools dispatch (minimal slice)
+if (typeof CoCAI.processTools === 'function') {
+    const beforeInv = window.CoCState.gameState.inventory.length;
+    const aiMsg = {
+        role: 'assistant',
+        tool_calls: [{
+            id: 'call_opt19_1',
+            type: 'function',
+            function: { name: 'system_alert', arguments: '{"message":"processTools smoke"}' },
+            isResolved: false
+        }],
+        isResolved: false,
+        _toolRound: 0
+    };
+    await CoCAI.processTools(aiMsg, 0);
+    check(aiMsg.tool_calls[0].isResolved === true, 'processTools resolves system_alert');
+    check(aiMsg.isResolved === true, 'processTools marks aiMsg resolved');
+    check(window.CoCState.gameState.chatHistory.some(m => String(m.content || '').includes('processTools smoke')), 'processTools alert in chat');
+}
+
 console.log(`ESM ai: ALL ${passed} assertions PASSED`);

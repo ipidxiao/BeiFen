@@ -15,9 +15,37 @@
  * the API-facing schema by buildTools(), but retained for local validation.
  */
 const CoCToolDefinitions = (function() {
+    /** Hard-required tools vs soft-suggested — reduces model over-triggering on contextual actions. */
+    const TOOL_TIERS = Object.freeze({
+        required: new Set([
+            'spawn_npc', 'update_inventory', 'register_npc', 'start_combat', 'add_clue', 'record_engine_log'
+        ]),
+        suggested: new Set([
+            'burst_fire', 'fire_weapon', 'link_clues', 'mark_clue_status', 'update_npc_status',
+            'end_combat', 'update_enemy', 'enemy_attack', 'dodge', 'fight_back',
+            'disarm', 'grapple', 'create_map', 'update_room', 'set_position',
+            'apply_environmental_damage', 'apply_poison', 'apply_dice_modifier', 'cast_spell'
+        ])
+    });
+
+    const stripTierPrefix = (text) => String(text || '').replace(/^【(必须调用|建议调用|铁律)[^】]*】\s*/, '');
+
+    const formatToolDescription = (name, rawDescription) => {
+        const body = stripTierPrefix(rawDescription);
+        if (TOOL_TIERS.required.has(name)) return `【必须调用】${body}`;
+        if (TOOL_TIERS.suggested.has(name)) return `【建议调用】${body}`;
+        return rawDescription;
+    };
+
+    const getToolTier = (name) => {
+        if (TOOL_TIERS.required.has(name)) return 'required';
+        if (TOOL_TIERS.suggested.has(name)) return 'suggested';
+        return 'neutral';
+    };
+
     const TOOL_CATALOG = {
         spawn_npc: {
-            description: '【必须调用】从模板生成NPC/怪物。使用标准属性模板（警察、邪教徒、深潜者、食尸鬼等），确保属性一致性。',
+            description: '从模板生成NPC/怪物。使用标准属性模板（警察、邪教徒、深潜者、食尸鬼等），确保属性一致性。',
             parameters: {
                 type: 'object',
                 properties: {
@@ -68,7 +96,7 @@ const CoCToolDefinitions = (function() {
             }
         },
         update_inventory: {
-            description: '【必须调用】当玩家拾取、发现或获得物品时调用。枪械与弹药须分为两个独立物品；开火时从背包匹配弹药。',
+            description: '当玩家拾取、发现或获得物品时调用。枪械与弹药须分为两个独立物品；开火时从背包匹配弹药。',
             parameters: {
                 type: 'object',
                 properties: {
@@ -126,7 +154,7 @@ const CoCToolDefinitions = (function() {
             }
         },
         register_npc: {
-            description: '【必须调用】剧情中初次出现有名字的NPC时，立即静默调用此工具记录到关系网络。',
+            description: '剧情中初次出现有名字的NPC时，立即静默调用此工具记录到关系网络。',
             parameters: {
                 type: 'object',
                 properties: {
@@ -151,7 +179,7 @@ const CoCToolDefinitions = (function() {
             }
         },
         start_combat: {
-            description: '【必须调用】当剧情进入激烈战斗时调用，激活回合制战斗界面。叙事须呈现 CoC 7e 完整行动菜单：防御（生存/逃脱/打断/保护）、攻击（近战/射击/反击）、战技（缴械/擒抱/推搡/击倒）、技能与环境、神秘学施法。',
+            description: '当剧情进入激烈战斗时调用，激活回合制战斗界面。叙事须呈现 CoC 7e 完整行动菜单：防御（生存/逃脱/打断/保护）、攻击（近战/射击/反击）、战技（缴械/擒抱/推搡/击倒）、技能与环境、神秘学施法。',
             parameters: {
                 type: 'object',
                 properties: {
@@ -314,7 +342,7 @@ const CoCToolDefinitions = (function() {
             }
         },
         add_clue: {
-            description: '【必须调用】调查员发现有意义的线索、证据、信息时，立即静默记录到线索板。',
+            description: '调查员发现有意义的线索、证据、信息时，立即静默记录到线索板。',
             parameters: {
                 type: 'object',
                 properties: {
@@ -429,7 +457,7 @@ const CoCToolDefinitions = (function() {
             }
         },
         record_engine_log: {
-            description: '【铁律】当系统架构发生重大变化、Bug被修复或新功能实装时，必须调用此工具记录开发者日志。',
+            description: '当系统架构发生重大变化、Bug被修复或新功能实装时，必须调用此工具记录开发者日志。',
             parameters: {
                 type: 'object',
                 properties: {
@@ -521,7 +549,7 @@ const CoCToolDefinitions = (function() {
             type: 'function',
             function: {
                 name,
-                description: def.description,
+                description: formatToolDescription(name, def.description),
                 parameters: addStrictObjectBoundaries(stripInternalSchemaKeys(def.parameters))
             }
         };
@@ -554,6 +582,7 @@ const CoCToolDefinitions = (function() {
         getDefinition,
         getSchema,
         getNames,
+        getToolTier,
         buildTools,
         stripInternalSchemaKeys,
         addStrictObjectBoundaries,

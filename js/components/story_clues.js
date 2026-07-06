@@ -15,7 +15,11 @@ window.StoryClues = {
               newLinkTarget: null,
               newLinkNote: '',
               addingNote: false,
-              noteText: ''
+              noteText: '',
+              webPage: 0,
+              cluesPerPage: 12,
+              _layoutKey: '',
+              _layoutPositions: {}
           };
       },
       template: `
@@ -140,8 +144,8 @@ window.StoryClues = {
                               :y="(nodePos(link.from).y+nodePos(link.to).y)/2"
                               text-anchor="middle" font-size="8" fill="#4a4a7a">{{ link.note }}</text>
                       </g>
-                      <g v-for="(clue, i) in gameState.clueBoard.clues" :key="clue.id"
-                          tabindex="0" role="button" :aria-label="clue.title" style="cursor:pointer;" @keydown.enter="toggleClueDetail(clue)" @keydown.space.prevent="toggleClueDetail(clue)" @click="selectedClue=(selectedClue?.id===clue.id)?null:clue">
+                      <g v-for="(clue, i) in pagedWebClues" :key="clue.id"
+                          tabindex="0" role="button" :aria-label="clue.title" style="cursor:pointer;" @keydown.enter="toggleClueDetail(clue)" @keydown.space.prevent="toggleClueDetail(clue)" @click="toggleClueDetail(clue)">
                           <circle :cx="nodePos(clue.id).x" :cy="nodePos(clue.id).y" :r="clue.status==='key'?26:20"
                               :fill="nodeColor(clue)"
                               :stroke="selectedClue?.id===clue.id ? '#aaaaff' : (clue.status==='key' ? '#ccaa00' : '#3a3a6a')"
@@ -151,6 +155,11 @@ window.StoryClues = {
                               style="font-family:sans-serif;">{{ clue.title.length>6 ? clue.title.slice(0,5)+'…' : clue.title }}</text>
                       </g>
                   </svg>
+                  <div v-if="webPageCount > 1" class="d-flex justify-content-center align-items-center gap-2 py-1 border-top border-secondary">
+                      <button class="btn btn-sm btn-outline-secondary py-0 px-2" :disabled="webPage <= 0" @click="webPage = Math.max(0, webPage - 1)">‹ 上一页</button>
+                      <span class="small text-muted">{{ webPage + 1 }} / {{ webPageCount }}</span>
+                      <button class="btn btn-sm btn-outline-secondary py-0 px-2" :disabled="webPage >= webPageCount - 1" @click="webPage = Math.min(webPageCount - 1, webPage + 1)">下一页 ›</button>
+                  </div>
                   <!-- Selected clue detail overlay in web mode -->
                   <div v-if="selectedClue && viewMode==='web'" class="p-2 m-2 rounded clue-web-overlay">
                       <div class="d-flex justify-content-between mb-1">
@@ -170,8 +179,26 @@ window.StoryClues = {
                   (this.filterStatus==='all' || c.status===this.filterStatus)
               );
           },
-          webW() { return Math.max(300, Math.ceil(Math.sqrt(this.gameState.clueBoard.clues.length)) * 110 + 60); },
-          webH() { return Math.max(200, Math.ceil(this.gameState.clueBoard.clues.length / Math.ceil(Math.sqrt(this.gameState.clueBoard.clues.length))) * 100 + 60); },
+          webW() {
+              const n = this.pagedWebClues.length;
+              return Math.max(300, Math.ceil(Math.sqrt(n || 1)) * 120 + 80);
+          },
+          webH() {
+              const n = this.pagedWebClues.length;
+              const cols = Math.max(1, Math.ceil(Math.sqrt(n || 1)));
+              const rows = Math.max(1, Math.ceil(n / cols));
+              return Math.max(200, rows * 110 + 80);
+          },
+          webPageCount() {
+              const total = this.gameState.clueBoard.clues.length;
+              return Math.max(1, Math.ceil(total / this.cluesPerPage));
+          },
+          pagedWebClues() {
+              const clues = this.gameState.clueBoard.clues;
+              if (clues.length <= this.cluesPerPage) return clues;
+              const start = this.webPage * this.cluesPerPage;
+              return clues.slice(start, start + this.cluesPerPage);
+          },
           scenePathTrue() { return this.gameState.kpEngine?.scenePaths?.truePathCount ?? 0; },
           scenePathFalse() { return this.gameState.kpEngine?.scenePaths?.falsePathCount ?? 0; }
       },
@@ -191,12 +218,57 @@ window.StoryClues = {
           },
           nodeColor(c) { return {new:'#141428',investigating:'#141408',key:'#1a1400',solved:'#0d0d0d'}[c.status]||'#141428'; },
           nodePos(id) {
-              const clues = this.gameState.clueBoard.clues;
+              this.ensureWebLayout();
+              if (this._layoutPositions[id]) return this._layoutPositions[id];
+              const clues = this.pagedWebClues;
               const idx = clues.findIndex(c => c.id === id);
               if (idx < 0) return null;
               const cols = Math.max(1, Math.ceil(Math.sqrt(clues.length)));
               const col = idx % cols, row = Math.floor(idx / cols);
-              return { x: col * 110 + 60, y: row * 100 + 60 };
+              return { x: col * 120 + 60, y: row * 110 + 60 };
+          },
+          ensureWebLayout() {
+              const clues = this.pagedWebClues;
+              const links = this.gameState.clueBoard.links || [];
+              const key = clues.map(c => c.id).join('|') + '::' + links.map(l => `${l.from}-${l.to}`).join('|');
+              if (key === this._layoutKey && Object.keys(this._layoutPositions).length) return;
+              this._layoutKey = key;
+              const positions = {};
+              const n = clues.length;
+              const cols = Math.max(1, Math.ceil(Math.sqrt(n)));
+              clues.forEach((c, i) => {
+                  const col = i % cols, row = Math.floor(i / cols);
+                  positions[c.id] = { x: col * 120 + 60, y: row * 110 + 60 };
+              });
+              // Simple force-directed pass to reduce overlap on dense boards
+              for (let iter = 0; iter < 24; iter++) {
+                  for (let i = 0; i < n; i++) {
+                      for (let j = i + 1; j < n; j++) {
+                          const a = clues[i].id, b = clues[j].id;
+                          const pa = positions[a], pb = positions[b];
+                          let dx = pb.x - pa.x, dy = pb.y - pa.y;
+                          let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                          const minDist = 52;
+                          if (dist < minDist) {
+                              const push = (minDist - dist) * 0.35;
+                              dx = (dx / dist) * push;
+                              dy = (dy / dist) * push;
+                              pa.x -= dx; pa.y -= dy;
+                              pb.x += dx; pb.y += dy;
+                          }
+                      }
+                  }
+                  links.forEach((link) => {
+                      const pa = positions[link.from], pb = positions[link.to];
+                      if (!pa || !pb) return;
+                      const dx = pb.x - pa.x, dy = pb.y - pa.y;
+                      pa.x += dx * 0.04;
+                      pa.y += dy * 0.04;
+                      pb.x -= dx * 0.04;
+                      pb.y -= dy * 0.04;
+                  });
+              }
+              this._layoutPositions = positions;
           },
           getRelated(clue) {
               const linked = this.gameState.clueBoard.links

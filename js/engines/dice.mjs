@@ -3,6 +3,17 @@
 
 export function attachDiceEngine(CoCEngine) {
   Object.assign(CoCEngine, {
+    _setTestRolls(rolls) {
+      CoCEngine._d100TestQueue = Array.isArray(rolls) ? rolls.slice() : null;
+    },
+    _clearTestRolls() {
+      CoCEngine._d100TestQueue = null;
+    },
+    _rollD100() {
+      const q = CoCEngine._d100TestQueue;
+      if (q && q.length) return q.shift();
+      return Math.floor(Math.random() * 100) + 1;
+    },
     /**
      * 基础掷骰函数
      * @param {number} count - 骰子数量
@@ -43,7 +54,7 @@ export function attachDiceEngine(CoCEngine) {
         } else if (penaltyDice > 0) {
             roll = CoCEngine.rollPenaltyDice(penaltyDice);
         } else {
-            roll = Math.floor(Math.random() * 100) + 1;
+            roll = CoCEngine._rollD100();
         }
         let success = false;
         let level = '失败';

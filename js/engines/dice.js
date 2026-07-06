@@ -1,6 +1,17 @@
 // GENERATED from js/engines/dice.mjs — do not edit; run: npm run build:js
 window.CoCEngine = window.CoCEngine || {};
 Object.assign(window.CoCEngine, {
+    _setTestRolls(rolls) {
+      window.CoCEngine._d100TestQueue = Array.isArray(rolls) ? rolls.slice() : null;
+    },
+    _clearTestRolls() {
+      window.CoCEngine._d100TestQueue = null;
+    },
+    _rollD100() {
+      const q = window.CoCEngine._d100TestQueue;
+      if (q && q.length) return q.shift();
+      return Math.floor(Math.random() * 100) + 1;
+    },
     /**
      * 基础掷骰函数
      * @param {number} count - 骰子数量
@@ -41,7 +52,7 @@ Object.assign(window.CoCEngine, {
         } else if (penaltyDice > 0) {
             roll = window.CoCEngine.rollPenaltyDice(penaltyDice);
         } else {
-            roll = Math.floor(Math.random() * 100) + 1;
+            roll = window.CoCEngine._rollD100();
         }
         let success = false;
         let level = '失败';

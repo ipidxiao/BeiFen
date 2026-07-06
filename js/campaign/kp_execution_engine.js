@@ -72,6 +72,18 @@ function rollD100() {
     return Math.floor(Math.random() * 100) + 1;
 }
 
+/** Unit interval [0,1) — uses injectable queue when present (value/100). */
+function rollUnit() {
+    if (_testRollQueue && _testRollQueue.length) return rollD100() / 100;
+    return Math.random();
+}
+
+function rollIndex(max) {
+    const n = Math.max(1, Number(max) || 1);
+    if (_testRollQueue && _testRollQueue.length) return Math.floor(rollD100() / 100 * n) % n;
+    return Math.floor(Math.random() * n);
+}
+
 /** Normalize inventory element (string or {id,name,qty,note}) to display label. */
 function inventoryLabel(item) {
     if (item == null) return '';
@@ -971,8 +983,8 @@ const KpExecutionEngine = {
             && /友|同盟|ally|friend|信任|联络|informant|合作/i.test(String(n.relation || '')));
         if (!friendly.length) return null;
         const chance = 0.25 + w * 0.35;
-        if (Math.random() >= chance) return null;
-        const pick = friendly[Math.floor(Math.random() * friendly.length)];
+        if (rollUnit() >= chance) return null;
+        const pick = friendly[rollIndex(friendly.length)];
         pick._kpCompromised = true;
         if (gameState.chatHistory) {
             gameState.chatHistory.push({
@@ -1006,7 +1018,7 @@ const KpExecutionEngine = {
             ant.ALERT_LEVEL = clamp(ant.ALERT_LEVEL + 1, 0, 10);
             const baseChance = ant.ALERT_LEVEL >= 5 ? 0.7 : 0.4;
             const corruptChance = Math.min(0.95, baseChance + (weights.misinformation || 0) * 0.15);
-            if (Math.random() < corruptChance) {
+            if (rollUnit() < corruptChance) {
                 ev.misinformation = true;
                 result.misinformation = true;
                 result.corruptedClue = {
@@ -1039,7 +1051,7 @@ const KpExecutionEngine = {
             if ((weights.combatCounter || 0) >= 0.6) ambushChance += 0.15;
         }
         if (ambushChance > 0) {
-            result.ambush = Math.random() < Math.min(0.85, ambushChance);
+            result.ambush = rollUnit() < Math.min(0.85, ambushChance);
             if (result.ambush) this.tickDoomClock(gameState, 'antagonist_ambush');
         }
         if (ant.ALERT_LEVEL >= 5 && ev.misinformation) {

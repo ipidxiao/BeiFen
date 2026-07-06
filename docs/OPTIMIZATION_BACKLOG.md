@@ -1,7 +1,7 @@
 # 需要优化的项目清单
 
 > 综合来源：`MODULE_REVIEW.md` · `PRE_RELEASE_AUDIT.md` · `OPTIONAL_ENHANCEMENTS.md` · `TEST_COVERAGE_GAP.md` · `ROADMAP.md` · `ROADMAP_V18.md` · `BUG_FIX_BATCH.md`
-> 现状基线：V18.1.0 · 39/39 smoke PASS · **零阻塞项**（P0 无）；以下均为增强/质量/架构项。
+> 现状基线：V18.1.0 · 42/42 smoke PASS · **零阻塞项**（P0 无）；以下均为增强/质量/架构项。
 >
 > 模块完善度与分模块详述见 [MODULE_REVIEW.md](./MODULE_REVIEW.md)。
 
@@ -53,21 +53,43 @@
 
 | ID | 模块 | 描述 | 来源文档 | 工作量 |
 |----|------|------|----------|:---:|
-| OPT-012 | 建卡/引擎 | 补 `applyAgeModifiers` 边界单测（14/15/19/40/70+ 分档） | TEST_COVERAGE_GAP §3 / MODULE_REVIEW §2 | 小 |
-| OPT-013 | 引擎 | 补 `checkSkill` extreme 难度（target = skill/5）单测 | TEST_COVERAGE_GAP §3 | 小 |
-| OPT-014 | 战斗 | 补 `resolveCombatExchange`/`resolveBurstFire` 边界单测（大失败露破绽、反击优先级） | TEST_COVERAGE_GAP / MODULE_REVIEW §5 | 中 |
-| OPT-015 | 引擎 | 补 `HealingEngine.applyHealing` 各分支单测 | TEST_COVERAGE_GAP §3 | 中 |
-| OPT-016 | 引擎 | 补 `getSkillValue` 的 `char.isEnemy` enemy 路径单测 | TEST_COVERAGE_GAP §3 | 小 |
-| OPT-017 | 存档 | 补 `saveGame` quota-exceeded / IDB 不可用模拟单测 | TEST_COVERAGE_GAP / MODULE_REVIEW §8 | 中 |
-| OPT-018 | 数据/工具层 | 为 `handlers/*.js` 补 ESM 导入测试（utils/logger 已由 `esm_utils_smoke` 覆盖） | TEST_COVERAGE_GAP §1 | 小 |
-| OPT-019 | 状态/AI 层 | jsdom + Vue mock 层：深化 `esm_state`/`esm_ai`，纳入 `processTools` 调度测试 | TEST_COVERAGE_GAP §3 高优先 / MODULE_REVIEW §10 | 大 |
-| OPT-020 | 战斗 | `checkMalfunction` 依赖 `Math.random`，改走可注入骰序（复用 KP `_setTestRolls` 模式）提高可测性 | MODULE_REVIEW §5 | 中 |
-| OPT-021 | KP 引擎 | `runAntagonistTick`/`applySocialInfiltration` 随机源统一走可注入队列，提升确定性回归 | MODULE_REVIEW §6 | 中 |
-| OPT-022 | 地图/线索 | 大量线索时网络图网格布局节点重叠，引入简单力导/分页优化可读性 | MODULE_REVIEW §4 | 中 |
-| OPT-023 | 地图/线索 | 统一 `story_clues` 网络视图节点 click（内联表达式）与键盘（`toggleClueDetail`）写法，便于回归 | MODULE_REVIEW §4 | 小 |
-| OPT-024 | AI 层 | 工具描述"【必须调用】"梳理为分级（硬必需/软建议），减少模型误触发 | MODULE_REVIEW §7 | 中 |
-| OPT-025 | 叙事/引擎 | 推动检定失败的"更严重后果"目前依赖 AI 叙事，可在引擎侧加一条硬提示 | MODULE_REVIEW §3 | 小 |
-| OPT-026 | 建卡 | 技能点分配加"剩余点数=0"强校验提示；确认离线无 Chart 时的文本回退分支 | MODULE_REVIEW §2 | 小 |
+| ~~OPT-012~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-013~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-014~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-015~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-016~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-017~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-018~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-019~~ | — | *已完成（最小切片）→ 见下方「已完成 P3」* | — | — |
+| ~~OPT-020~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-021~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-022~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-023~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-024~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-025~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+| ~~OPT-026~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
+
+## 已完成 P3（OPT-012–026）
+
+| ID | 模块 | 描述 | commit |
+|----|------|------|--------|
+| [x] OPT-012 | 建卡/引擎 | `applyAgeModifiers` 边界单测（14/15/19/40/70+） | *pending* |
+| [x] OPT-013 | 引擎 | `checkSkill` extreme 难度单测 | *pending* |
+| [x] OPT-014 | 战斗 | `resolveCombatExchange`/`resolveBurstFire` 边界单测 | *pending* |
+| [x] OPT-015 | 引擎 | `HealingEngine.applyHealing` 各分支单测 | *pending* |
+| [x] OPT-016 | 引擎 | `getSkillValue` enemy 路径单测 | *pending* |
+| [x] OPT-017 | 存档 | `saveGame` quota-exceeded / IDB 不可用模拟单测 | *pending* |
+| [x] OPT-018 | 数据/工具层 | `handlers/*.mjs` ESM 导入测试 | *pending* |
+| [x] OPT-019 | 状态/AI 层 | `esm_ai` 纳入 `processTools` 调度最小切片 | *pending* |
+| [x] OPT-020 | 战斗 | `checkMalfunction` 可注入骰序（`_setTestRolls`） | *pending* |
+| [x] OPT-021 | KP 引擎 | `runAntagonistTick`/`applySocialInfiltration` 走可注入队列 | *pending* |
+| [x] OPT-022 | 地图/线索 | 线索网络图力导布局 + 分页 | *pending* |
+| [x] OPT-023 | 地图/线索 | `story_clues` click/keyboard 统一 `toggleClueDetail` | *pending* |
+| [x] OPT-024 | AI 层 | 工具描述分级（【必须调用】/【建议调用】） | *pending* |
+| [x] OPT-025 | 叙事/引擎 | 推动检定失败引擎侧硬提示 | *pending* |
+| [x] OPT-026 | 建卡 | 技能点剩余=0 强校验 + Chart 文本回退确认 | *pending* |
+
+> OPT-019 全量 jsdom+Vue 深化仍属 P4 候选；本批次仅落地 `processTools` 单测切片。
 
 ## P4 长期架构（ROADMAP_V18）
 
