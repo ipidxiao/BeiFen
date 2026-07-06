@@ -21,11 +21,17 @@
             s.src = url;
             document.head.appendChild(s);
         }
+        // ESM Phase 2 opt-in: ?esm=1 skips IIFE app.js mount; app.mjs loads at end of body
+        if (new URLSearchParams(location.search).get('esm') === '1') window.__COC_ESM_BOOT__ = true;
     </script>
     <script src="./vendor/vue.global.prod.js"></script>
     <script>cocLoadCdnFallback(function () { return window.Vue; }, 'https://unpkg.com/vue@3/dist/vue.global.js');</script>
-    <script src="./vendor/chart.min.js"></script>
-    <script>cocLoadCdnFallback(function () { return window.Chart; }, 'https://cdn.jsdelivr.net/npm/chart.js');</script>
+    <script src="./vendor/chart.min.js" onerror="window.__cocChartLoadFailed=true"></script>
+    <script>
+        cocLoadCdnFallback(function () { return window.Chart; }, 'https://cdn.jsdelivr.net/npm/chart.js');
+        // Plan C: if local + CDN both fail, creator_view falls back to text attrs
+        setTimeout(function () { if (!window.Chart) window.__cocChartLoadFailed = true; }, 8000);
+    </script>
     <script src="./vendor/pdf.min.js"></script>
     <script>cocLoadCdnFallback(function () { return window.pdfjsLib; }, 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');</script>
     <script>if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js'; }</script>
@@ -416,6 +422,9 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').catch(() => {});
         }
+    </script>
+    <script type="module">
+        if (window.__COC_ESM_BOOT__) import('./js/app.mjs');
     </script>
 
     <!-- V18.1 Integrated · CoC 7th Engine -->

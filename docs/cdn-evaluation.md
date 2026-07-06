@@ -57,7 +57,7 @@ vendor/
 
 ## 建议
 
-**推荐方案 C**（混合策略）。Vue 和 Bootstrap 本地化保证核心功能离线可用，Chart.js 保持 CDN 并添加加载失败提示。雷达图不是游戏核心功能，CDN 故障时降级为纯文本属性展示即可。
+**推荐方案 C**（混合策略）— **已于 2026-07-06 实施**：Vue/Bootstrap/Chart/PDF 均本地化至 `vendor/`，CDN 仅作 `cocLoadCdnFallback` 兜底。
 
 ## 执行步骤
 

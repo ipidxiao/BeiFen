@@ -94,7 +94,10 @@ export const ViewCreator = {
                 <div v-show="draftChar.attrs.STR > 0">
                     
                     <div class="mb-3 bg-dark border border-secondary rounded shadow-sm" style="height: 220px; position: relative;">
-                        <canvas id="radarChart"></canvas>
+                        <canvas v-if="!chartUnavailable" id="radarChart"></canvas>
+                        <div v-else class="text-muted small text-center pt-5 px-2" role="status">
+                            雷达图不可用（Chart.js 未加载）。属性数值见下方网格。
+                        </div>
                     </div>
                     
                     <div class="row g-1 mb-3">

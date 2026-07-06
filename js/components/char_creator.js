@@ -56,6 +56,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
     const notify = (message, type = 'warning') => State.showToast ? State.showToast(message, type) : console.warn(message);
     
     let radarChartInstance = null;
+    const chartUnavailable = ref(typeof Chart === 'undefined' || window.__cocChartLoadFailed);
     const showSTImport = ref(false);
 
     // 💡 智能过滤：根据当前选择的时代，过滤经历包
@@ -201,6 +202,11 @@ window.CoCCreator = (function(State, Engine, Vue) {
 
     const renderRadarChart = () => {
         nextTick(() => {
+            if (typeof Chart === 'undefined' || window.__cocChartLoadFailed) {
+                chartUnavailable.value = true;
+                return;
+            }
+            chartUnavailable.value = false;
             const ctx = document.getElementById('radarChart');
             if (!ctx) return;
             const dataValues = [
@@ -382,6 +388,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
         applyExperience, isUnlockedSkill, isClassSkill, rollAllStats, saveDraftCharacter,
         showSTImport, importSTData, confirmImport, cancelImport, importPreview, goBack,
         getAttrEvaluation: Engine.getAttrEvaluation,
-        CHARACTER_PRESETS, applyPreset
+        CHARACTER_PRESETS, applyPreset,
+        chartUnavailable
     };
 })(window.CoCState, (typeof CoCEngine !== "undefined" ? CoCEngine : null), window.Vue);
