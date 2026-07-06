@@ -73,21 +73,21 @@
 
 | ID | 模块 | 描述 | commit |
 |----|------|------|--------|
-| [x] OPT-012 | 建卡/引擎 | `applyAgeModifiers` 边界单测（14/15/19/40/70+） | *pending* |
-| [x] OPT-013 | 引擎 | `checkSkill` extreme 难度单测 | *pending* |
-| [x] OPT-014 | 战斗 | `resolveCombatExchange`/`resolveBurstFire` 边界单测 | *pending* |
-| [x] OPT-015 | 引擎 | `HealingEngine.applyHealing` 各分支单测 | *pending* |
-| [x] OPT-016 | 引擎 | `getSkillValue` enemy 路径单测 | *pending* |
-| [x] OPT-017 | 存档 | `saveGame` quota-exceeded / IDB 不可用模拟单测 | *pending* |
-| [x] OPT-018 | 数据/工具层 | `handlers/*.mjs` ESM 导入测试 | *pending* |
-| [x] OPT-019 | 状态/AI 层 | `esm_ai` 纳入 `processTools` 调度最小切片 | *pending* |
-| [x] OPT-020 | 战斗 | `checkMalfunction` 可注入骰序（`_setTestRolls`） | *pending* |
-| [x] OPT-021 | KP 引擎 | `runAntagonistTick`/`applySocialInfiltration` 走可注入队列 | *pending* |
-| [x] OPT-022 | 地图/线索 | 线索网络图力导布局 + 分页 | *pending* |
-| [x] OPT-023 | 地图/线索 | `story_clues` click/keyboard 统一 `toggleClueDetail` | *pending* |
-| [x] OPT-024 | AI 层 | 工具描述分级（【必须调用】/【建议调用】） | *pending* |
-| [x] OPT-025 | 叙事/引擎 | 推动检定失败引擎侧硬提示 | *pending* |
-| [x] OPT-026 | 建卡 | 技能点剩余=0 强校验 + Chart 文本回退确认 | *pending* |
+| [x] OPT-012 | 建卡/引擎 | `applyAgeModifiers` 边界单测（14/15/19/40/70+） | `125dcfa` |
+| [x] OPT-013 | 引擎 | `checkSkill` extreme 难度单测 | `125dcfa` |
+| [x] OPT-014 | 战斗 | `resolveCombatExchange`/`resolveBurstFire` 边界单测 | `125dcfa` |
+| [x] OPT-015 | 引擎 | `HealingEngine.applyHealing` 各分支单测 | `125dcfa` |
+| [x] OPT-016 | 引擎 | `getSkillValue` enemy 路径单测 | `125dcfa` |
+| [x] OPT-017 | 存档 | `saveGame` quota-exceeded / IDB 不可用模拟单测 | `125dcfa` |
+| [x] OPT-018 | 数据/工具层 | `handlers/*.mjs` ESM 导入测试 | `125dcfa` |
+| [x] OPT-019 | 状态/AI 层 | `esm_ai` 纳入 `processTools` 调度最小切片 | `125dcfa` |
+| [x] OPT-020 | 战斗 | `checkMalfunction` 可注入骰序（`_setTestRolls`） | `125dcfa` |
+| [x] OPT-021 | KP 引擎 | `runAntagonistTick`/`applySocialInfiltration` 走可注入队列 | `125dcfa` |
+| [x] OPT-022 | 地图/线索 | 线索网络图力导布局 + 分页 | `125dcfa` |
+| [x] OPT-023 | 地图/线索 | `story_clues` click/keyboard 统一 `toggleClueDetail` | `125dcfa` |
+| [x] OPT-024 | AI 层 | 工具描述分级（【必须调用】/【建议调用】） | `125dcfa` |
+| [x] OPT-025 | 叙事/引擎 | 推动检定失败引擎侧硬提示 | `125dcfa` |
+| [x] OPT-026 | 建卡 | 技能点剩余=0 强校验 + Chart 文本回退确认 | `125dcfa` |
 
 > OPT-019 全量 jsdom+Vue 深化仍属 P4 候选；本批次仅落地 `processTools` 单测切片。
 
