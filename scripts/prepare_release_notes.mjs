@@ -45,7 +45,12 @@ if (lines.length === 0) {
 } else {
     for (const line of lines) console.log(`- ${line}`);
 }
-console.log('\n### Test plan\n');
+console.log('\n### Known limitations (intentional design)\n');
+console.log('- **Combat action menu** is guidance only — not enforced each round (offline quick commands / online free-form dialogue).');
+console.log('- **KP protocol engine** defaults on; London rules are a global bottom-layer protocol (user can disable in lobby).');
+console.log('- Full draft: docs/RELEASE_NOTES_DRAFT.md\n');
+console.log('### Test plan\n');
+console.log('- [ ] `python build.py` (not manual .js edits — SW CACHE_NAME must update)');
 console.log('- [ ] `npm run build:js`');
-console.log('- [ ] `npm test`');
-console.log('- [ ] Manual smoke: lobby → combat → save/load');
+console.log('- [ ] `npm test` + `npm run ci:smoke`');
+console.log('- [ ] Manual: keyboard Tab · narrow viewport · offline refresh · PWA add-to-home');

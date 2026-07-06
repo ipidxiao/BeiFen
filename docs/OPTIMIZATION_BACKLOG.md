@@ -9,12 +9,21 @@
 
 | ID | 模块 | 描述 | 来源文档 | 工作量 |
 |----|------|------|----------|:---:|
-| OPT-001 | PWA/构建 | README 与发布清单**顶部醒目标注**"禁止手工打包，必须走 `python build.py`"（否则 SW 缓存哈希不更新，用户拿旧缓存） | MODULE_REVIEW §11 / 短期3 | 小 |
-| OPT-002 | CI/构建 | CI 增加"SW 哈希与产物一致性"校验，防止缓存清单漂移 | MODULE_REVIEW §11 | 中 |
-| OPT-003 | QA/无障碍 | 发布前人工走查：键盘 Tab（大厅→建卡→叙事→战斗→存/读档）+ 窄屏 + 断网离线刷新 + PWA 添加主屏 + vendor 版本核对 | PRE_RELEASE 清单 / P2-5 | 中 |
-| OPT-004 | 发布说明 | 发布说明明示两处 wontfix（战斗菜单为引导性、KP 默认开启且伦敦规则为全局底层协议） | PRE_RELEASE P2-3 / ROADMAP | 小 |
+| ~~OPT-001~~ | — | *已完成 → 见下方「已完成 P1」* | — | — |
+| ~~OPT-002~~ | — | *已完成 → 见下方「已完成 P1」* | — | — |
+| ~~OPT-003~~ | — | *已完成 → 见下方「已完成 P1」* | — | — |
+| ~~OPT-004~~ | — | *已完成 → 见下方「已完成 P1」* | — | — |
 
 > 说明：PRE_RELEASE 原 P1（复跑 `npm test`/`ci:smoke`、修正 ROADMAP 漂移）本批次已完成；BUG-001/002/003（a11y 键盘 + 死代码 `formatText`）已修复，不再列入。
+
+## 已完成 P1（OPT-001–004）
+
+| ID | 模块 | 描述 | commit |
+|----|------|------|--------|
+| [x] OPT-001 | PWA/构建 | README + PRE_RELEASE 顶部醒目标注「必须 `python build.py`」 | TBD |
+| [x] OPT-002 | CI/构建 | `scripts/verify_sw_cache.mjs` + 接入 `ci:smoke` | TBD |
+| [x] OPT-003 | QA/无障碍 | PRE_RELEASE 清单扩充 Tab/窄屏/离线/PWA/vendor 人工步骤（未声称已测） | TBD |
+| [x] OPT-004 | 发布说明 | `docs/RELEASE_NOTES_DRAFT.md` + `prepare_release_notes.mjs` wontfix 模板 | TBD |
 
 ## P2 发布后尽快
 

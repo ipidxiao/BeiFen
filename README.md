@@ -1,5 +1,7 @@
 # 🌑 CoC 7th Engine — V18.1
 
+> ⚠️ **发布打包必读**：**禁止手工改 `.js` 或手编 ZIP**。必须使用 **`python build.py`** 出包（内部自动执行 `npm run build:js`，并向 `sw.js` 注入 `CACHE_NAME` 内容哈希）。若跳过此流程，Service Worker 缓存名不会更新，用户可能长期命中旧静态资源。
+
 > 克苏鲁的呼唤第七版 TRPG 纯前端引擎  
 > 版本: **18.1.0**（以 `package.json` 为准）· Service Worker 缓存名 `coc-engine-v18.1.0-<hash>`（以 `sw.js` / `getCacheName()` 为准，含内容哈希）  
 > 门禁: **39/39** smoke ✅ · deep_verify 0/179 ✅

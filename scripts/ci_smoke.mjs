@@ -28,6 +28,7 @@ function selfCheck() {
         'tests/run_all_smoke.js',
         'scripts/build_browser.mjs',
         'scripts/verify_browser_exports.mjs',
+        'scripts/verify_sw_cache.mjs',
     ];
     for (const rel of required) {
         const full = path.join(root, rel);
@@ -47,6 +48,7 @@ if (process.argv.includes('--self-check')) {
 try {
     runNode(['tests/run_all_smoke.js'], 'tests/run_all_smoke.js (smoke suites)');
     runNode(['scripts/build_browser.mjs', '--check'], 'build_browser --check');
+    runNode(['scripts/verify_sw_cache.mjs'], 'verify_sw_cache (CACHE_NAME consistency)');
     runNode(['scripts/verify_browser_exports.mjs'], 'verify_browser_exports');
     console.log('\n✓ ci_smoke passed');
     process.exit(0);
