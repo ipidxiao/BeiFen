@@ -415,6 +415,8 @@ body .border-secondary { border-color: var(--border-default); }
 .coc-toast-info { border-left-color: #0dcaf0; }
 .coc-confirm-overlay { z-index: 2500; }
 .coc-confirm-box { max-width: 420px; }
+.save-loading-overlay { z-index: 2400; background: rgba(0, 0, 0, 0.88); }
+.save-loading-state { min-width: 220px; }
 
 /* ═══════════════════════════════════════════════════════
    战斗面板 (story_combat.js)

@@ -58,7 +58,7 @@ window.CoCStateCore = (function(Vue) {
         },
         londonKpState: null,
         selectedCharIndex: 0,
-        ui: { toasts: [], confirmDialog: null },
+        ui: { toasts: [], confirmDialog: null, saveLoading: false, saveLoadingMessage: '' },
         storageStatus: { usedBytes: 0, quotaBytes: 5 * 1024 * 1024, usedRatio: 0, currentSaveBytes: 0, projectedBytes: 0, projectedRatio: 0, warning: '', lastCheckedAt: null }
     });
 

@@ -29,13 +29,25 @@
 
 | ID | 模块 | 描述 | 来源文档 | 工作量 |
 |----|------|------|----------|:---:|
-| OPT-005 | 大厅/安全 | 设置页补一行"API Key 仅存于本机浏览器"隐私提示 | PRE_RELEASE P2-4 / MODULE_REVIEW §1 | 小 |
-| OPT-006 | 大厅/KP | KP 开关加 hover tooltip 说明"默认开启+伦敦规则为底层协议" | MODULE_REVIEW §1 | 小 |
-| OPT-007 | 大厅 | 模组卡片显示 KP 开启状态徽标，减少进入后才发现的困惑 | MODULE_REVIEW §1 | 小 |
-| OPT-008 | 叙事 Story | 长对话经 `trimForSave` 裁剪后，UI 提示玩家"历史已压缩" | MODULE_REVIEW §3 | 小 |
-| OPT-009 | 存档 | `loadGame` 的 IDB 异步恢复分支补 loading 态（当前仅 toast，需二次刷新过渡） | MODULE_REVIEW §8 | 中 |
-| OPT-010 | 场景/战役 Store | 下载失败时把"改用本地 PDF 转换"引导直接写入错误 toast | MODULE_REVIEW §9 | 小 |
-| OPT-011 | 场景/战役 Store | `LS_FALLBACK_MAX_BYTES` 超限时给出更明确的清理指引 | MODULE_REVIEW §9 | 小 |
+| ~~OPT-005~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+| ~~OPT-006~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+| ~~OPT-007~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+| ~~OPT-008~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+| ~~OPT-009~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+| ~~OPT-010~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+| ~~OPT-011~~ | — | *已完成 → 见下方「已完成 P2」* | — | — |
+
+## 已完成 P2（OPT-005–011）
+
+| ID | 模块 | 描述 | commit |
+|----|------|------|--------|
+| [x] OPT-005 | 大厅/安全 | 设置页补一行"API Key 仅存于本机浏览器"隐私提示 | *pending* |
+| [x] OPT-006 | 大厅/KP | KP 开关加 hover tooltip 说明"默认开启+伦敦规则为底层协议" | *pending* |
+| [x] OPT-007 | 大厅 | 模组卡片显示 KP 开启状态徽标 | *pending* |
+| [x] OPT-008 | 叙事 Story | 长对话经 `trimForSave` 裁剪后 UI toast「历史已压缩」 | *pending* |
+| [x] OPT-009 | 存档 | `loadGame` IDB 异步恢复补 loading 态 + Promise 化 | *pending* |
+| [x] OPT-010 | 场景/战役 Store | 下载失败 toast 含「改用本地 PDF 转换」引导 | *pending* |
+| [x] OPT-011 | 场景/战役 Store | `LS_FALLBACK_MAX_BYTES` 超限更清晰清理指引 | *pending* |
 
 ## P3 中期质量（测试深度 + 局部体验）
 

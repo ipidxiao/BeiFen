@@ -151,9 +151,9 @@ window.ViewStory = {
           const doLoad = async function(slotKey) {
               const okConfirm = await state.confirmAction('载入存档将覆盖当前游戏进度，确认吗？', { title: '读取存档' });
               if (!okConfirm) return;
-              const ok = state.loadGame(slotKey);
+              const ok = await state.loadGame(slotKey);
               if (ok) { state.closeModal(); state.scrollToBottom(); }
-              else { state.showToast && state.showToast('读取失败：存档损坏或不存在。', 'danger'); }
+              else if (!state.gameState.ui.saveLoading) { state.showToast && state.showToast('读取失败：存档损坏或不存在。', 'danger'); }
           };
           
           const doDelete = async function(slotKey) {

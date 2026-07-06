@@ -44,3 +44,16 @@ window.CocConfirmDialog = {
         }
     }
 };
+
+window.CocSaveLoadingOverlay = {
+    props: ['loading', 'message'],
+    template: `
+        <div v-if="loading" class="modal-overlay save-loading-overlay" aria-live="polite" aria-busy="true">
+            <div class="empty-state save-loading-state">
+                <coc-icon name="storage" :size="40" class="empty-state-icon empty-state-pulse"></coc-icon>
+                <div class="empty-state-title">{{ message || '正在加载存档…' }}</div>
+                <div class="empty-state-hint">请稍候，正在从 IndexedDB 恢复数据</div>
+            </div>
+        </div>
+    `
+};

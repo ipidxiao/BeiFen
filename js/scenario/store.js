@@ -107,7 +107,9 @@ function assertLocalStorageWithinQuota(payload) {
     const size = JSON.stringify(payload).length;
     if (size > LS_FALLBACK_MAX_BYTES) {
         throw new Error(
-            '已下载模组总大小超过 localStorage 安全上限（约 4MB）。请使用支持 IndexedDB 的现代浏览器，或删除部分已下载模组后重试。'
+            '已下载模组总大小超过 localStorage 安全上限（约 4MB）。' +
+            '请在大厅「模组库」中移除部分已下载模组以释放空间；' +
+            '或使用支持 IndexedDB 的现代浏览器（Chrome / Firefox / Edge）以获得更大容量。'
         );
     }
 }
@@ -344,7 +346,10 @@ const CoCScenarioStore = {
 
         if (!scenario) {
             const detail = lastError && lastError.message ? lastError.message : '网络错误';
-            throw new Error(`所有下载源均不可用（${detail}），请检查网络或稍后重试`);
+            const pdfHint = (remote && (remote.convertToScenario || remote.importType === 'official_pdf'))
+                ? ' 若已获取官方 PDF，可改用「选择 PDF 转换」从本地上传。'
+                : '';
+            throw new Error(`所有下载源均不可用（${detail}），请检查网络或稍后重试。${pdfHint}`);
         }
 
         const catalog = getCatalogApi();

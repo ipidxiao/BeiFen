@@ -65,6 +65,7 @@ if (window.CocToastLayer) app.component('coc-toast-layer', window.CocToastLayer)
 else throw new Error("找不到 Toast 组件！");
 if (window.CocConfirmDialog) app.component('coc-confirm-dialog', window.CocConfirmDialog);
 else throw new Error("找不到确认对话框组件！");
+if (window.CocSaveLoadingOverlay) app.component('coc-save-loading-overlay', window.CocSaveLoadingOverlay);
 if (window.CocIcon) app.component('coc-icon', window.CocIcon);
 else throw new Error("找不到图标组件！");
 

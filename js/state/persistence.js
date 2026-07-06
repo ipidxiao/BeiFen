@@ -111,7 +111,9 @@ window.CoCStatePersistence = (function() {
                         let autoSave = null;
                         try { const raw = localStorage.getItem(savePrefix + 'auto'); if (raw) { const s = migrateSaveData(safeJsonParse(raw, null)); autoSave = s ? { charNames: s.charNames, location: s.location, savedAt: s.savedAt ? new Date(s.savedAt).toLocaleString('zh-CN') : '?' } : null; } } catch(e) {}
                         const hasAnySave = !!localStorage.getItem(savePrefix + 'auto') || !!localStorage.getItem(savePrefix + 'slot1');
-                        return { id, name: meta.name || '未命名模组', createdAt: meta.createdAt, lastPlayed: meta.lastPlayed, autoSave, hasAnySave };
+                        const kpPref = _loadKpPreference(id);
+                        const kpEnabled = kpPref !== null ? kpPref : _kpDefaultEnabled();
+                        return { id, name: meta.name || '未命名模组', createdAt: meta.createdAt, lastPlayed: meta.lastPlayed, autoSave, hasAnySave, kpEnabled };
                     } catch(e) { return { id, name: id === 'default' ? '默认模组' : id, hasAnySave: false }; }
                 });
             } catch(e) { return [{ id: 'default', name: '默认模组', hasAnySave: false }]; }
@@ -329,11 +331,17 @@ window.CoCStatePersistence = (function() {
             return out;
         };
 
+        let _saveTrimDroppedCount = 0;
+
         const _buildSaveData = (slotName) => {
             const rawChatToSave = gameState.chatHistory.filter(m => !m.isLocalOnly && !m.isLocalError);
-            const chatToSave = (window.CoCContextManager && window.CoCContextManager.trimForSave)
-                ? window.CoCContextManager.trimForSave(rawChatToSave).messages
-                : rawChatToSave;
+            let chatToSave = rawChatToSave;
+            _saveTrimDroppedCount = 0;
+            if (window.CoCContextManager && window.CoCContextManager.trimForSave) {
+                const trimResult = window.CoCContextManager.trimForSave(rawChatToSave);
+                chatToSave = trimResult.messages;
+                _saveTrimDroppedCount = trimResult.droppedCount || 0;
+            }
             const combatToSave = _stripTransientFields(safeJsonClone(gameState.combat, {
                 active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: ''
             }));
@@ -586,6 +594,9 @@ window.CoCStatePersistence = (function() {
             try {
                 compactChatHistory('save');
                 const payload = JSON.stringify(_buildSaveData(slotName));
+                if (_saveTrimDroppedCount > 0) {
+                    showToast('历史已压缩', 'info', { timeout: 5000 });
+                }
                 const storageReport = getStorageStatus(slotKey, slotName, payload);
                 if (storageReport.warning) showToast(storageReport.warning, 'warning', { timeout: 7000 });
                 const ok = _safeLocalStorageSetItem(_getModSavePrefix() + slotKey, payload, '存档');
@@ -612,30 +623,41 @@ window.CoCStatePersistence = (function() {
          * @param {string} slotKey - Save slot key to load from
          * @returns {boolean} true if loaded successfully
          */
+        const _finishSaveLoading = () => {
+            try {
+                gameState.ui.saveLoading = false;
+                gameState.ui.saveLoadingMessage = '';
+            } catch (_) {}
+        };
+
         const loadGame = (slotKey) => {
             try {
                 const fullKey = _getModSavePrefix() + slotKey;
                 const raw = localStorage.getItem(fullKey);
-                if (raw) return _restoreFromData(safeJsonParse(raw, null));
+                if (raw) return Promise.resolve(_restoreFromData(safeJsonParse(raw, null)));
                 const cached = _idbCache[fullKey];
                 if (cached) {
                     const ok = _restoreFromData(safeJsonParse(cached, null));
                     if (ok) showToast('已从 IndexedDB 备份恢复存档。', 'info');
-                    return ok;
+                    return Promise.resolve(ok);
                 }
-                _idbLoad(fullKey).then((payload) => {
+                gameState.ui.saveLoading = true;
+                gameState.ui.saveLoadingMessage = '正在从 IndexedDB 加载存档…';
+                return _idbLoad(fullKey).then((payload) => {
                     if (!payload) {
                         showToast('未找到存档。', 'warning');
-                        return;
+                        return false;
                     }
                     _idbCache[fullKey] = payload;
                     const ok = _restoreFromData(safeJsonParse(payload, null));
                     if (ok) showToast('已从 IndexedDB 恢复存档。', 'success');
                     else showToast('IndexedDB 存档数据无效。', 'danger');
-                }).catch(() => showToast('IndexedDB 读档失败。', 'danger'));
-                showToast('正在从 IndexedDB 加载存档…', 'info');
-                return false;
-            } catch (e) { return false; }
+                    return ok;
+                }).catch(() => {
+                    showToast('IndexedDB 读档失败。', 'danger');
+                    return false;
+                }).finally(_finishSaveLoading);
+            } catch (e) { return Promise.resolve(false); }
         };
 
         const deleteSave = (slotKey) => {

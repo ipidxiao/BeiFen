@@ -41,6 +41,7 @@ window.ViewLobby = {
                               <div class="d-flex align-items-center gap-2 mb-1">
                                   <span class="fw-bold text-warning">{{ mod.name }}</span>
                                   <span v-if="mod.id === 'default'" class="badge" style="background:#333;color:#999;font-size:0.65rem;">默认</span>
+                                  <span class="badge ms-1" :class="mod.kpEnabled ? 'bg-danger' : 'bg-secondary'" style="font-size:0.6rem;" :title="mod.kpEnabled ? 'KP 协议引擎已启用' : 'KP 协议引擎已关闭'">{{ mod.kpEnabled ? 'KP 开' : 'KP 关' }}</span>
                               </div>
                               <div v-if="mod.autoSave" class="text-muted" style="font-size:0.72rem;">
                                   👥 {{ mod.autoSave.charNames }} · 📍 {{ mod.autoSave.location }}<br>
@@ -93,7 +94,7 @@ window.ViewLobby = {
                   <div class="mb-3 p-3 border rounded text-start lobby-kp-panel" :class="gameState.kpEngine?.enabled ? 'active border-warning' : 'border-secondary'">
                       <div class="form-check form-switch mb-2">
                           <input class="form-check-input" type="checkbox" id="kpEngineToggle" :checked="gameState.kpEngine?.enabled" @change="toggleKpEngine($event)">
-                          <label class="form-check-label text-warning fw-bold" for="kpEngineToggle">⚙️ KP 协议引擎</label>
+                          <label class="form-check-label text-warning fw-bold" for="kpEngineToggle" title="默认开启。伦敦规则为全局底层协议，在代码层强制执行行动校验、缩放与五段输出协议。">⚙️ KP 协议引擎</label>
                       </div>
                       <div class="text-muted" style="font-size:0.72rem;">规则在代码层强制执行（行动校验、缩放、输出协议等）。与战役存档独立，可单独开启。</div>
                       <div v-if="gameState.kpEngine?.enabled" class="lobby-kp-stats mt-2">
@@ -287,6 +288,7 @@ window.ViewLobby = {
                   <h3 class="coc-section-title mb-3">AI 引擎设置</h3>
                   <div class="mb-3"><label class="form-label">接口地址</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl"></div>
                   <div class="mb-3"><label class="form-label">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey" placeholder="DeepSeek / OpenAI 兼容密钥"></div>
+                  <div class="text-secondary mb-3" style="font-size:0.72rem;">🔒 API Key 仅存于本机浏览器，不会上传至引擎服务器。</div>
                   <div v-if="!(gameState.aiSettings.apiKey || '').trim()" class="empty-state empty-state-compact empty-state-inline mb-3">
                       <coc-icon name="settings" :size="28" class="empty-state-icon"></coc-icon>
                       <div class="empty-state-title">未配置 API 密钥</div>
@@ -387,17 +389,17 @@ window.ViewLobby = {
       setup() {
           const state = window.CoCState;
 
-          const quickLoad = () => {
-              const ok = state.loadGame('auto');
+          const quickLoad = async () => {
+              const ok = await state.loadGame('auto');
               if (ok) { state.switchScreen('story'); state.scrollToBottom(); }
-              else { state.showToast && state.showToast('自动存档读取失败。', 'danger'); }
+              else if (!state.gameState.ui.saveLoading) { state.showToast && state.showToast('自动存档读取失败。', 'danger'); }
           };
           const lobbyLoad = async (slotKey) => {
               const okConfirm = await state.confirmAction('载入存档将覆盖当前游戏进度，确认吗？', { title: '读取存档' });
               if (!okConfirm) return;
-              const ok = state.loadGame(slotKey);
+              const ok = await state.loadGame(slotKey);
               if (ok) { state.switchScreen('story'); state.scrollToBottom(); }
-              else { state.showToast && state.showToast('读取失败：存档损坏或不存在。', 'danger'); }
+              else if (!state.gameState.ui.saveLoading) { state.showToast && state.showToast('读取失败：存档损坏或不存在。', 'danger'); }
           };
           const lobbyDelete = async (slotKey) => {
               const okConfirm = await state.confirmAction('确认删除该存档？', { title: '删除存档', danger: true, okText: '删除' });
@@ -630,7 +632,9 @@ window.ViewLobby = {
                   window.CoCState.showToast && window.CoCState.showToast('模组已下载到本地。', 'success');
               } catch (e) {
                   this.storeError = String(e.message || e);
-                  window.CoCState.showToast && window.CoCState.showToast('下载失败：' + this.storeError, 'danger');
+                  const item = this.selectedStoreItem;
+                  const pdfHint = item && item.pdfConvert ? ' 若已获取官方 PDF，可改用「选择 PDF 转换」。' : '';
+                  window.CoCState.showToast && window.CoCState.showToast('下载失败：' + this.storeError + pdfHint, 'danger', { timeout: 8000 });
               } finally {
                   this.storeLoading = false;
               }

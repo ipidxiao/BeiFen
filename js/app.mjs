@@ -74,6 +74,7 @@ else throw new Error("找不到剧情视图！");
 if (window.ViewDevLog) app.component('view-dev-log', window.ViewDevLog);
 if (window.CocToastLayer) app.component('coc-toast-layer', window.CocToastLayer);
 if (window.CocConfirmDialog) app.component('coc-confirm-dialog', window.CocConfirmDialog);
+if (window.CocSaveLoadingOverlay) app.component('coc-save-loading-overlay', window.CocSaveLoadingOverlay);
 if (window.CocIcon) app.component('coc-icon', window.CocIcon);
 
 if (!window.__COC_ESM_BOOT__) app.mount('#app');

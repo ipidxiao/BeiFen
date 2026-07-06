@@ -312,6 +312,7 @@
         <view-dev-log v-if="gameState?.currentScreen === 'devlog'"></view-dev-log>
         <coc-toast-layer :toasts="gameState?.ui?.toasts"></coc-toast-layer>
         <coc-confirm-dialog :dialog="gameState?.ui?.confirmDialog"></coc-confirm-dialog>
+        <coc-save-loading-overlay :loading="gameState?.ui?.saveLoading" :message="gameState?.ui?.saveLoadingMessage"></coc-save-loading-overlay>
     </div>
 
     <!-- @generated script-tags — do not edit; run: npm run build:js -->
