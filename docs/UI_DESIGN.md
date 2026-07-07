@@ -2,6 +2,85 @@
 
 Design improvements follow patterns from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) and the [Google Stitch DESIGN.md](https://stitch.withgoogle.com/docs/design-md/overview/) format: semantic tokens, dark cinematic surfaces, readable typography, and CSS-only micro-interactions.
 
+## External reference: ui-ux-pro-max-skill
+
+**Source:** [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) — a Cursor/Claude Agent Skill with 67 UI styles, 161 product-type reasoning rules, 99 UX guidelines, and stack-specific recommendations (HTML+Tailwind, Vue, React, etc.).
+
+CoC Engine does **not** vendor the skill into this repo. Use it as an external design-intelligence reference alongside this document and `css/style.css` tokens.
+
+### Recommended style profile (Gaming / TRPG)
+
+| ui-ux-pro-max concept | CoC Engine mapping |
+|-----------------------|-------------------|
+| **Product type** | Gaming, storytelling-driven UI |
+| **Style** | Dark Mode (OLED) + HUD / Sci-Fi FUI accents — horror atmosphere, readable first |
+| **Pattern** | Dashboard / data-dense panels (inventory, combat, dice) + chat-centric narrative |
+| **Anti-patterns** | Bright neon overload, emoji-as-icons, harsh motion, AI purple/pink gradients |
+| **Stack** | HTML + Bootstrap 5 grid + custom CSS tokens (not Tailwind) |
+
+### Pre-delivery checklist → CoC components
+
+| Skill guideline | CoC implementation | File / class |
+|-----------------|-------------------|--------------|
+| SVG icons, no emoji UI chrome | Inline sprite `<coc-icon>` | `css/icons.svg`, `icon_sprite.mjs` |
+| `cursor-pointer` on clickables | Buttons, cards, tabs, slots | `css/style.css` — `.btn`, `.nav-link`, `.lobby-mod-card`, `.clue-card`, `[role="button"]` |
+| Hover / press 150–300ms transitions | `--transition-fast` (150ms), `--transition-normal` (250ms) | `:root` tokens |
+| Focus rings for keyboard nav | `:focus-visible` gold outline | `.btn`, `.nav-link`, `.apex-slot`, `.dice-quick-btn`, `.lobby-mod-card`, `[role="button"]` |
+| Touch targets ≥ 44px | Mobile overrides | `.lobby-action-btn` 52px, `.combat-quick-btn` 44px, `.story-tab-btn` 44px |
+| `prefers-reduced-motion` | Ambient breathe disabled | `body::after` media query |
+| Semantic color tokens, no raw hex in new code | `:root` `--bg-*`, `--text-*`, `--accent-*` | `css/style.css` |
+| Contrast on dark surfaces | `--text-primary` on `--bg-dark` | WCAG-oriented token choices |
+| Empty / loading states | `.empty-state` pattern | lobby, chat, combat, panels |
+| ARIA / keyboard for custom controls | `aria-live`, `role="button"`, `@keydown.enter` | `story_chat.mjs`, `story_map.mjs`, `story_clues.mjs` |
+
+### Component map (skill categories → CoC)
+
+| UI area | CoC surface | Skill focus (priority) |
+|---------|-------------|------------------------|
+| Lobby | `.lobby-hero`, `.lobby-mod-card`, `.lobby-kp-panel` | Touch & interaction, style consistency |
+| Story chat | `.chat-box`, `.kp-msg`, `.sys-msg` | Typography, accessibility (`aria-live`) |
+| Combat | `.combat-panel`, `.combat-enemy-card`, `.combat-quick-btn` | Touch targets, color-not-only (HP/SAN bars) |
+| Dice | `.dice-panel`, `.dice-quick-btn`, `.dice-face-svg` | Press feedback, SVG icons |
+| Sub-panels | `.coc-panel-card`, `.coc-section-title` | Layout tokens, card elevation |
+| Settings / creator | `.nav-tabs`, `.form-control` | Form labels, focus states |
+
+### Install ui-ux-pro-max-skill for Cursor (alongside this project)
+
+The skill is installed **outside** the repo — globally or per-project — and auto-activates on UI/UX tasks.
+
+**Option 1 — CLI (recommended):**
+
+```bash
+npm install -g ui-ux-pro-max-cli
+cd /path/to/CoC_Engine_V17.2_CCGS
+uipro init --ai cursor          # project: .cursor/skills/ui-ux-pro-max/
+# or, all projects:
+uipro init --ai cursor --global # user:   ~/.cursor/skills/ui-ux-pro-max/
+```
+
+Requires **Python 3.x** for the bundled design-system search script.
+
+**Option 2 — npx (no global install):**
+
+```bash
+npx ui-ux-pro-max-cli init --ai cursor
+```
+
+**Update / remove:**
+
+```bash
+uipro update
+uipro uninstall --ai cursor
+```
+
+**Using with CoC Engine:** When prompting Cursor for UI work, mention `docs/UI_DESIGN.md` and `css/style.css` tokens so generated code extends existing conventions instead of replacing them with Tailwind defaults.
+
+**Advanced — generate a design-system brief:**
+
+```bash
+python .cursor/skills/ui-ux-pro-max/scripts/search.py "horror TRPG dark dashboard" --design-system -p "CoC Engine"
+```
+
 ## Inspiration applied
 
 | DESIGN.md section | CoC Engine application |

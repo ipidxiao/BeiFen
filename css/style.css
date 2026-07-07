@@ -68,6 +68,11 @@
   --radius-lg: 10px;
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
+  /* Interaction — ui-ux-pro-max: touch ≥44px, focus ring, 150–300ms transitions */
+  --touch-target-min: 44px;
+  --focus-ring-width: 2px;
+  --focus-ring-color: var(--accent-gold);
+  --focus-ring-offset: 2px;
   --shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.45);
   --shadow-glow-gold: 0 0 12px rgba(232, 168, 74, 0.25);
 }
@@ -105,6 +110,9 @@ body::after {
 }
 @media (prefers-reduced-motion: reduce) {
     body::after { animation: none; }
+    .btn:active:not(:disabled),
+    .lobby-action-btn:active,
+    .btn-outline-secondary:active { transform: none; }
 }
 
 /* 针对按钮和可点击元素优化，防止快速点击时的默认行为干扰 */
@@ -355,9 +363,15 @@ body .border-secondary { border-color: var(--border-default); }
 
 /* 💡 Form 控件深色主题 */
 .form-control:focus, .form-select:focus { background-color: #333; color: #fff; border-color: var(--accent-gold); box-shadow: 0 0 0 0.2rem rgba(240, 173, 78, 0.25); }
-.btn:focus-visible, button:focus-visible, .apex-slot:focus-visible, .dice-quick-btn:focus-visible {
-    outline: 2px solid var(--accent-gold);
-    outline-offset: 2px;
+.btn:focus-visible, button:focus-visible, .apex-slot:focus-visible, .dice-quick-btn:focus-visible,
+.nav-link:focus-visible, .lobby-mod-card:focus-visible, .clue-card:focus-visible,
+.story-tab-btn:focus-visible, [role="button"]:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+/* Clickable affordance — ui-ux-pro-max cursor-pointer guideline */
+.nav-link, .lobby-mod-card, .clue-card, .story-tab-btn, [role="button"] {
+    cursor: pointer;
 }
 .form-control::placeholder { color: #777; }
 
@@ -1273,7 +1287,8 @@ body .border-secondary { border-color: var(--border-default); }
     .clue-panel, .journal-panel, .npc-panel, .growth-panel, .map-panel, .char-panel {
         max-height: 70vh; padding: var(--space-sm);
     }
-    .story-tab-btn { font-size: var(--text-xs); padding: var(--space-xs) var(--space-sm) !important; min-height: 36px; }
+    .story-tab-btn { font-size: var(--text-xs); padding: var(--space-xs) var(--space-sm) !important; min-height: var(--touch-target-min); }
+    .lobby-mod-btn { min-height: var(--touch-target-min); }
     .story-toolbar { flex-wrap: wrap; gap: var(--space-xs); }
     .apex-slot { width: 48px; height: 48px; }
     .chat-box { height: 45vh; padding: var(--space-md); }
