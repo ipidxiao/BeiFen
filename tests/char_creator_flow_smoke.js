@@ -79,12 +79,15 @@ State.switchScreen = (s) => {
 };
 
 run('js/components/char_creator.js');
+run('js/components/story_char.js');
 
 const Creator = sandbox.window.CoCCreator;
 const preset = Creator.CHARACTER_PRESETS[0];
+const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name === '杂技演员');
 
 (async () => {
   assert(preset && preset.name, 'preset fixture exists');
+  assert(acrobatJob, 'acrobat occupation exists');
 
   // BUG-004: the dice-roll path must create the radar chart after Vue nextTick.
   Creator.rollAllStats();
@@ -118,6 +121,16 @@ const preset = Creator.CHARACTER_PRESETS[0];
   Creator.stopAutoAdd();
   assert.strictEqual(sandbox.__intervalFn, null, 'stopAutoAdd clears repeat timer');
 
+  // BUG-008: acrobat occupation points must parse EDU x2 + DEX x2 and never display negative.
+  Object.assign(State.draftChar.attrs, { STR: 50, CON: 60, SIZ: 50, DEX: 60, APP: 50, INT: 70, POW: 60, EDU: 65, LUCK: 50 });
+  State.draftChar.job = acrobatJob;
+  State.draftChar.skillAllocations = { '攀爬': { occ: acrobatJob.calcPoints(State.draftChar.attrs) + 70, per: 0 } };
+  assert.strictEqual(acrobatJob.calcPoints(State.draftChar.attrs), 250, 'acrobat occupation formula includes DEX');
+  assert(Creator.pointStats.value.occRemain >= 0, 'acrobat occupation remaining display is non-negative');
+  assert.strictEqual(Creator.pointStats.value.occOverspent, 70, 'overspent occupation points are tracked separately');
+  State.draftChar.skillAllocations = {};
+  assert.strictEqual(Creator.pointStats.value.occRemain, 250, 'acrobat occupation starts with valid remaining points');
+
   // BUG-006: preset quick start commits, resumes pending local scenario, and persists immediately.
   State.gameState.roster.splice(0);
   State.gameState.scenarioRunner.pendingScenarioId = 'tutorial';
@@ -144,6 +157,15 @@ const preset = Creator.CHARACTER_PRESETS[0];
   assert.strictEqual(switchedTo, 'story', 'applyPreset navigates to story');
   assert.deepStrictEqual(sandbox.__saved[0], { slot: 'auto', name: '自动存档', roster: 1 }, 'applyPreset writes immediate autosave');
 
+  // BUG-007: the story character tab renders a real sheet for roster entries, including presets.
+  const storyEmits = [];
+  const storyCharVm = sandbox.window.StoryChar.setup({}, { emit: (event, payload) => storyEmits.push({ event, payload }) });
+  assert.strictEqual(storyCharVm.currentChar.value.name, preset.name, 'story character panel selects roster entry');
+  assert.strictEqual(storyCharVm.displayAttr(storyCharVm.currentChar.value, 'STR'), preset.attrs.STR, 'story character panel renders attributes');
+  assert(storyCharVm.notableSkills(storyCharVm.currentChar.value).some((skill) => skill.name === '侦查'), 'story character panel renders skill summary');
+  storyCharVm.emitSwitchTab('chat');
+  assert.deepStrictEqual(storyEmits[0], { event: 'switch-tab', payload: 'chat' }, 'story character panel returns to story tab');
+
   const creatorView = fs.readFileSync(path.join(root, 'js/views/creator_view.mjs'), 'utf8');
   assert(/startAutoAdd\(skill, 'occ'\)/.test(creatorView), 'creator_view wires occ hold-repeat');
   assert(/startAutoAdd\(skill, 'per'\)/.test(creatorView), 'creator_view wires per hold-repeat');
@@ -156,10 +178,12 @@ const preset = Creator.CHARACTER_PRESETS[0];
   const storyChar = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
   const storyView = fs.readFileSync(path.join(root, 'js/views/story_view.mjs'), 'utf8');
   assert(/emitSwitchTab\('chat'\)/.test(storyChar), 'story_char has back-to-story action');
+  assert(/技能摘要/.test(storyChar), 'story_char renders a character sheet skill summary');
+  assert(/selectedActiveIndex/.test(storyChar), 'story_char maps active roster selection to roster index');
   assert(/管理\/启用调查员/.test(storyChar), 'story_char empty state clarifies inactive roster action');
   assert(/@switch-tab="activeStoryTab = \$event"/.test(storyView), 'story_view handles story_char back event');
 
-  console.log('char_creator_flow_smoke: preset + radar + hold-repeat + scenario resume OK');
+  console.log('char_creator_flow_smoke: preset + radar + hold-repeat + scenario resume + story character sheet OK');
 })().catch((err) => {
   console.error(err);
   process.exit(1);

@@ -161,11 +161,14 @@ window.ViewCreator = {
                         <div class="row align-items-center small mb-2 border-bottom border-dark pb-2">
                             <div class="col-4 fw-bold" style="color:#e0e0e0;">🎯 可用点数：</div>
                             <div class="col-8 d-flex justify-content-end gap-3" style="color:#cccccc;">
-                                <span>本职 <strong class="text-warning fs-6" :class="pointStats.occRemain === 0 ? 'text-success' : ''">{{ pointStats.occRemain }}</strong></span>
-                                <span>兴趣 <strong class="text-info fs-6" :class="pointStats.perRemain === 0 ? 'text-success' : ''">{{ pointStats.perRemain }}</strong></span>
+                                <span>本职 <strong class="text-warning fs-6" :class="pointStats.occRemainRaw === 0 ? 'text-success' : ''">{{ pointStats.occRemain }}</strong></span>
+                                <span>兴趣 <strong class="text-info fs-6" :class="pointStats.perRemainRaw === 0 ? 'text-success' : ''">{{ pointStats.perRemain }}</strong></span>
                             </div>
                         </div>
-                        <div v-if="pointStats.occRemain !== 0 || pointStats.perRemain !== 0" class="small text-warning mb-2" role="status">
+                        <div v-if="pointStats.occOverspent || pointStats.perOverspent" class="small text-danger mb-2" role="status">
+                            当前加点超过可用点数，请先减少已分配点数后再登记。
+                        </div>
+                        <div v-else-if="!isPointAllocationComplete" class="small text-warning mb-2" role="status">
                             须将本职与兴趣技能点全部分配完毕（剩余=0）方可登记归档。
                         </div>
                         <div class="row align-items-center small fw-bold mb-2 pb-1 border-bottom border-secondary" style="padding-right: 6px; color: #cccccc;">
@@ -227,7 +230,7 @@ window.ViewCreator = {
             
             <div class="d-flex gap-2 mt-3 pt-2 border-top border-secondary">
                 <button class="btn btn-outline-secondary" @click="switchScreen('character')">放弃</button>
-                <button class="btn btn-success fw-bold flex-grow-1" @click="saveDraftCharacter" :disabled="!draftChar.name || draftChar.attrs.STR === 0 || !draftChar.job || pointStats.occRemain !== 0 || pointStats.perRemain !== 0">💾 登记归档</button>
+                <button class="btn btn-success fw-bold flex-grow-1" @click="saveDraftCharacter" :disabled="!draftChar.name || draftChar.attrs.STR === 0 || !draftChar.job || !isPointAllocationComplete">💾 登记归档</button>
             </div>
         </div>
     `,

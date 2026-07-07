@@ -6,13 +6,25 @@ window.CoCEngine = window.CoCEngine || {};
  * @param {Object} attrs - 角色属性对象
  * @returns {number} 计算后的点数
  */
-const parsePoints = (formula, attrs) => {
-    const map = { "力量": "STR", "体质": "CON", "体型": "SIZ", "敏捷": "DEX", "外貌": "APP", "智力": "INT", "意志": "POW", "教育": "EDU" };
-    return formula.split('＋').reduce((total, part) => {
-        let [attrStr, multStr] = part.split('×');
-        let maxAttr = Math.max(...attrStr.split('或').map(k => attrs[map[k]] || 0));
-        return total + (maxAttr * (parseInt(multStr) || 1));
-    }, 0) || (attrs.EDU * 4);
+const parsePoints = (formula, attrs = {}) => {
+    const map = {
+        "力量": "STR", "STR": "STR",
+        "体质": "CON", "CON": "CON",
+        "体型": "SIZ", "SIZ": "SIZ",
+        "敏捷": "DEX", "DEX": "DEX",
+        "外貌": "APP", "APP": "APP",
+        "智力": "INT", "INT": "INT",
+        "意志": "POW", "POW": "POW",
+        "教育": "EDU", "EDU": "EDU"
+    };
+    const normalizedFormula = String(formula || '').replace(/\s+/g, '').replace(/[+]/g, '＋').replace(/[*xX]/g, '×');
+    const total = normalizedFormula.split('＋').reduce((sum, part) => {
+        const [rawAttr = '', rawMult = '1'] = part.split('×');
+        const candidates = rawAttr.split('或').map((key) => Number(attrs[map[key] || key] || 0));
+        const maxAttr = Math.max(0, ...candidates.filter(Number.isFinite));
+        return sum + (maxAttr * (parseInt(rawMult, 10) || 1));
+    }, 0);
+    return total || (Number(attrs.EDU) || 0) * 4;
 };
   Object.assign(CoCEngine, {
     /**

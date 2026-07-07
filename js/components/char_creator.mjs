@@ -119,17 +119,48 @@ window.CoCCreator = (function(State, Engine, Vue) {
         return draftChar.job.classSkillsString.includes(skillName);
     };
 
+    const getAllocationPoints = (skillName, type) => {
+        const allocation = draftChar.skillAllocations[skillName];
+        const value = Number(allocation && allocation[type]);
+        return Number.isFinite(value) ? value : 0;
+    };
+
+    const clearOccupationAllocations = () => {
+        for (let skill in draftChar.skillAllocations) {
+            const allocation = draftChar.skillAllocations[skill];
+            if (!allocation) continue;
+            allocation.occ = 0;
+            if (!allocation.per) delete draftChar.skillAllocations[skill];
+        }
+    };
+
+    watch(() => draftChar.job ? draftChar.job.name : null, (newJobName, oldJobName) => {
+        if (newJobName !== oldJobName) clearOccupationAllocations();
+    });
+
     const pointStats = computed(() => {
-        let occMax = draftChar.job ? draftChar.job.calcPoints(draftChar.attrs) : 0;
-        let bonus = draftChar.expPackage ? draftChar.expPackage.bonusPoints : 0;
-        let perMax = (draftChar.attrs.INT * 2) + bonus;
+        let occMax = draftChar.job ? Math.max(0, Number(draftChar.job.calcPoints(draftChar.attrs)) || 0) : 0;
+        let bonus = draftChar.expPackage ? Number(draftChar.expPackage.bonusPoints) || 0 : 0;
+        let perMax = Math.max(0, (Number(draftChar.attrs.INT) || 0) * 2 + bonus);
         let occSpent = 0; let perSpent = 0;
         for (let skill in draftChar.skillAllocations) {
             if (!isVisibleSkill(skill)) continue;
-            occSpent += draftChar.skillAllocations[skill].occ; perSpent += draftChar.skillAllocations[skill].per;
+            occSpent += getAllocationPoints(skill, 'occ');
+            perSpent += getAllocationPoints(skill, 'per');
         }
-        return { occMax, perMax, occSpent, perSpent, occRemain: occMax - occSpent, perRemain: perMax - perSpent };
+        const occRemainRaw = occMax - occSpent;
+        const perRemainRaw = perMax - perSpent;
+        return {
+            occMax, perMax, occSpent, perSpent,
+            occRemainRaw, perRemainRaw,
+            occRemain: Math.max(0, occRemainRaw),
+            perRemain: Math.max(0, perRemainRaw),
+            occOverspent: Math.max(0, -occRemainRaw),
+            perOverspent: Math.max(0, -perRemainRaw)
+        };
     });
+
+    const isPointAllocationComplete = computed(() => pointStats.value.occRemainRaw === 0 && pointStats.value.perRemainRaw === 0);
 
     const getSkillTotal = (skillName) => {
         let base = Engine.getSkillValue(draftChar, skillName); // 使用新的Engine.getSkillValue来获取基础值
@@ -180,8 +211,8 @@ window.CoCCreator = (function(State, Engine, Vue) {
         if (draftChar.skillAllocations[skillName] && draftChar.skillAllocations[skillName][type] >= 5) draftChar.skillAllocations[skillName][type] -= 5;
     };
 
-    const getSkillOcc = (skillName) => draftChar.skillAllocations[skillName] ? draftChar.skillAllocations[skillName].occ : 0;
-    const getSkillPer = (skillName) => draftChar.skillAllocations[skillName] ? draftChar.skillAllocations[skillName].per : 0;
+    const getSkillOcc = (skillName) => getAllocationPoints(skillName, 'occ');
+    const getSkillPer = (skillName) => getAllocationPoints(skillName, 'per');
     const isUnlockedSkill = (skillName) => draftChar.expPackage && draftChar.expPackage.unlock && draftChar.expPackage.unlock.includes(skillName);
 
     const renderRadarChart = () => {
@@ -412,7 +443,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
     };
 
       const saveDraftCharacter = () => {
-        if (pointStats.value.occRemain !== 0 || pointStats.value.perRemain !== 0) {
+        if (!isPointAllocationComplete.value) {
             notify(`请分配完所有技能点后再登记（剩余：本职 ${pointStats.value.occRemain}，兴趣 ${pointStats.value.perRemain}）。`, 'warning');
             return;
         }
@@ -450,7 +481,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
     };
 
     return { 
-        availableJobs, availableExperiences, dynamicSkillNames, pointStats, 
+        availableJobs, availableExperiences, dynamicSkillNames, pointStats, isPointAllocationComplete,
         getSkillTotal, addSkillPoint, startAutoAdd, stopAutoAdd, removeSkillPoint, getSkillOcc, getSkillPer, 
         applyExperience, isUnlockedSkill, isClassSkill, rollAllStats, saveDraftCharacter,
         showSTImport, importSTData, confirmImport, cancelImport, importPreview, goBack,
