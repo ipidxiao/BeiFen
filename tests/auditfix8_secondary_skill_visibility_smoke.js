@@ -116,7 +116,11 @@ assert.strictEqual(engine.getSkillValue(char, '格斗：斗殴'), 60, 'visible f
 assert.strictEqual(engine.getSkillValue(char, '射击：手枪'), 55, 'visible filtering does not break 射击：手枪 alias resolution');
 assert.strictEqual(engine.getSkillValue(char, '生存：森林'), 45, 'visible filtering does not break named custom survival skill');
 
-const hiddenStorySkill = sandbox.window.StoryChar.setup().isNotableSkill(char, '射击', 70);
-assert.strictEqual(hiddenStorySkill, false, 'story character sheet hides stale generic parent skill values');
+const storyCharSource = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
+const storyCharBundle = fs.readFileSync(path.join(root, 'js/components/story_char.js'), 'utf8');
+assert(!/技能摘要/.test(storyCharSource), 'story character source does not render skill summary');
+assert(!/技能摘要/.test(storyCharBundle), 'story character bundle does not render skill summary');
+assert(!/notableSkills/.test(storyCharSource), 'story character source has no notable skill helper');
+assert(!/notableSkills/.test(storyCharBundle), 'story character bundle has no notable skill helper');
 
 console.log('AUDITFIX8 secondary skill visibility smoke tests passed');

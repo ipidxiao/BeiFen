@@ -11,16 +11,7 @@ export const StoryChar = {
                 <h6 class="text-warning m-0">人物档案</h6>
                 <button class="btn btn-outline-secondary btn-sm" @click="emitSwitchTab('chat')">← 返回剧情</button>
             </div>
-            <div v-if="activeRoster.length > 0">
-                <div v-if="activeRoster.length > 1" class="d-flex gap-1 mb-3 overflow-auto pb-2 border-bottom border-secondary no-scrollbar">
-                    <button v-for="(entry, idx) in activeRoster" :key="entry.rosterIndex" 
-                        class="btn btn-sm text-nowrap" 
-                        :class="selectedActiveIndex === idx ? 'btn-warning' : 'btn-outline-secondary'"
-                        @click="selectedActiveIndex = idx">
-                        {{ entry.char.name }}
-                    </button>
-                </div>
-
+            <div v-if="currentChar">
                 <div v-if="currentChar">
                     <div class="card bg-dark border-warning shadow-sm mb-3">
                         <div class="card-body">
@@ -53,32 +44,7 @@ export const StoryChar = {
                                     </div>
                                 </div>
                             </div>
-
-                            <h6 class="border-bottom border-secondary pb-1 text-light">技能摘要</h6>
-                            <div v-if="notableSkills(currentChar).length" class="d-flex flex-wrap gap-1 mb-1">
-                                <span v-for="skill in notableSkills(currentChar)" :key="skill.name" class="badge" style="background:#1a6a7a; color:#e0f7ff; font-weight:500;">{{ skill.name }} {{ skill.value }}</span>
-                            </div>
-                            <div v-else class="text-muted small mb-1">暂无高于基础值的技能加点。</div>
                         </div>
-                    </div>
-
-                    <h6 class="border-bottom border-dark pb-1" style="color:#d0d0d0;">穿戴装备 (点击卸下)</h6>
-                    <div class="paper-doll-container mb-3">
-                        <div class="equip-column">
-                            <div class="equip-slot" :class="{filled: (currentChar.equipment || {}).head}" @click="unequip('head')"><div class="equip-icon">🎩</div><div class="equip-name">{{ (currentChar.equipment || {}).head || '头部' }}</div></div>
-                            <div class="equip-slot" :class="{filled: (currentChar.equipment || {}).acc1}" @click="unequip('acc1')"><div class="equip-icon">📿</div><div class="equip-name">{{ (currentChar.equipment || {}).acc1 || '饰品1' }}</div></div>
-                            <div class="equip-slot" :class="{filled: (currentChar.equipment || {}).hands}" @click="unequip('hands')"><div class="equip-icon">🧤</div><div class="equip-name">{{ (currentChar.equipment || {}).hands || '手部' }}</div></div>
-                        </div>
-                        <div class="avatar-box">👤</div>
-                        <div class="equip-column">
-                            <div class="equip-slot" :class="{filled: (currentChar.equipment || {}).weapon}" @click="unequip('weapon')"><div class="equip-icon">⚔️</div><div class="equip-name">{{ (currentChar.equipment || {}).weapon || '武器' }}</div></div>
-                            <div class="equip-slot" :class="{filled: (currentChar.equipment || {}).acc2}" @click="unequip('acc2')"><div class="equip-icon">💍</div><div class="equip-name">{{ (currentChar.equipment || {}).acc2 || '饰品2' }}</div></div>
-                            <div class="equip-slot" :class="{filled: (currentChar.equipment || {}).feet}" @click="unequip('feet')"><div class="equip-icon">🥾</div><div class="equip-name">{{ (currentChar.equipment || {}).feet || '足部' }}</div></div>
-                        </div>
-                    </div>
-
-                    <div v-if="currentChar.backstory && currentChar.backstory.description" class="small text-muted border-top border-secondary pt-2 mb-4">
-                        {{ currentChar.backstory.description }}
                     </div>
                 </div>
             </div>
@@ -99,18 +65,6 @@ export const StoryChar = {
         const activeRoster = computed(() => gameState.roster
             .map((char, rosterIndex) => ({ char, rosterIndex }))
             .filter(entry => entry.char && entry.char.isActive));
-        const selectedActiveIndex = computed({
-            get: () => {
-                state.clampSelectedCharIndex(gameState);
-                return gameState.selectedCharIndex;
-            },
-            set: (val) => {
-                const max = Math.max(0, activeRoster.value.length - 1);
-                const idx = Number.isFinite(+val) ? Math.max(0, Math.min(+val, max)) : 0;
-                gameState.selectedCharIndex = idx;
-                state.clampSelectedCharIndex(gameState);
-            }
-        });
         const currentChar = computed(() => {
             state.clampSelectedCharIndex(gameState);
             const entry = activeRoster.value[gameState.selectedCharIndex] || activeRoster.value[0] || null;
@@ -129,45 +83,11 @@ export const StoryChar = {
         const half = (val) => Math.floor(numeric(val) / 2);
         const fifth = (val) => Math.floor(numeric(val) / 5);
 
-        const isNotableSkill = (char, skillName, val) => {
-            if (!skillName || val === undefined) return false;
-            const visible = acc
-                ? acc.isVisibleSkillName(skillName)
-                : !(window.CoCEngine && window.CoCEngine.isVisibleSkillName && !window.CoCEngine.isVisibleSkillName(skillName));
-            if (!visible) return false;
-            if (skillName === "闪避") return val > Math.floor(displayAttr(char, 'DEX') / 2);
-            
-            const skillDef = acc
-                ? acc.getSkillDef(skillName)
-                : (window.CoCEngine && window.CoCEngine.BaseSkills ? window.CoCEngine.BaseSkills[skillName] : undefined);
-            let base = 0;
-            if (skillDef !== undefined) {
-                base = (typeof skillDef === 'number') ? skillDef : (skillDef.base !== undefined ? skillDef.base : 0);
-            }
-            return val > base;
-        };
-
-        const notableSkills = (char) => {
-            if (!char || !char.skills) return [];
-            return Object.entries(char.skills)
-                .map(([name, value]) => ({ name, value: numeric(value, 0) }))
-                .filter(skill => isNotableSkill(char, skill.name, skill.value))
-                .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, 'zh-Hans-CN'))
-                .slice(0, 18);
-        };
-        
-        const unequip = (slot) => {
-            if (currentChar.value && currentChar.value.equipment && currentChar.value.equipment[slot]) {
-                gameState.inventory.push(currentChar.value.equipment[slot]);
-                currentChar.value.equipment[slot] = null;
-            }
-        };
-
         const emitSwitchTab = (tab) => emit('switch-tab', tab);
         
         return { 
-            isNotableSkill, notableSkills, unequip, gameState,
-            activeRoster, currentChar, selectedActiveIndex, attrOrder,
+            gameState,
+            activeRoster, currentChar, attrOrder,
             displayAttr, displayDerived, displayCurrentHp, displayMaxHp, displaySan, half, fifth,
             emitSwitchTab
         };
