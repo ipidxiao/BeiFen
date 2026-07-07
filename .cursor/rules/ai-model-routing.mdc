@@ -1,0 +1,52 @@
+---
+description: Cursor dev-time model routing — Fable 5 / Composer 2.5 / GPT-5.5 by task and path
+alwaysApply: true
+---
+
+# AI Model Routing (CoC Engine)
+
+**Scope:** Cursor **development-time** agent routing only. Do **not** change runtime in-game LLM (`js/ai/network.mjs`, DeepSeek API).
+
+Full workflow: `docs/AI_MODEL_WORKFLOW.md`.
+
+## Model slugs (Task subagent `model` param)
+
+| Role | Slug | Use for |
+|------|------|---------|
+| Fable 5 | `claude-fable-5-thinking-high` | Scenario outlines, Lovecraftian scenes, art direction, narrative design |
+| Composer 2.5 Fast | `composer-2.5-fast` | UI code, bulk dialogue/text entry, mechanical components |
+| GPT-5.5 | `gpt-5.5-medium` | Sanity, dice, save structures, engines, persistence, KP logic |
+
+## Path → preferred model
+
+| Paths / globs | Model |
+|---------------|-------|
+| `js/data/scenarios/**`, `js/data/campaigns/**`, `js/data/ai_prompt_config.mjs`, `docs/archive/CCGS*`, creative docs | Fable 5 |
+| `js/components/**`, `js/views/**`, `css/**`, `index.html`, `icons/**`, UI docs | Composer 2.5 |
+| `js/engines/**`, `js/state/**`, `js/campaign/kp_*.mjs`, `js/campaign/*_engine*`, `js/tools/**`, `tests/**`, `js/scenario/store.mjs`, `js/scenario/runner.mjs` | GPT-5.5 |
+
+## When to use Task subagent with explicit `model`
+
+- **Cross-cutting or large scope** (e.g. new KP rule + UI + scenario text): parent agent plans; spawn focused subagents per layer with matching `model`.
+- **Wrong model for the file**: delegate that slice via Task + `model`, not mixed edits in one pass.
+- **Creative burst** (scene bible, module pitch): Task + `claude-fable-5-thinking-high`, `readonly: true` for brainstorm-only.
+- **Bulk content** (10+ NPC lines, tab labels): Task + `composer-2.5-fast`.
+- **Engine correctness** (sanity edge case, save migration, dice resolution): Task + `gpt-5.5-medium`.
+
+Example:
+
+```
+Task(subagent_type="generalPurpose", model="gpt-5.5-medium", prompt="Fix sanity tick in js/engines/sanity.mjs …")
+```
+
+## Escalate to harder model
+
+| Signal | Escalate to |
+|--------|-------------|
+| Narrative tone, mythos, KP voice, module structure | Fable 5 |
+| Layout, a11y, CSS tokens, component wiring | Composer 2.5 |
+| State invariants, migrations, combat/sanity math, KP execution | GPT-5.5 |
+
+## Do not route here
+
+- `js/ai/network.mjs`, `js/ai/worker*.js`, `js/ai_logic.mjs` — runtime AI transport; separate from Cursor model choice unless explicitly refactoring dev tooling.
