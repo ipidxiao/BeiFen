@@ -3,6 +3,16 @@
 本文档定义 **开发时** 在 Cursor 中如何选择 AI 模型与 Task 子代理。  
 **不包含** 游戏内运行时 LLM（`js/ai/network.mjs` 的 DeepSeek API）——那是玩家对话/KP 推理链路，与本文无关。
 
+## 自主路由（默认策略）
+
+**Agent 必须自行判定用哪个模型；用户发布任务时不必每次写明 Fable 5 / Composer 2.5 / GPT-5.5。**
+
+1. **按任务内容与涉及路径推断** — 每次接单都对照下文「目录归属」与「升级模型」表。
+2. **委派子代理时显式传 `model`** — 用 Task  spawn 子代理时带上对应 slug，不在子代理侧留空。
+3. **回复里仅在不明显时简短说明** — 选型清晰时直接开工；仅在跨层、歧义或用户追问原因时说明选了哪个模型。
+
+跨叙事 + UI + 引擎的大任务：父 Agent 拆计划，每层开一个 Task 子代理并分别指定 `model`。
+
 ---
 
 ## 1. 三模型分工
@@ -82,8 +92,9 @@ UI 大改前先读 `docs/UI_SKILL_WORKFLOW.md` 与 `docs/UI_DESIGN.md`。
 
 ### 4.1 主 Agent（当前对话）
 
-- 在聊天里 **写明模型倾向**，例如：「这段只改 `story_combat.mjs` UI，用 Composer 风格，遵循 `UI_DESIGN.md`」。
-- 项目已启用规则 `.cursor/rules/ai-model-routing.mdc`（`alwaysApply: true`），Agent 会按路径与任务类型自动倾向对应模型。
+- **默认**：用户只描述任务即可；Agent 按路径与任务类型自动选型（见上文「自主路由」）。
+- 用户仍可 **显式指定模型**（例如「这段用 Composer 风格」）；有明确要求时以用户为准。
+- 规则 `.cursor/rules/ai-model-routing.mdc`（`alwaysApply: true`）与本文档一致。
 
 ### 4.2 Task 子代理（显式 `model`）
 

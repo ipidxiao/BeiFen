@@ -9,6 +9,16 @@ alwaysApply: true
 
 Full workflow: `docs/AI_MODEL_WORKFLOW.md`.
 
+## Autonomous routing
+
+**The agent MUST choose the model itself.** The user does **not** need to name Fable 5 / Composer 2.5 / GPT-5.5 on every task.
+
+1. **Infer from task + file paths** — use the tables below (and escalate signals) on every assignment.
+2. **Delegate with `model`** — when spawning Task subagents, pass the matching slug; do not leave routing implicit on subagents.
+3. **Brief note only if non-obvious** — mention the chosen model in the reply only when the choice is ambiguous, cross-cutting, or the user explicitly asked why.
+
+Default: follow path ownership. Cross-cutting work → parent plans, spawn one subagent per layer with the correct `model`.
+
 ## Model slugs (Task subagent `model` param)
 
 | Role | Slug | Use for |
