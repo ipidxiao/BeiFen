@@ -7,6 +7,10 @@
 export const StoryChar = {
     template: `
         <div class="flex-grow-1 overflow-auto p-3 bg-dark">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-warning m-0">人物档案</h6>
+                <button class="btn btn-outline-secondary btn-sm" @click="emitSwitchTab('chat')">← 返回剧情</button>
+            </div>
             <div v-if="activeRoster.length > 0">
                 <!-- 角色选择 Tab -->
                 <div class="d-flex gap-1 mb-3 overflow-auto pb-2 border-bottom border-secondary no-scrollbar">
@@ -76,13 +80,14 @@ export const StoryChar = {
                 <p class="text-muted">当前小队中没有活跃调查员。</p>
                 <div class="d-flex flex-column gap-2 align-items-center">
                     <button class="btn btn-success" @click="switchScreen('creator')">+ 创建调查员</button>
-                    <button class="btn btn-outline-secondary" @click="switchScreen('character')">管理小队</button>
+                    <button class="btn btn-outline-secondary" @click="switchScreen('character')">管理/启用调查员</button>
                     <button class="btn btn-outline-warning btn-sm" @click="switchScreen('lobby')">返回大厅</button>
                 </div>
             </div>
         </div>
     `,
-    setup() {
+    setup(_, context = {}) {
+        const emit = context.emit || (() => {});
         const { ref, computed } = window.Vue;
         const acc = window.CoCStateAccessor;
         const state = acc ? acc.getState() : window.CoCState;
@@ -122,11 +127,13 @@ export const StoryChar = {
                 currentChar.value.equipment[slot] = null;
             }
         };
+
+        const emitSwitchTab = (tab) => emit('switch-tab', tab);
         
         return { 
             isNotableSkill, unequip, gameState, 
             activeRoster, currentChar, selectedCharIndex,
-            switchScreen: state.switchScreen
+            switchScreen: state.switchScreen, emitSwitchTab
         };
     }
 };

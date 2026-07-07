@@ -392,7 +392,19 @@ window.CoCCreator = (function(State, Engine, Vue) {
         resetDraftChar();
         if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
         notify(`✅ ${preset.name} 已就绪！可直接开始冒险。`, 'success');
+        const pendingScenarioId = gameState.scenarioRunner && gameState.scenarioRunner.pendingScenarioId;
+        if (pendingScenarioId && window.CoCScenarioRunner && window.CoCScenarioRunner.startScenario) {
+            if (window.CoCScenarioRunner.startScenario(pendingScenarioId)) {
+                gameState.scenarioRunner.pendingScenarioId = null;
+            } else {
+                notify('剧本加载失败，请从本地剧本模式重新开始。', 'danger');
+            }
+        }
         switchScreen('story');
+        if (State.saveGame) {
+            const ok = State.saveGame('auto', '自动存档');
+            if (!ok) notify('预置调查员已创建，但自动存档写入失败，请手动保存。', 'warning');
+        }
     };
 
     applyPreset = (preset) => {

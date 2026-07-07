@@ -54,7 +54,7 @@ window.ViewStory = {
 
               <keep-alive :include="tabComponents">
               <story-chat v-if="activeStoryTab === 'chat'" @switch-tab="activeStoryTab = $event"></story-chat>
-              <story-char v-if="activeStoryTab === 'character'"></story-char>
+              <story-char v-if="activeStoryTab === 'character'" @switch-tab="activeStoryTab = $event"></story-char>
               <story-inv v-if="activeStoryTab === 'inventory'" @switch-tab="activeStoryTab = $event"></story-inv>
               <story-store v-if="activeStoryTab === 'storage'"></story-store>
             <story-journal v-if="activeStoryTab === 'journal'"></story-journal>

@@ -130,7 +130,7 @@ function loadMasksLondonCampaign(gameState, opts) {
         gameState.inventory.push({ id: 'camp_inv_' + i, name: item.name, qty: 1, note: item.detail });
     });
 
-    gameState.scenarioRunner = { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null };
+    gameState.scenarioRunner = { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null };
 
     if (gameState.aiSettings) {
         gameState.aiSettings.difficultyPreset = MASKS_LONDON_CATALOG.difficultyPreset;

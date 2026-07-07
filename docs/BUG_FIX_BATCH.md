@@ -75,3 +75,19 @@ npm run ci:smoke
 ```
 
 新增 `tests/char_creator_flow_smoke.js` 覆盖预置登记与 UI 绑定。
+
+## 复审补丁（2026-07-07 夜）
+
+复审 `5fddcaa` 后确认 BUG-004/005/006 的主修方向正确，但仍有两个端到端缺口：
+
+- **BUG-004 补强**：原 smoke 只检查源码存在重试逻辑，未真正触发 `rollAllStats()`。现已在 VM 中执行浏览器版 `char_creator.js`，掷骰后等待 `nextTick` 并断言雷达图 Chart 实例被创建。
+- **BUG-005 补强**：原 smoke 只检查模板绑定，未验证长按定时器。现已直接调用 `startAutoAdd`，模拟延迟后的 interval，断言本职技能会持续 +5，`stopAutoAdd` 会清理定时器。
+- **BUG-006 再修**：`startLocalScenario` 的 `pendingScenarioId` 原本只存在 `ViewLobby.data()`，进入创建页时大厅组件卸载，导致「快速开始 → 无角色 → 创建/预置」后无法续接剧本；预置提交后也只依赖 8 秒自动存档 watcher，立即刷新/返回可能丢角色。现改为写入 `gameState.scenarioRunner.pendingScenarioId`，预置提交后启动待开始剧本、清空 pending，并立即 `saveGame('auto', '自动存档')`。
+- **人物页 UX 补强**：`story_char` 增加「返回剧情」按钮，并把空态的「管理小队」改为「管理/启用调查员」，避免用户在人物页无明显返回路径。
+
+复审后 `tests/char_creator_flow_smoke.js` 覆盖：
+
+- 投掷生成 → 雷达图创建；
+- 技能分配 `+` → 长按自动重复；
+- 快速开始待剧本 → 预置调查员登记 → 剧本续接 → 自动存档；
+- 剧情人物页 → 返回剧情事件绑定。

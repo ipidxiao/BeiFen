@@ -682,6 +682,7 @@ window.ViewLobby = {
               if (window.CoCState.gameState.roster.length === 0) {
                   window.CoCState.showToast && window.CoCState.showToast('请先创建至少一名调查员。', 'warning');
                   this.pendingScenarioId = scenarioId;
+                  window.CoCState.gameState.scenarioRunner.pendingScenarioId = scenarioId;
                   CoCStateAccessor.switchScreen('character');
                   return;
               }
@@ -691,6 +692,7 @@ window.ViewLobby = {
                   return;
               }
               this.pendingScenarioId = null;
+              window.CoCState.gameState.scenarioRunner.pendingScenarioId = null;
               CoCStateAccessor.switchScreen('story');
               window.CoCState.scrollToBottom && window.CoCState.scrollToBottom();
           },

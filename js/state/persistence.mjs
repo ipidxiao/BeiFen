@@ -252,7 +252,7 @@ export const CoCStatePersistence = (function() {
                     clueBoard: migrated.clueBoard || { clues: [], links: [] },
                     diceHistory: migrated.diceHistory || [],
                     atmosphere: migrated.atmosphere || { level: 'calm', note: '' },
-                    scenarioRunner: migrated.scenarioRunner || { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null },
+                    scenarioRunner: migrated.scenarioRunner || { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null },
                     activeCampaign: migrated.activeCampaign || null,
                     campaignArchive: migrated.campaignArchive || null,
                     londonKpState: migrated.londonKpState || null,
@@ -366,7 +366,7 @@ export const CoCStatePersistence = (function() {
                     clueBoard: safeJsonClone(gameState.clueBoard, { clues: [], links: [] }),
                     diceHistory: safeJsonClone(gameState.diceHistory, []),
                     atmosphere: safeJsonClone(gameState.atmosphere, { level: 'calm', note: '' }),
-                    scenarioRunner: safeJsonClone(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null }),
+                    scenarioRunner: safeJsonClone(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null }),
                     activeCampaign: gameState.activeCampaign || null,
                     campaignArchive: safeJsonClone(gameState.campaignArchive, null),
                     londonKpState: safeJsonClone(gameState.londonKpState, null),
@@ -469,7 +469,7 @@ export const CoCStatePersistence = (function() {
             if (d.diceHistory) gameState.diceHistory.splice(0, gameState.diceHistory.length, ...d.diceHistory);
             if (d.atmosphere) Object.assign(gameState.atmosphere, d.atmosphere);
             if (d.scenarioRunner) Object.assign(gameState.scenarioRunner, d.scenarioRunner);
-            else Object.assign(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null });
+            else Object.assign(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null });
             gameState.activeCampaign = d.activeCampaign || null;
             gameState.campaignArchive = d.campaignArchive ? safeJsonClone(d.campaignArchive, null) : null;
             gameState.londonKpState = d.londonKpState ? safeJsonClone(d.londonKpState, null) : null;

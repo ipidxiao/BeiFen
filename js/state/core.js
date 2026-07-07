@@ -44,7 +44,7 @@ window.CoCStateCore = (function(Vue) {
         diceHistory: [],
         aiSettings: { baseUrl: "https://api.deepseek.com/chat/completions", apiKey: "", model: "deepseek-chat", difficultyPreset: "standard" },
         atmosphere: { level: 'calm', note: '' },
-        scenarioRunner: { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null },
+        scenarioRunner: { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null },
         activeCampaign: null,
         campaignArchive: null,
         kpEngine: {

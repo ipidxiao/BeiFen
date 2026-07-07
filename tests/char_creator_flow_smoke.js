@@ -1,4 +1,4 @@
-// char_creator flow smoke — preset roster commit, radar retry, skill hold-repeat UI
+// char_creator flow smoke — preset commit, radar roll, skill hold-repeat, scenario resume
 const fs = require('fs');
 const vm = require('vm');
 const path = require('path');
@@ -6,19 +6,26 @@ const assert = require('assert');
 
 const root = path.join(__dirname, '..');
 const store = new Map();
+const radarCanvas = { id: 'radarChart' };
+
 const sandbox = {
   console,
-  setTimeout: (fn) => { if (typeof fn === 'function') fn(); return 1; },
-  clearTimeout: () => {},
-  clearInterval: () => {},
+  setTimeout: (fn) => { sandbox.__timeoutFn = fn; return 1; },
+  setInterval: (fn) => { sandbox.__intervalFn = fn; return 2; },
+  clearTimeout: () => { sandbox.__timeoutFn = null; },
+  clearInterval: () => { sandbox.__intervalFn = null; },
   Date,
   Math: Object.create(Math),
   JSON,
   Promise,
   Buffer,
+  __chartCreations: 0,
+  __chartUpdates: 0,
+  __saved: [],
+  __scenarioStarted: null,
   window: {},
   document: {
-    getElementById: () => null,
+    getElementById: (id) => (id === 'radarChart' ? radarCanvas : null),
     createElement: () => ({ click() {}, style: {}, set href(v) {}, set download(v) {} }),
     body: { appendChild() {}, removeChild() {} },
     addEventListener() {}
@@ -30,7 +37,13 @@ const sandbox = {
     setItem: (k, v) => { store.set(k, String(v)); },
     removeItem: (k) => { store.delete(k); }
   },
-  Chart: function Chart() { this.canvas = null; this.data = { datasets: [{ data: [] }] }; this.update = () => {}; this.destroy = () => {}; }
+  Chart: function Chart(ctx, config) {
+    sandbox.__chartCreations += 1;
+    this.canvas = ctx;
+    this.data = config.data;
+    this.update = () => { sandbox.__chartUpdates += 1; };
+    this.destroy = () => {};
+  }
 };
 sandbox.window = sandbox;
 sandbox.window.Vue = {
@@ -70,26 +83,84 @@ run('js/components/char_creator.js');
 const Creator = sandbox.window.CoCCreator;
 const preset = Creator.CHARACTER_PRESETS[0];
 
-assert(preset && preset.name, 'preset fixture exists');
-assert.strictEqual(State.gameState.roster.length, 0, 'roster starts empty');
+(async () => {
+  assert(preset && preset.name, 'preset fixture exists');
 
-Creator.applyPreset(preset);
+  // BUG-004: the dice-roll path must create the radar chart after Vue nextTick.
+  Creator.rollAllStats();
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.strictEqual(sandbox.__chartCreations, 1, 'rollAllStats creates radar chart');
+  assert.deepStrictEqual(
+    sandbox.window.CoCState.draftChar.derived,
+    sandbox.window.CoCEngine.calculateDerived(sandbox.window.CoCState.draftChar.attrs, sandbox.window.CoCState.draftChar.age),
+    'rollAllStats recalculates derived stats'
+  );
 
-assert.strictEqual(State.gameState.roster.length, 1, 'applyPreset commits to roster');
-assert.strictEqual(State.gameState.roster[0].name, preset.name, 'roster entry name matches preset');
-assert(State.gameState.roster[0].attrs.STR > 0, 'roster entry has attrs');
-assert.strictEqual(switchedTo, 'story', 'applyPreset navigates to story');
+  // BUG-005: startAutoAdd must add immediately and again through the hold timer.
+  Object.assign(State.draftChar.attrs, { STR: 50, CON: 60, SIZ: 50, DEX: 60, APP: 50, INT: 70, POW: 60, EDU: 65, LUCK: 50 });
+  State.draftChar.derived = sandbox.window.CoCEngine.calculateDerived(State.draftChar.attrs, State.draftChar.age);
+  State.draftChar.skillAllocations = {};
+  let repeatJob = null;
+  let repeatSkill = '';
+  for (const candidate of sandbox.window.CoCEngine.Occupations) {
+    State.draftChar.job = candidate;
+    repeatSkill = String(candidate.classSkillsString || '').split(/[，,、;；\s]+/).find((skill) => Creator.isClassSkill(skill));
+    if (repeatSkill) { repeatJob = candidate; break; }
+  }
+  assert(repeatJob && repeatSkill, 'found a class skill for hold-repeat');
+  Creator.startAutoAdd(repeatSkill, 'occ');
+  assert.strictEqual(Creator.getSkillOcc(repeatSkill), 5, 'hold-repeat adds immediately');
+  sandbox.__timeoutFn();
+  sandbox.__intervalFn();
+  sandbox.__intervalFn();
+  assert.strictEqual(Creator.getSkillOcc(repeatSkill), 15, 'hold-repeat keeps adding while held');
+  Creator.stopAutoAdd();
+  assert.strictEqual(sandbox.__intervalFn, null, 'stopAutoAdd clears repeat timer');
 
-const creatorView = fs.readFileSync(path.join(root, 'js/views/creator_view.mjs'), 'utf8');
-assert(/startAutoAdd\(skill, 'occ'\)/.test(creatorView), 'creator_view wires occ hold-repeat');
-assert(/startAutoAdd\(skill, 'per'\)/.test(creatorView), 'creator_view wires per hold-repeat');
+  // BUG-006: preset quick start commits, resumes pending local scenario, and persists immediately.
+  State.gameState.roster.splice(0);
+  State.gameState.scenarioRunner.pendingScenarioId = 'tutorial';
+  State.saveGame = (slot, name) => {
+    sandbox.__saved.push({ slot, name, roster: State.gameState.roster.length });
+    return true;
+  };
+  sandbox.window.CoCScenarioRunner = {
+    startScenario(id) {
+      sandbox.__scenarioStarted = id;
+      State.gameState.scenarioRunner.active = true;
+      State.gameState.scenarioRunner.scenarioId = id;
+      return true;
+    }
+  };
 
-const charCreatorSrc = fs.readFileSync(path.join(root, 'js/components/char_creator.mjs'), 'utf8');
-assert(/commitPresetToRoster/.test(charCreatorSrc), 'char_creator has commitPresetToRoster');
-assert(/paint\(retriesLeft/.test(charCreatorSrc), 'renderRadarChart retries canvas mount');
+  Creator.applyPreset(preset);
 
-const storyChar = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
-assert(/switchScreen\('creator'\)/.test(storyChar), 'story_char empty state links to creator');
-assert(/switchScreen\('lobby'\)/.test(storyChar), 'story_char empty state links to lobby');
+  assert.strictEqual(State.gameState.roster.length, 1, 'applyPreset commits to roster');
+  assert.strictEqual(State.gameState.roster[0].name, preset.name, 'roster entry name matches preset');
+  assert(State.gameState.roster[0].attrs.STR > 0, 'roster entry has attrs');
+  assert.strictEqual(sandbox.__scenarioStarted, 'tutorial', 'applyPreset resumes pending scenario');
+  assert.strictEqual(State.gameState.scenarioRunner.pendingScenarioId, null, 'pending scenario is cleared');
+  assert.strictEqual(switchedTo, 'story', 'applyPreset navigates to story');
+  assert.deepStrictEqual(sandbox.__saved[0], { slot: 'auto', name: '自动存档', roster: 1 }, 'applyPreset writes immediate autosave');
 
-console.log('char_creator_flow_smoke: preset roster + UI patterns OK');
+  const creatorView = fs.readFileSync(path.join(root, 'js/views/creator_view.mjs'), 'utf8');
+  assert(/startAutoAdd\(skill, 'occ'\)/.test(creatorView), 'creator_view wires occ hold-repeat');
+  assert(/startAutoAdd\(skill, 'per'\)/.test(creatorView), 'creator_view wires per hold-repeat');
+
+  const charCreatorSrc = fs.readFileSync(path.join(root, 'js/components/char_creator.mjs'), 'utf8');
+  assert(/commitPresetToRoster/.test(charCreatorSrc), 'char_creator has commitPresetToRoster');
+  assert(/paint\(retriesLeft/.test(charCreatorSrc), 'renderRadarChart retries canvas mount');
+  assert(/saveGame\('auto', '自动存档'\)/.test(charCreatorSrc), 'preset commit persists immediately');
+
+  const storyChar = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
+  const storyView = fs.readFileSync(path.join(root, 'js/views/story_view.mjs'), 'utf8');
+  assert(/emitSwitchTab\('chat'\)/.test(storyChar), 'story_char has back-to-story action');
+  assert(/管理\/启用调查员/.test(storyChar), 'story_char empty state clarifies inactive roster action');
+  assert(/@switch-tab="activeStoryTab = \$event"/.test(storyView), 'story_view handles story_char back event');
+
+  console.log('char_creator_flow_smoke: preset + radar + hold-repeat + scenario resume OK');
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
