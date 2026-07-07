@@ -180,8 +180,11 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   assert.deepStrictEqual(storyEmits[0], { event: 'switch-tab', payload: 'chat' }, 'story character panel returns to story tab');
 
   const creatorView = fs.readFileSync(path.join(root, 'js/views/creator_view.mjs'), 'utf8');
-  assert(/startAutoAdd\(skill, 'occ'\)/.test(creatorView), 'creator_view wires occ hold-repeat');
-  assert(/startAutoAdd\(skill, 'per'\)/.test(creatorView), 'creator_view wires per hold-repeat');
+  assert(/@pointerdown\.prevent="startAutoAdd\(skill, 'occ'\)"/.test(creatorView), 'creator_view wires occ pointer hold-repeat');
+  assert(/@pointerdown\.prevent="startAutoAdd\(skill, 'per'\)"/.test(creatorView), 'creator_view wires per pointer hold-repeat');
+  assert(/@pointerup="stopAutoAdd"/.test(creatorView), 'creator_view stops hold-repeat on pointer up');
+  assert(/@pointerleave="stopAutoAdd"/.test(creatorView), 'creator_view stops hold-repeat on pointer leave');
+  assert(/@pointercancel="stopAutoAdd"/.test(creatorView), 'creator_view stops hold-repeat on pointer cancel');
 
   const charCreatorSrc = fs.readFileSync(path.join(root, 'js/components/char_creator.mjs'), 'utf8');
   assert(/commitPresetToRoster/.test(charCreatorSrc), 'char_creator has commitPresetToRoster');
@@ -199,6 +202,8 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   const storyView = fs.readFileSync(path.join(root, 'js/views/story_view.mjs'), 'utf8');
   assert(/emitSwitchTab\('chat'\)/.test(storyChar), 'story_char has back-to-story action');
   assert(/基础属性/.test(storyChar), 'story_char renders character attributes');
+  assert(/selectedActiveIndex/.test(storyChar), 'story_char has multi-character switcher state');
+  assert(/activeRoster\.length > 1/.test(storyChar), 'story_char shows switcher tabs when multiple investigators');
   assert(!/技能摘要/.test(storyChar), 'story_char source is attribute-only');
   assert(!/穿戴装备/.test(storyChar), 'story_char source does not render equipment management');
   assert(!/@click="unequip/.test(storyChar), 'story_char source has no equipment interaction');

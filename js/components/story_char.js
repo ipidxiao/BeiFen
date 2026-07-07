@@ -12,7 +12,16 @@ window.StoryChar = {
                 <h6 class="text-warning m-0">人物档案</h6>
                 <button class="btn btn-outline-secondary btn-sm" @click="emitSwitchTab('chat')">← 返回剧情</button>
             </div>
-            <div v-if="currentChar">
+            <div v-if="activeRoster.length > 0">
+                <div v-if="activeRoster.length > 1" class="d-flex gap-1 mb-3 overflow-auto pb-2 border-bottom border-secondary no-scrollbar">
+                    <button v-for="(entry, idx) in activeRoster" :key="entry.rosterIndex"
+                        class="btn btn-sm text-nowrap"
+                        :class="selectedActiveIndex === idx ? 'btn-warning' : 'btn-outline-secondary'"
+                        @click="selectedActiveIndex = idx">
+                        {{ entry.char.name }}
+                    </button>
+                </div>
+
                 <div v-if="currentChar">
                     <div class="card bg-dark border-warning shadow-sm mb-3">
                         <div class="card-body">
@@ -66,6 +75,18 @@ window.StoryChar = {
         const activeRoster = computed(() => gameState.roster
             .map((char, rosterIndex) => ({ char, rosterIndex }))
             .filter(entry => entry.char && entry.char.isActive));
+        const selectedActiveIndex = computed({
+            get: () => {
+                state.clampSelectedCharIndex(gameState);
+                return gameState.selectedCharIndex;
+            },
+            set: (val) => {
+                const max = Math.max(0, activeRoster.value.length - 1);
+                const idx = Number.isFinite(+val) ? Math.max(0, Math.min(+val, max)) : 0;
+                gameState.selectedCharIndex = idx;
+                state.clampSelectedCharIndex(gameState);
+            }
+        });
         const currentChar = computed(() => {
             state.clampSelectedCharIndex(gameState);
             const entry = activeRoster.value[gameState.selectedCharIndex] || activeRoster.value[0] || null;
@@ -88,7 +109,7 @@ window.StoryChar = {
         
         return { 
             gameState,
-            activeRoster, currentChar, attrOrder,
+            activeRoster, currentChar, selectedActiveIndex, attrOrder,
             displayAttr, displayDerived, displayCurrentHp, displayMaxHp, displaySan, half, fifth,
             emitSwitchTab
         };

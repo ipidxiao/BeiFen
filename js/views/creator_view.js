@@ -188,12 +188,12 @@ window.ViewCreator = {
                                 <div class="col-3 d-flex justify-content-center align-items-center px-0 flex-nowrap">
                                     <button class="btn btn-sm btn-outline-warning py-0 px-1" style="line-height:1;" :disabled="!isClassSkill(skill)" @click="removeSkillPoint(skill, 'occ')">-</button>
                                     <span class="text-warning fw-bold" style="width: 22px; text-align: center; font-size: 0.85rem;">{{ getSkillOcc(skill) }}</span>
-                                    <button class="btn btn-sm btn-warning py-0 px-1" style="line-height:1;" :disabled="!isClassSkill(skill) || pointStats.occRemain < 5" @mousedown.prevent="startAutoAdd(skill, 'occ')" @mouseup="stopAutoAdd" @mouseleave="stopAutoAdd" @touchstart.prevent="startAutoAdd(skill, 'occ')" @touchend="stopAutoAdd" @touchcancel="stopAutoAdd">+</button>
+                                    <button class="btn btn-sm btn-warning py-0 px-1" style="line-height:1; touch-action:none;" :disabled="!isClassSkill(skill) || pointStats.occRemain < 5" @pointerdown.prevent="startAutoAdd(skill, 'occ')" @pointerup="stopAutoAdd" @pointerleave="stopAutoAdd" @pointercancel="stopAutoAdd">+</button>
                                 </div>
                                 <div class="col-3 d-flex justify-content-center align-items-center px-0 flex-nowrap">
                                     <button class="btn btn-sm btn-outline-info py-0 px-1" style="line-height:1;" @click="removeSkillPoint(skill, 'per')">-</button>
                                     <span class="text-info fw-bold" style="width: 22px; text-align: center; font-size: 0.85rem;">{{ getSkillPer(skill) }}</span>
-                                    <button class="btn btn-sm btn-info py-0 px-1" style="line-height:1;" :disabled="pointStats.perRemain < 5" @mousedown.prevent="startAutoAdd(skill, 'per')" @mouseup="stopAutoAdd" @mouseleave="stopAutoAdd" @touchstart.prevent="startAutoAdd(skill, 'per')" @touchend="stopAutoAdd" @touchcancel="stopAutoAdd">+</button>
+                                    <button class="btn btn-sm btn-info py-0 px-1" style="line-height:1; touch-action:none;" :disabled="pointStats.perRemain < 5" @pointerdown.prevent="startAutoAdd(skill, 'per')" @pointerup="stopAutoAdd" @pointerleave="stopAutoAdd" @pointercancel="stopAutoAdd">+</button>
                                 </div>
                             </div>
                         </div>
