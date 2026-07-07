@@ -403,6 +403,11 @@ window.CoCCreator = (function(State, Engine, Vue) {
         return Engine.Occupations.find((j) => j.name === name) || jobLike;
     };
 
+    const openStoryCharacterTab = () => {
+        gameState.ui.openStoryTab = 'character';
+        switchScreen('story');
+    };
+
     const commitPresetToRoster = (preset) => {
         const derived = Engine.calculateDerived(preset.attrs, preset.age);
         derived.maxHp = derived.maxHp || derived.hp;
@@ -443,8 +448,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
                 notify('剧本加载失败，请从本地剧本模式重新开始。', 'danger');
             }
         }
-        gameState.ui.openStoryTab = 'character';
-        switchScreen('story');
+        openStoryCharacterTab();
         if (State.saveGame) {
             const ok = State.saveGame('auto', '自动存档');
             if (!ok) notify('预置调查员已创建，但自动存档写入失败，请手动保存。', 'warning');
@@ -482,15 +486,16 @@ window.CoCCreator = (function(State, Engine, Vue) {
         
         resetDraftChar();
         if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
-        activeCreatorTab.value = 'stats'; switchScreen('character');
+        activeCreatorTab.value = 'stats';
+        openStoryCharacterTab();
     };
 
     const goBack = () => {
-        // 如果是从剧情界面跳过来的，返回剧情；否则返回大厅/小队管理
+        // Story character sheet vs lobby roster — never use legacy 'character' screen id
         if (gameState.roster.length > 0) {
-            switchScreen('story');
+            openStoryCharacterTab();
         } else {
-            switchScreen('character');
+            switchScreen('roster');
         }
     };
 

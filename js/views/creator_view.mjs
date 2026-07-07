@@ -228,7 +228,7 @@ export const ViewCreator = {
             </div>
             
             <div class="d-flex gap-2 mt-3 pt-2 border-top border-secondary">
-                <button class="btn btn-outline-secondary" @click="switchScreen('character')">放弃</button>
+                <button class="btn btn-outline-secondary" @click="switchScreen('roster')">放弃</button>
                 <button class="btn btn-success fw-bold flex-grow-1" @click="saveDraftCharacter" :disabled="!draftChar.name || draftChar.attrs.STR === 0 || !draftChar.job || !isPointAllocationComplete">💾 登记归档</button>
             </div>
         </div>

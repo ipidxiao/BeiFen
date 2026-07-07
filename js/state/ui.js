@@ -93,7 +93,7 @@ window.CoCStateUI = (function() {
             }
             const storageType = rememberKey ? '本地存储（跨会话）' : '会话存储（关闭浏览器后清除）';
             showToast(ok ? `AI 设置已保存到${storageType}。` : 'AI 设置保存失败。', ok ? 'success' : 'danger');
-            if (ok) core.switchScreen('character');
+            if (ok) core.switchScreen('lobby');
             return ok;
         };
 

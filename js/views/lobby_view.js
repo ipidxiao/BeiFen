@@ -87,7 +87,7 @@ window.ViewLobby = {
                       </div>
                   </div>
 
-                  <button class="btn btn-warning fw-bold mb-3 p-3 w-100 lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="switchScreen('character')"><coc-icon name="character" :size="20"></coc-icon> 调查员小队管理</button>
+                  <button class="btn btn-warning fw-bold mb-3 p-3 w-100 lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="switchScreen('roster')"><coc-icon name="character" :size="20"></coc-icon> 调查员小队管理</button>
                   <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="openScenarios"><coc-icon name="scroll" :size="20"></coc-icon> 本地剧本模式</button>
                   <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="openScenarioStore"><coc-icon name="storage" :size="20"></coc-icon> 模组库</button>
                   <button class="btn btn-outline-info mb-3 p-3 w-100 lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="switchScreen('settings')"><coc-icon name="settings" :size="20"></coc-icon> AI 引擎设置</button>
@@ -331,7 +331,7 @@ window.ViewLobby = {
               </div>
 
               <!-- ===== 调查员管理界面 ===== -->
-              <div v-if="gameState.currentScreen === 'character'" class="card card-custom p-3 shadow-sm">
+              <div v-if="gameState.currentScreen === 'roster'" class="card card-custom p-3 shadow-sm">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                       <button class="btn btn-outline-secondary btn-sm" @click="switchScreen('lobby')">⬅ 返回</button>
                       <h3 class="text-warning m-0">调查员小队</h3>

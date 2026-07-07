@@ -159,3 +159,24 @@ npm run ci:smoke
 ```
 
 `tests/char_creator_flow_smoke.js` 新增断言：人物页模板无「管理小队」/小队跳转；预置提交后 `openStoryTab` 与 roster 职业/技能完整。
+
+## 复审补丁 5（2026-07-08）
+
+| ID | Severity | Area | Description | Status |
+|----|----------|------|-------------|--------|
+| BUG-014 | P0 | `core` / navigation | `switchScreen('character')` 实际打开大厅「调查员小队」页，与剧情 Tab「人物卡」混淆，用户误以为人物卡未修复 | **fixed** |
+
+### 修复摘要
+
+- 大厅小队管理屏 `currentScreen` 由 `'character'` 重命名为 **`'roster'`**（调查员小队列表）。
+- 剧情人物卡仍为 `currentScreen === 'story'` + `activeStoryTab === 'character'` + `<story-char>`。
+- `saveDraftCharacter` / `goBack` / 预置提交统一走 `openStoryCharacterTab()`，登记后直达剧情人物卡。
+- 设置保存后返回大厅，不再误入小队屏。
+
+### 验证
+
+```bash
+npm run build:js
+npm test
+npm run ci:smoke
+```

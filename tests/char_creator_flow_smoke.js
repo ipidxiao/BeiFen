@@ -171,12 +171,11 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   assert.strictEqual(State.gameState.ui.openStoryTab, 'character', 'applyPreset opens character sheet tab');
   assert.deepStrictEqual(sandbox.__saved[0], { slot: 'auto', name: '自动存档', roster: 1 }, 'applyPreset writes immediate autosave');
 
-  // BUG-007: the story character tab renders a real sheet for roster entries, including presets.
+  // BUG-007: the story character tab renders an attribute-only sheet for roster entries, including presets.
   const storyEmits = [];
   const storyCharVm = sandbox.window.StoryChar.setup({}, { emit: (event, payload) => storyEmits.push({ event, payload }) });
   assert.strictEqual(storyCharVm.currentChar.value.name, preset.name, 'story character panel selects roster entry');
   assert.strictEqual(storyCharVm.displayAttr(storyCharVm.currentChar.value, 'STR'), preset.attrs.STR, 'story character panel renders attributes');
-  assert(storyCharVm.notableSkills(storyCharVm.currentChar.value).some((skill) => skill.name === '侦查'), 'story character panel renders skill summary');
   storyCharVm.emitSwitchTab('chat');
   assert.deepStrictEqual(storyEmits[0], { event: 'switch-tab', payload: 'chat' }, 'story character panel returns to story tab');
 
@@ -196,16 +195,33 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   assert(/Object\.keys\(char\.skills\)\.length/.test(lobbyView), 'lobby roster list shows skill count for committed investigators');
 
   const storyChar = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
+  const storyCharBundle = fs.readFileSync(path.join(root, 'js/components/story_char.js'), 'utf8');
   const storyView = fs.readFileSync(path.join(root, 'js/views/story_view.mjs'), 'utf8');
   assert(/emitSwitchTab\('chat'\)/.test(storyChar), 'story_char has back-to-story action');
-  assert(/技能摘要/.test(storyChar), 'story_char renders a character sheet skill summary');
+  assert(/基础属性/.test(storyChar), 'story_char renders character attributes');
+  assert(!/技能摘要/.test(storyChar), 'story_char source is attribute-only');
+  assert(!/穿戴装备/.test(storyChar), 'story_char source does not render equipment management');
+  assert(!/@click="unequip/.test(storyChar), 'story_char source has no equipment interaction');
+  assert(!/notableSkills/.test(storyChar), 'story_char source has no skill summary logic');
   assert(!/管理小队/.test(storyChar), 'story_char must not expose squad management label');
+  assert(!/管理小队/.test(storyCharBundle), 'story_char bundle must not expose squad management label');
+  assert(!/创建调查员/.test(storyChar), 'story_char must not expose creator label');
+  assert(!/创建调查员/.test(storyCharBundle), 'story_char bundle must not expose creator label');
   assert(!/管理\/启用调查员/.test(storyChar), 'story_char must not link to squad management screen');
   assert(!/switchScreen\('character'\)/.test(storyChar), 'story_char must not navigate to squad management');
   assert(!/switchScreen\('creator'\)/.test(storyChar), 'story_char must not navigate to character creator');
   assert(!/switchScreen\('lobby'\)/.test(storyChar), 'story_char must not navigate to lobby');
+  assert(!/技能摘要/.test(storyCharBundle), 'story_char bundle is attribute-only');
+  assert(!/穿戴装备/.test(storyCharBundle), 'story_char bundle does not render equipment management');
+  assert(!/@click="unequip/.test(storyCharBundle), 'story_char bundle has no equipment interaction');
+  assert(!/notableSkills/.test(storyCharBundle), 'story_char bundle has no skill summary logic');
+  assert(!/switchScreen\('character'\)/.test(storyCharBundle), 'story_char bundle must not navigate to squad management');
+  assert(!/switchScreen\('creator'\)/.test(storyCharBundle), 'story_char bundle must not navigate to character creator');
+  assert(!/switchScreen\('lobby'\)/.test(storyCharBundle), 'story_char bundle must not navigate to lobby');
   assert(/applyPendingStoryTab/.test(storyView), 'story_view applies pending character tab after preset');
   assert(/switchScreen\('creator'\)/.test(lobbyView), 'tutorial flow opens creator when roster is empty');
+  assert(/switchScreen\('roster'\)/.test(lobbyView), 'lobby squad management uses roster screen id');
+  assert(!/currentScreen === 'character'/.test(lobbyView), 'lobby must not use legacy character screen id');
   assert(!/请先创建至少一名调查员。/.test(lobbyView), 'empty-roster scenario start uses creator redirect copy');
   assert(/@switch-tab="activeStoryTab = \$event"/.test(storyView), 'story_view handles story_char back event');
 
