@@ -27,27 +27,8 @@ window.CoCCreator = (function(State, Engine, Vue) {
         }
     ]);
 
-    const applyPreset = (preset) => {
+    let applyPreset = (preset) => {
         if (!State || !Engine || !Vue) return;
-        draftChar.attrs = { ...preset.attrs };
-        draftChar.age = preset.age;
-        draftChar.name = preset.name;
-        draftChar.era = preset.era;
-        draftChar.job = preset.job;
-        draftChar.hp = Math.floor((preset.attrs.CON + preset.attrs.SIZ) / 10);
-        draftChar.sanity = preset.attrs.POW;
-        draftChar.luck = preset.attrs.LUCK;
-        draftChar.mov = 8;
-        draftChar.skillAllocations = {};
-        Object.entries(preset.skillPts).forEach(([skill, val]) => {
-            draftChar.skillAllocations[skill] = { occ: val, per: 0 };
-        });
-        draftChar.expPackage = null;
-        draftChar.sanPenalty = 0;
-        const derived = Engine.calculateDerived(draftChar.attrs, preset.age);
-        draftChar.derived = derived;
-        if (State.showToast) State.showToast(`✅ ${preset.name} 已就绪！可直接开始冒险。`, 'success');
-        if (State.switchScreen) setTimeout(() => State.switchScreen('story'), 500);
     };
 
     if (!State || !Engine || !Vue) return { CHARACTER_PRESETS, applyPreset };
@@ -109,6 +90,10 @@ window.CoCCreator = (function(State, Engine, Vue) {
                 draftChar.sanPenalty = 0;
             }
         }
+    });
+
+    watch(() => draftChar.attrs.STR, (str) => {
+        if (str > 0) renderRadarChart();
     });
 
     const isVisibleSkill = (skillName) => !Engine.isVisibleSkillName || Engine.isVisibleSkillName(skillName);
@@ -202,31 +187,43 @@ window.CoCCreator = (function(State, Engine, Vue) {
 
     const renderRadarChart = () => {
         nextTick(() => {
-            if (typeof Chart === 'undefined' || window.__cocChartLoadFailed) {
-                chartUnavailable.value = true;
-                return;
-            }
-            chartUnavailable.value = false;
-            const ctx = document.getElementById('radarChart');
-            if (!ctx) return;
-            const dataValues = [
-                draftChar.attrs.STR, draftChar.attrs.CON, draftChar.attrs.SIZ,
-                draftChar.attrs.DEX, draftChar.attrs.APP, draftChar.attrs.INT,
-                draftChar.attrs.POW, draftChar.attrs.EDU
-            ];
-            if (radarChartInstance) {
-                radarChartInstance.data.datasets[0].data = dataValues;
-                radarChartInstance.update();
-            } else {
-                radarChartInstance = new Chart(ctx, {
-                    type: 'radar',
-                    data: {
-                        labels: ['力量STR', '体质CON', '体型SIZ', '敏捷DEX', '外貌APP', '智力INT', '意志POW', '教育EDU'],
-                        datasets: [{ label: '能力评估', data: dataValues, backgroundColor: 'rgba(240, 173, 78, 0.2)', borderColor: 'rgba(240, 173, 78, 1)', pointBackgroundColor: 'rgba(240, 173, 78, 1)', pointBorderColor: '#fff', }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.2)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#ccc', font: { size: 10 } }, ticks: { display: false, min: 0, max: 100, stepSize: 20 } } }, plugins: { legend: { display: false } } }
+            const paint = (retriesLeft = 3) => {
+                if (typeof Chart === 'undefined' || window.__cocChartLoadFailed) {
+                    chartUnavailable.value = true;
+                    return;
+                }
+                chartUnavailable.value = false;
+                nextTick(() => {
+                    const ctx = document.getElementById('radarChart');
+                    if (!ctx) {
+                        if (retriesLeft > 0) nextTick(() => paint(retriesLeft - 1));
+                        return;
+                    }
+                    const dataValues = [
+                        draftChar.attrs.STR, draftChar.attrs.CON, draftChar.attrs.SIZ,
+                        draftChar.attrs.DEX, draftChar.attrs.APP, draftChar.attrs.INT,
+                        draftChar.attrs.POW, draftChar.attrs.EDU
+                    ];
+                    if (radarChartInstance && radarChartInstance.canvas !== ctx) {
+                        radarChartInstance.destroy();
+                        radarChartInstance = null;
+                    }
+                    if (radarChartInstance) {
+                        radarChartInstance.data.datasets[0].data = dataValues;
+                        radarChartInstance.update();
+                    } else {
+                        radarChartInstance = new Chart(ctx, {
+                            type: 'radar',
+                            data: {
+                                labels: ['力量STR', '体质CON', '体型SIZ', '敏捷DEX', '外貌APP', '智力INT', '意志POW', '教育EDU'],
+                                datasets: [{ label: '能力评估', data: dataValues, backgroundColor: 'rgba(240, 173, 78, 0.2)', borderColor: 'rgba(240, 173, 78, 1)', pointBackgroundColor: 'rgba(240, 173, 78, 1)', pointBorderColor: '#fff', }]
+                            },
+                            options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.2)' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, pointLabels: { color: '#ccc', font: { size: 10 } }, ticks: { display: false, min: 0, max: 100, stepSize: 20 } } }, plugins: { legend: { display: false } } }
+                        });
+                    }
                 });
-            }
+            };
+            paint();
         });
     };
 
@@ -347,6 +344,62 @@ window.CoCCreator = (function(State, Engine, Vue) {
 
       const cancelImport = () => { importPreview.value = null; };
 
+    const resetDraftChar = () => {
+        draftChar.name = "";
+        draftChar.player = "";
+        draftChar.job = null;
+        draftChar.skillAllocations = {};
+        draftChar.expPackage = null;
+        draftChar.sanPenalty = 0;
+        for (let k in draftChar.attrs) draftChar.attrs[k] = 0;
+        for (let k in draftChar.attrModifiers) draftChar.attrModifiers[k] = 0;
+        draftChar.derived = { hp: 0, maxHp: 0, mp: 0, san: 0, db: "0", build: 0, mov: 0 };
+    };
+
+    const resolveOccupation = (jobLike) => {
+        if (!jobLike || !Engine.Occupations) return jobLike;
+        const name = typeof jobLike === 'string' ? jobLike : jobLike.name;
+        return Engine.Occupations.find((j) => j.name === name) || jobLike;
+    };
+
+    const commitPresetToRoster = (preset) => {
+        const derived = Engine.calculateDerived(preset.attrs, preset.age);
+        derived.maxHp = derived.maxHp || derived.hp;
+        derived.hp = derived.maxHp;
+        const job = resolveOccupation(preset.job);
+        gameState.roster.push({
+            name: preset.name,
+            jobName: job ? job.name : (preset.job ? preset.job.name : '无业'),
+            hp: derived.maxHp,
+            sanity: derived.san,
+            attrs: JSON.parse(JSON.stringify(preset.attrs)),
+            derived: JSON.parse(JSON.stringify(derived)),
+            skills: { ...preset.skillPts },
+            backstory: {
+                description: preset.desc || '',
+                ideology: '', significantPeople: '', meaningfulLocations: '',
+                treasuredPossessions: '', traits: '', injuries: '', phobias: '', encounters: ''
+            },
+            expName: '无',
+            isInsane: false,
+            isActive: true,
+            hasMajorWound: false, isDying: false, isUnconscious: false,
+            equipment: { head: null, acc1: null, acc2: null, hands: null, feet: null, weapon: null }
+        });
+        const activeCount = gameState.roster.filter((c) => c.isActive).length;
+        gameState.selectedCharIndex = Math.max(0, activeCount - 1);
+        gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `调查员【${preset.name}】已登入。` });
+        resetDraftChar();
+        if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
+        notify(`✅ ${preset.name} 已就绪！可直接开始冒险。`, 'success');
+        switchScreen('story');
+    };
+
+    applyPreset = (preset) => {
+        if (!preset) return;
+        commitPresetToRoster(preset);
+    };
+
       const saveDraftCharacter = () => {
         if (pointStats.value.occRemain !== 0 || pointStats.value.perRemain !== 0) {
             notify(`请分配完所有技能点后再登记（剩余：本职 ${pointStats.value.occRemain}，兴趣 ${pointStats.value.perRemain}）。`, 'warning');
@@ -371,8 +424,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
                 });
         gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `调查员【${draftChar.name}】已登入。` });
         
-        draftChar.name = ""; draftChar.player = ""; draftChar.job = null; draftChar.skillAllocations = {}; draftChar.expPackage = null; draftChar.sanPenalty = 0;
-        for(let k in draftChar.attrs) draftChar.attrs[k] = 0; 
+        resetDraftChar();
         if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
         activeCreatorTab.value = 'stats'; switchScreen('character');
     };

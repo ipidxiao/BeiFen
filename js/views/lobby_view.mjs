@@ -316,6 +316,7 @@ export const ViewLobby = {
               <!-- ===== 调查员管理界面 ===== -->
               <div v-if="gameState.currentScreen === 'character'" class="card card-custom p-3 shadow-sm">
                   <div class="d-flex justify-content-between align-items-center mb-3">
+                      <button class="btn btn-outline-secondary btn-sm" @click="switchScreen('lobby')">⬅ 返回</button>
                       <h3 class="text-warning m-0">调查员小队</h3>
                       <button class="btn btn-warning btn-sm fw-bold" @click="switchScreen('story')" :disabled="gameState.roster.length === 0">进入剧情 ▶</button>
                   </div>

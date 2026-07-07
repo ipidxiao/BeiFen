@@ -74,7 +74,11 @@ export const StoryChar = {
             </div>
             <div v-else class="text-center py-5">
                 <p class="text-muted">当前小队中没有活跃调查员。</p>
-                <button class="btn btn-success" @click="switchScreen('character')">管理小队</button>
+                <div class="d-flex flex-column gap-2 align-items-center">
+                    <button class="btn btn-success" @click="switchScreen('creator')">+ 创建调查员</button>
+                    <button class="btn btn-outline-secondary" @click="switchScreen('character')">管理小队</button>
+                    <button class="btn btn-outline-warning btn-sm" @click="switchScreen('lobby')">返回大厅</button>
+                </div>
             </div>
         </div>
     `,

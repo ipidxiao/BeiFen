@@ -65,6 +65,7 @@ const SUITES = [
     'save_persistence_boundary_smoke.js',
     'esm_handlers_smoke.mjs',
     'a11y_smoke.js',
+    'char_creator_flow_smoke.js',
     'test_v18_engines.mjs',
     'ui/component_helpers_smoke.mjs',
     'ui/dom_parse_smoke.mjs',

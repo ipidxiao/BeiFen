@@ -45,3 +45,33 @@
 npm test
 npm run ci:smoke
 ```
+
+---
+
+# BUG 修复批次 — 调查员创建流程 (2026-07-07)
+
+> 门禁：`npm test` · `npm run ci:smoke`
+
+## BUG 清单
+
+| ID | Severity | Area | Description | Status |
+|----|----------|------|-------------|--------|
+| BUG-004 | P1 | `char_creator` / `creator_view` | 掷骰生成后多维雷达图不显示（Chart.js 已加载但 canvas 未挂载即渲染） | **fixed** |
+| BUG-005 | P2 | `creator_view` | 技能分配「+」按住无法连续加点（逻辑已有但未绑定 UI） | **fixed** |
+| BUG-006 | P1 | `char_creator` / `story_char` / `lobby_view` | 快速开始预置调查员未写入 `gameState.roster`，剧情人物页空白并陷入重建循环 | **fixed** |
+
+## 修复摘要
+
+- **BUG-004**：`renderRadarChart` 在 `chartUnavailable` 切换与 `v-if` 挂载后双重 `nextTick` 重试；监听 `attrs.STR` 在掷骰后补绘。
+- **BUG-005**：本职/兴趣「+」按钮绑定 `mousedown`/`touchstart` → `startAutoAdd`，`mouseup`/`mouseleave`/`touchend` → `stopAutoAdd`。
+- **BUG-006**：`applyPreset` 经 `commitPresetToRoster` 直接登记预置角色并跳转剧情；人物页空态增加「创建调查员」「返回大厅」；小队管理页增加返回按钮。
+
+## 验证
+
+```bash
+npm run build:js
+npm test
+npm run ci:smoke
+```
+
+新增 `tests/char_creator_flow_smoke.js` 覆盖预置登记与 UI 绑定。
