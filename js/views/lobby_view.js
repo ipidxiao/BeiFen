@@ -87,10 +87,10 @@ window.ViewLobby = {
                       </div>
                   </div>
 
-                  <button class="btn btn-warning fw-bold mb-3 p-3 w-100 lobby-action-btn" @click="switchScreen('character')">👥 调查员小队管理</button>
-                  <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold lobby-action-btn" @click="openScenarios">📜 本地剧本模式</button>
-                  <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold lobby-action-btn" @click="openScenarioStore">📚 模组库</button>
-                  <button class="btn btn-outline-info mb-3 p-3 w-100 lobby-action-btn" @click="switchScreen('settings')">⚙️ AI 引擎设置</button>
+                  <button class="btn btn-warning fw-bold mb-3 p-3 w-100 lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="switchScreen('character')"><coc-icon name="character" :size="20"></coc-icon> 调查员小队管理</button>
+                  <button class="btn btn-outline-warning mb-3 p-3 w-100 fw-bold lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="openScenarios"><coc-icon name="scroll" :size="20"></coc-icon> 本地剧本模式</button>
+                  <button class="btn btn-outline-success mb-3 p-3 w-100 fw-bold lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="openScenarioStore"><coc-icon name="storage" :size="20"></coc-icon> 模组库</button>
+                  <button class="btn btn-outline-info mb-3 p-3 w-100 lobby-action-btn d-inline-flex align-items-center justify-content-center gap-2" @click="switchScreen('settings')"><coc-icon name="settings" :size="20"></coc-icon> AI 引擎设置</button>
                   <div class="mb-3 p-3 border rounded text-start lobby-kp-panel" :class="gameState.kpEngine?.enabled ? 'active border-warning' : 'border-secondary'">
                       <div class="form-check form-switch mb-2">
                           <input class="form-check-input" type="checkbox" id="kpEngineToggle" :checked="gameState.kpEngine?.enabled" @change="toggleKpEngine($event)">
@@ -124,7 +124,11 @@ window.ViewLobby = {
                       <div class="text-secondary mt-1" style="font-size:0.72rem;">{{ sc.era }} · 约 {{ sc.estimatedMinutes || '?' }} 分钟 · {{ sc.nodeCount }} 节点</div>
                       <button class="btn btn-sm btn-warning fw-bold mt-2" @click="startLocalScenario(sc.id)">开始剧本 ▶</button>
                   </div>
-                  <div v-if="!scenarios.length" class="text-muted text-center py-3">暂无可用剧本</div>
+                  <div v-if="!scenarios.length" class="empty-state empty-state-compact py-3">
+                      <coc-icon name="scroll" :size="36" class="empty-state-icon"></coc-icon>
+                      <div class="empty-state-title">暂无可用剧本</div>
+                      <div class="empty-state-hint">可从模组库下载或导入 JSON 剧本</div>
+                  </div>
               </div>
 
               <!-- ===== 模组库 ===== -->
@@ -286,23 +290,35 @@ window.ViewLobby = {
               <!-- ===== AI 设置界面 ===== -->
               <div v-if="gameState.currentScreen === 'settings'" class="card card-custom p-3 shadow-sm settings-panel">
                   <h3 class="coc-section-title mb-3">AI 引擎设置</h3>
-                  <div class="mb-3"><label class="form-label">接口地址</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl"></div>
-                  <div class="mb-3"><label class="form-label">API 密钥</label><input type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey" placeholder="DeepSeek / OpenAI 兼容密钥"></div>
-                  <div class="text-secondary mb-3" style="font-size:0.72rem;">🔒 API Key 仅存于本机浏览器，不会上传至引擎服务器。</div>
+                  <div class="mb-3">
+                      <label class="form-label" for="settings-base-url">接口地址</label>
+                      <input id="settings-base-url" type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.baseUrl" aria-describedby="settings-base-url-hint" autocomplete="url">
+                      <div id="settings-base-url-hint" class="form-field-hint">OpenAI / DeepSeek 等兼容 API 基址</div>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label" for="settings-api-key">API 密钥</label>
+                      <input id="settings-api-key" type="password" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.apiKey" placeholder="DeepSeek / OpenAI 兼容密钥" aria-describedby="settings-api-key-hint" autocomplete="off">
+                      <div id="settings-api-key-hint" class="form-field-hint">🔒 仅存于本机浏览器，不会上传至引擎服务器</div>
+                  </div>
                   <div v-if="!(gameState.aiSettings.apiKey || '').trim()" class="empty-state empty-state-compact empty-state-inline mb-3">
                       <coc-icon name="settings" :size="28" class="empty-state-icon"></coc-icon>
                       <div class="empty-state-title">未配置 API 密钥</div>
                       <div class="empty-state-hint">联网 AI 守秘人需要密钥；本地剧本模式无需配置</div>
                   </div>
-                  <div class="mb-3"><label class="form-label">模型名称</label><input type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model"></div>
                   <div class="mb-3">
-                      <label class="form-label">守秘人难度</label>
-                      <select class="form-select bg-dark text-light border-secondary settings-difficulty-select" v-model="gameState.aiSettings.difficultyPreset" @change="onDifficultyPresetChange($event)">
+                      <label class="form-label" for="settings-model">模型名称</label>
+                      <input id="settings-model" type="text" class="form-control bg-dark text-light border-secondary" v-model="gameState.aiSettings.model" aria-describedby="settings-model-hint">
+                      <div id="settings-model-hint" class="form-field-hint">与接口提供商文档中的模型 ID 一致</div>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label" for="settings-difficulty">守秘人难度</label>
+                      <select id="settings-difficulty" class="form-select bg-dark text-light border-secondary settings-difficulty-select" v-model="gameState.aiSettings.difficultyPreset" @change="onDifficultyPresetChange($event)" aria-describedby="settings-difficulty-desc">
                           <option value="merciful">仁慈 — 宽容线索与判定</option>
                           <option value="standard">标准 — CoC 7e 默认</option>
                           <option value="brutal">致命 — 残酷后果</option>
                           <option value="divine_war">神战 — 神话战争级严苛模式</option>
                       </select>
+                      <div id="settings-difficulty-desc" class="form-field-hint">影响 AI 守秘人的线索宽容度与后果严厉程度</div>
                       <div v-if="gameState.aiSettings.difficultyPreset === 'divine_war' && !gameState.kpEngine?.enabled" class="alert alert-warning py-2 small mt-2 mb-0 settings-difficulty-hint">
                           ⚠️ 神战预设建议启用 KP 协议引擎（大厅开关），以获得注意力、敌对组织与五段输出协议的完整 enforcement。
                       </div>
@@ -322,7 +338,13 @@ window.ViewLobby = {
                       <button class="btn btn-warning btn-sm fw-bold" @click="switchScreen('story')" :disabled="gameState.roster.length === 0">进入剧情 ▶</button>
                   </div>
                   <ul class="list-group list-group-flush mb-4">
-                      <li v-if="gameState.roster.length === 0" class="list-group-item bg-dark text-muted">没有调查员，请先建立。</li>
+                      <li v-if="gameState.roster.length === 0" class="list-group-item bg-dark border-secondary">
+                          <div class="empty-state empty-state-compact">
+                              <coc-icon name="character" :size="36" class="empty-state-icon"></coc-icon>
+                              <div class="empty-state-title">尚无调查员</div>
+                              <div class="empty-state-hint">创建至少一名调查员后方可进入剧情</div>
+                          </div>
+                      </li>
                       <li v-for="(char, index) in gameState.roster" :key="index" class="list-group-item bg-dark text-light border-secondary">
                           <div class="d-flex justify-content-between align-items-start">
                               <div>

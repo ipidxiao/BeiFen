@@ -24,8 +24,8 @@ window.ViewStory = {
       
       template: `
           <div class="d-flex flex-column bg-dark" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;">
-              <div class="d-flex align-items-center w-100 border-bottom border-secondary shadow-sm" style="background-color: #1a1a1a; padding: 4px 6px; gap: 4px; overflow-x: auto;">
-                  <button class="btn btn-sm btn-outline-light flex-shrink-0" style="padding:4px 6px;" @click="switchScreen('lobby')" title="返回模组大厅">⬅️</button>
+              <div class="d-flex align-items-center w-100 border-bottom border-secondary shadow-sm story-toolbar">
+                  <button class="btn btn-sm btn-outline-light story-tab-btn flex-shrink-0" @click="switchScreen('lobby')" title="返回模组大厅" aria-label="返回模组大厅">⬅️</button>
                   <div v-if="gameState.kpEngine?.enabled" class="flex-shrink-0 px-2 py-1 rounded border border-danger" style="background:#1a0808;font-size:0.65rem;line-height:1.2;">
                       <span class="badge bg-danger" style="font-size:0.55rem;">KP</span>
                       <span class="text-warning">注意力{{ gameState.londonKpState?.ATTENTION_LEVEL ?? gameState.kpEngine?.global?.attention ?? 0 }}</span>
@@ -34,22 +34,22 @@ window.ViewStory = {
                       <span class="text-muted">·</span>
                       <span class="text-light">{{ gameState.londonKpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}</span>
                   </div>
-                  <div class="btn-group flex-shrink-0">
-                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'chat' ? 'btn-warning' : 'btn-outline-secondary'" @click="activeStoryTab = 'chat'"><coc-icon name="scroll" :size="14"></coc-icon> 剧情</button>
-                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'character' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'character'"><coc-icon name="character" :size="14"></coc-icon> 人物</button>
-                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'inventory' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'inventory'"><coc-icon name="inventory" :size="14"></coc-icon> 随身</button>
-                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'storage' ? 'btn-secondary' : 'btn-outline-secondary'" @click="activeStoryTab = 'storage'"><coc-icon name="storage" :size="14"></coc-icon> 仓库</button>
-                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'journal' ? 'btn-light' : 'btn-outline-secondary'" @click="activeStoryTab = 'journal'"><coc-icon name="journal" :size="14"></coc-icon> 日志</button>
-                      <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'npc' ? 'btn-primary' : 'btn-outline-secondary'" @click="activeStoryTab = 'npc'"><coc-icon name="npc" :size="14"></coc-icon> NPC</button>
-                        <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'growth' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'growth'"><coc-icon name="growth" :size="14"></coc-icon> 成长</button>
-                        <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'clues' ? 'btn-danger' : 'btn-outline-secondary'" @click="activeStoryTab = 'clues'"><coc-icon name="clues" :size="14"></coc-icon> 线索</button>
+                  <div class="btn-group flex-shrink-0" role="tablist" aria-label="剧情子面板">
+                      <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'chat'" :class="activeStoryTab === 'chat' ? 'btn-warning' : 'btn-outline-secondary'" @click="activeStoryTab = 'chat'"><coc-icon name="scroll" :size="14"></coc-icon> 剧情</button>
+                      <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'character'" :class="activeStoryTab === 'character' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'character'"><coc-icon name="character" :size="14"></coc-icon> 人物</button>
+                      <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'inventory'" :class="activeStoryTab === 'inventory' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'inventory'"><coc-icon name="inventory" :size="14"></coc-icon> 随身</button>
+                      <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'storage'" :class="activeStoryTab === 'storage' ? 'btn-secondary' : 'btn-outline-secondary'" @click="activeStoryTab = 'storage'"><coc-icon name="storage" :size="14"></coc-icon> 仓库</button>
+                      <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'journal'" :class="activeStoryTab === 'journal' ? 'btn-light' : 'btn-outline-secondary'" @click="activeStoryTab = 'journal'"><coc-icon name="journal" :size="14"></coc-icon> 日志</button>
+                      <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'npc'" :class="activeStoryTab === 'npc' ? 'btn-primary' : 'btn-outline-secondary'" @click="activeStoryTab = 'npc'"><coc-icon name="npc" :size="14"></coc-icon> NPC</button>
+                        <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'growth'" :class="activeStoryTab === 'growth' ? 'btn-success' : 'btn-outline-secondary'" @click="activeStoryTab = 'growth'"><coc-icon name="growth" :size="14"></coc-icon> 成长</button>
+                        <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'clues'" :class="activeStoryTab === 'clues' ? 'btn-danger' : 'btn-outline-secondary'" @click="activeStoryTab = 'clues'"><coc-icon name="clues" :size="14"></coc-icon> 线索</button>
                   </div>
-                  <button class="btn btn-sm btn-outline-light fw-bold flex-shrink-0" style="padding:4px 6px; margin-left:auto;" @click="copyChat" title="复制全部对话">📋</button>
-                  <button class="btn btn-sm btn-outline-light fw-bold flex-shrink-0" style="padding:4px 6px;" @click="exportChat" title="导出对话文本">📥</button>
-                  <button class="btn btn-sm btn-outline-info fw-bold flex-shrink-0 d-inline-flex align-items-center gap-1" style="padding:4px 8px;" @click="switchScreen('settings')" title="AI引擎设置"><coc-icon name="settings" :size="14"></coc-icon></button>
-                  <button class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1" :class="activeStoryTab === 'equip' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'equip'"><coc-icon name="equip" :size="14"></coc-icon> 装备</button>
-                  <button class="btn btn-sm btn-outline-secondary fw-bold flex-shrink-0 d-inline-flex align-items-center" style="padding:4px 8px;" @click="showModal('dice')" title="骰子台"><coc-icon name="dice" :size="16"></coc-icon></button>
-                    <button class="btn btn-sm btn-outline-warning fw-bold flex-shrink-0" style="padding: 4px 8px;" @click="openSaveModal()" title="存档管理">💾</button>
+                  <button class="btn btn-sm btn-outline-light fw-bold story-tab-btn flex-shrink-0" style="margin-left:auto;" @click="copyChat" title="复制全部对话" aria-label="复制全部对话">📋</button>
+                  <button class="btn btn-sm btn-outline-light fw-bold story-tab-btn flex-shrink-0" @click="exportChat" title="导出对话文本" aria-label="导出对话文本">📥</button>
+                  <button class="btn btn-sm btn-outline-info fw-bold story-tab-btn flex-shrink-0 d-inline-flex align-items-center gap-1" @click="switchScreen('settings')" title="AI引擎设置" aria-label="AI 引擎设置"><coc-icon name="settings" :size="14"></coc-icon></button>
+                  <button class="btn btn-sm fw-bold story-tab-btn d-inline-flex align-items-center gap-1" role="tab" :aria-selected="activeStoryTab === 'equip'" :class="activeStoryTab === 'equip' ? 'btn-info' : 'btn-outline-secondary'" @click="activeStoryTab = 'equip'"><coc-icon name="equip" :size="14"></coc-icon> 装备</button>
+                  <button class="btn btn-sm btn-outline-secondary fw-bold story-tab-btn flex-shrink-0 d-inline-flex align-items-center" @click="showModal('dice')" title="骰子台" aria-label="骰子台"><coc-icon name="dice" :size="16"></coc-icon></button>
+                    <button class="btn btn-sm btn-outline-warning fw-bold story-tab-btn flex-shrink-0" @click="openSaveModal()" title="存档管理" aria-label="存档管理">💾</button>
               </div>
 
               <keep-alive :include="tabComponents">
@@ -87,8 +87,8 @@ window.ViewStory = {
                               <span class="text-muted">浏览器存储估算</span>
                               <span class="text-light">{{ formatStorageBytes(gameState.storageStatus.usedBytes) }} / {{ formatStorageBytes(gameState.storageStatus.quotaBytes) }}</span>
                           </div>
-                          <div class="text-secondary" class="story-tab-btn">本次存档约 {{ formatStorageBytes(gameState.storageStatus.currentSaveBytes) }}，写入后预计 {{ ((gameState.storageStatus.projectedRatio || 0) * 100).toFixed(1) }}%</div>
-                          <div v-if="gameState.storageStatus.warning" class="text-warning" class="story-tab-btn">⚠️ {{ gameState.storageStatus.warning }}</div>
+                          <div class="text-secondary story-tab-btn">本次存档约 {{ formatStorageBytes(gameState.storageStatus.currentSaveBytes) }}，写入后预计 {{ ((gameState.storageStatus.projectedRatio || 0) * 100).toFixed(1) }}%</div>
+                          <div v-if="gameState.storageStatus.warning" class="text-warning story-tab-btn">⚠️ {{ gameState.storageStatus.warning }}</div>
                       </div>
                       
                       <!-- 手动存档槽 -->
@@ -97,15 +97,15 @@ window.ViewStory = {
                               <div class="d-flex justify-content-between align-items-start">
                                   <div class="flex-grow-1 me-2" style="min-width:0;">
                                       <div class="fw-bold text-light" style="font-size:0.85rem;">{{ slot.label }}</div>
-                                      <div v-if="slot.hasData" class="text-muted text-truncate" class="story-tab-btn">
+                                      <div v-if="slot.hasData" class="text-muted text-truncate story-tab-btn">
                                           {{ slot.charNames }} · {{ slot.location }}<br>{{ slot.savedAt }}
                                       </div>
-                                      <div v-else class="text-secondary" class="story-tab-btn">— 空槽位 —</div>
+                                      <div v-else class="text-secondary story-tab-btn">— 空槽位 —</div>
                                   </div>
                                   <div class="d-flex flex-column gap-1">
-                                      <button class="btn btn-sm btn-warning py-0 px-2" class="fs-6" @click="doSave(slot.key, slot.label)">存入</button>
-                                      <button class="btn btn-sm btn-info py-0 px-2" class="fs-6" @click="doLoad(slot.key)" :disabled="!slot.hasData">读取</button>
-                                      <button class="btn btn-sm btn-outline-danger py-0 px-2" class="fs-6" @click="doDelete(slot.key)" :disabled="!slot.hasData">删</button>
+                                      <button class="btn btn-sm btn-warning py-0 px-2 fs-6" @click="doSave(slot.key, slot.label)">存入</button>
+                                      <button class="btn btn-sm btn-info py-0 px-2 fs-6" @click="doLoad(slot.key)" :disabled="!slot.hasData">读取</button>
+                                      <button class="btn btn-sm btn-outline-danger py-0 px-2 fs-6" @click="doDelete(slot.key)" :disabled="!slot.hasData">删</button>
                                   </div>
                               </div>
                           </div>
@@ -116,7 +116,7 @@ window.ViewStory = {
                           <div class="text-muted small mb-2">JSON 文件备份（跨设备转移）</div>
                           <div class="d-flex gap-2">
                               <button class="btn btn-sm btn-outline-success flex-grow-1" @click="exportGame">📤 导出</button>
-                              <label class="btn btn-sm btn-outline-info flex-grow-1 mb-0" class="cursor-pointer">
+                              <label class="btn btn-sm btn-outline-info flex-grow-1 mb-0 cursor-pointer">
                                   📥 导入<input type="file" accept=".json" style="display:none" @change="doImport($event)">
                               </label>
                           </div>

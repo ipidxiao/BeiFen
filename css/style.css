@@ -75,6 +75,12 @@
   --focus-ring-offset: 2px;
   --shadow-panel: 0 4px 24px rgba(0, 0, 0, 0.45);
   --shadow-glow-gold: 0 0 12px rgba(232, 168, 74, 0.25);
+  /* ui-ux-pro-max design-system mapping — optional display/mono (skip CDN for PWA offline) */
+  --font-display-fallback: system-ui, -apple-system, 'Segoe UI', 'Noto Sans SC', sans-serif;
+  --font-mono-fallback: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+  --color-ds-background: #020617; /* search: --color-background → maps to --bg-dark family */
+  --color-ds-foreground: #f8fafc; /* search: --color-foreground → maps to --text-primary */
+  --color-ds-accent-positive: #22c55e; /* search: green CTA → maps to --success-green */
 }
 
 body {
@@ -350,7 +356,8 @@ body .border-secondary { border-color: var(--border-default); }
 .attr-eval-badge { position: absolute; top: 2px; right: 2px; font-size: 0.75rem; transform: scale(0.85); transform-origin: top right; padding: 2px 4px; font-weight: normal; }
 
 /* 其余表单与派生数值微调 */
-.sheet-label { font-size: 0.75rem; color: #bbbbbb; margin-bottom: 2px; white-space: nowrap; }
+.sheet-label { font-size: var(--text-xs); color: var(--text-muted); margin-bottom: var(--space-xs); white-space: nowrap; }
+.form-field-hint { font-size: var(--text-xs); color: var(--text-dim); margin-top: var(--space-xs); line-height: 1.35; }
 .sheet-box { border: 1px solid #555; border-radius: 6px; background: #222; padding: 6px; text-align: center; height: 100%; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
 .sheet-micro-label { font-size: 0.75rem; color: #bbbbbb; line-height: 1; margin-bottom: 2px; }
 /* 💡 Nav-tabs 深色主题覆盖 */
@@ -876,12 +883,41 @@ body .border-secondary { border-color: var(--border-default); }
     background: #1a1a3a; border-color: #5a5aaa;
 }
 .creator-job-name { font-size: 0.82rem; }
+.creator-nav-tabs { border-bottom: 1px solid var(--border-default) !important; }
+.creator-quick-start {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed var(--border-light);
+}
+.creator-quick-start-label { font-size: var(--text-xs); color: var(--text-muted); }
+.creator-quick-start-hint { font-size: var(--text-xs); color: var(--text-dim); margin-top: var(--space-xs); }
+.creator-derived-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+.creator-skill-scroll { max-height: 220px; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
+.creator-import-skills { max-height: 90px; overflow-y: auto; }
+.creator-radar-wrap { height: 220px; position: relative; }
 
 /* ═══════════════════════════════════════════════════════
    剧情主界面 (story_view.js)
    ═══════════════════════════════════════════════════════ */
-.story-tab-btn { font-size: 0.75rem; }
-.story-toolbar { background: #1a1a1a; padding: 4px 6px; gap: 4px; }
+.story-tab-btn {
+    font-size: var(--text-xs);
+    min-height: var(--touch-target-min);
+    padding: var(--space-xs) var(--space-sm);
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+.story-toolbar {
+    background: var(--bg-elevated);
+    padding: var(--space-xs) var(--space-sm);
+    gap: var(--space-xs);
+    overflow-x: auto;
+}
+.story-toolbar .btn { flex-shrink: 0; }
+.story-toolbar .btn-group .btn { min-height: var(--touch-target-min); }
+.lobby-action-btn .coc-icon { opacity: 0.92; flex-shrink: 0; }
 
 /* ═══════════════════════════════════════════════════════
    日志面板 (story_journal.js)

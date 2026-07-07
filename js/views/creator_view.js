@@ -14,9 +14,9 @@ window.ViewCreator = {
                     <h4 class="text-warning m-0">📝 调查员档案</h4>
                 </div>
                 <!-- Quick-start presets -->
-                <div v-if="!draftChar.name" class="quick-start-presets mb-3 p-2 rounded" style="background:rgba(255,255,255,0.03);border:1px dashed #555;">
+                <div v-if="!draftChar.name" class="creator-quick-start mb-3 p-2 rounded">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span style="font-size:0.8rem;color:#aaa;">⚡ 快速开始 — 选择一个预置调查员</span>
+                        <span class="creator-quick-start-label">⚡ 快速开始 — 选择一个预置调查员</span>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
                         <button v-for="p in CHARACTER_PRESETS" :key="p.name"
@@ -26,29 +26,42 @@ window.ViewCreator = {
                             {{ p.avatar }} {{ p.label }}
                         </button>
                     </div>
-                    <div style="font-size:0.75rem;color:#666;margin-top:4px;">一键创建完整角色，即刻开始冒险。也可手动填写下方表单。</div>
+                    <div class="creator-quick-start-hint">一键创建完整角色，即刻开始冒险。也可手动填写下方表单。</div>
                 </div>
             </div>
-            <ul class="nav nav-tabs mb-3" style="border-bottom: 1px solid #444;">
-                <li class="nav-item"><a class="nav-link" :class="{active: activeCreatorTab === 'stats'}" @click="activeCreatorTab = 'stats'" href="javascript:void(0)" style="cursor:pointer;">数值与技能</a></li>
-                <li class="nav-item"><a class="nav-link" :class="{active: activeCreatorTab === 'backstory'}" @click="activeCreatorTab = 'backstory'" href="javascript:void(0)" style="cursor:pointer;">背景与经历</a></li>
+            <ul class="nav nav-tabs creator-nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation"><a class="nav-link" role="tab" :class="{active: activeCreatorTab === 'stats'}" :aria-selected="activeCreatorTab === 'stats'" @click="activeCreatorTab = 'stats'" href="javascript:void(0)">数值与技能</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" role="tab" :class="{active: activeCreatorTab === 'backstory'}" :aria-selected="activeCreatorTab === 'backstory'" @click="activeCreatorTab = 'backstory'" href="javascript:void(0)">背景与经历</a></li>
             </ul>
 
             <div v-show="activeCreatorTab === 'stats'">
                 <div class="row g-2 mb-2">
-                    <div class="col-6"><label class="sheet-label">姓名</label><input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" v-model="draftChar.name"></div>
-                    <div class="col-6"><label class="sheet-label">玩家</label><input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" v-model="draftChar.player"></div>
+                    <div class="col-6">
+                        <label class="sheet-label" for="creator-name">姓名</label>
+                        <input id="creator-name" type="text" class="form-control form-control-sm bg-dark text-light border-secondary" v-model="draftChar.name" aria-describedby="creator-name-hint" autocomplete="name">
+                        <div id="creator-name-hint" class="form-field-hint">调查员在模组中的称呼</div>
+                    </div>
+                    <div class="col-6">
+                        <label class="sheet-label" for="creator-player">玩家</label>
+                        <input id="creator-player" type="text" class="form-control form-control-sm bg-dark text-light border-secondary" v-model="draftChar.player" aria-describedby="creator-player-hint">
+                        <div id="creator-player-hint" class="form-field-hint">桌游玩家姓名或昵称</div>
+                    </div>
                 </div>
                 
                 <div class="row g-2 mb-3">
-                    <div class="col-4"><label class="sheet-label">年龄 (影响属性)</label><input type="number" class="form-control form-control-sm bg-dark text-light border-secondary" v-model="draftChar.age"></div>
+                    <div class="col-4">
+                        <label class="sheet-label" for="creator-age">年龄 (影响属性)</label>
+                        <input id="creator-age" type="number" class="form-control form-control-sm bg-dark text-light border-secondary" v-model="draftChar.age" aria-describedby="creator-age-hint" min="15" max="90">
+                        <div id="creator-age-hint" class="form-field-hint">影响属性修正与移动力</div>
+                    </div>
                     <div class="col-8">
-                        <label class="sheet-label text-info">时代背景 (决定可选职业)</label>
-                        <select class="form-select form-select-sm bg-dark text-light border-secondary" v-model="draftChar.era">
+                        <label class="sheet-label text-info" for="creator-era">时代背景 (决定可选职业)</label>
+                        <select id="creator-era" class="form-select form-select-sm bg-dark text-light border-secondary" v-model="draftChar.era" aria-describedby="creator-era-hint">
                             <option value="1920s">1920s (经典)</option>
                             <option value="现代">现代 (Modern)</option>
                             <option value="1890s">1890s (煤气灯)</option>
                         </select>
+                        <div id="creator-era-hint" class="form-field-hint">切换时代会过滤不可用职业</div>
                     </div>
                 </div>
                 
@@ -80,7 +93,7 @@ window.ViewCreator = {
                           </div>
                           <div v-if="Object.keys(importPreview.skills).length > 0" class="mb-2">
                               <div class="text-success small fw-bold mb-1">【技能】(共 {{Object.keys(importPreview.skills).length}} 项)</div>
-                              <div class="d-flex flex-wrap gap-1" style="max-height:90px; overflow-y:auto;">
+                              <div class="d-flex flex-wrap gap-1 creator-import-skills">
                                   <span v-for="(val, key) in importPreview.skills" :key="key" class="badge" style="background:#1a4a5a; color:#a0f0ff;">{{key}}: {{val}}</span>
                               </div>
                           </div>
@@ -94,7 +107,7 @@ window.ViewCreator = {
 
                 <div v-show="draftChar.attrs.STR > 0">
                     
-                    <div class="mb-3 bg-dark border border-secondary rounded shadow-sm" style="height: 220px; position: relative;">
+                    <div class="mb-3 bg-dark border border-secondary rounded shadow-sm creator-radar-wrap">
                         <canvas v-if="!chartUnavailable" id="radarChart"></canvas>
                         <div v-else class="text-muted small text-center pt-5 px-2" role="status">
                             雷达图不可用（Chart.js 未加载）。属性数值见下方网格。
@@ -121,7 +134,7 @@ window.ViewCreator = {
                         </div>
                     </div>
                     
-                    <div class="p-2 mb-3 text-center shadow-sm" style="background:#222; border:1px solid #444; border-radius:6px; color:#e0e0e0;">
+                    <div class="p-2 mb-3 text-center shadow-sm creator-derived-panel">
                         <div class="row border-bottom border-secondary pb-2 mb-2">
                             <div class="col"><strong class="text-danger d-block">HP</strong> {{ draftChar.derived.hp }}</div>
                             <div class="col border-start border-end border-secondary"><strong class="text-primary d-block">MP</strong> {{ draftChar.derived.mp }}</div>
@@ -161,7 +174,7 @@ window.ViewCreator = {
                             <div class="col-3 text-center text-warning px-0">本职(±5)</div>
                             <div class="col-3 text-center text-info px-0">兴趣(±5)</div>
                         </div>
-                        <div style="max-height: 220px; overflow-y: auto; overflow-x: hidden; padding-right: 2px;">
+                        <div class="creator-skill-scroll">
                             <div v-for="skill in dynamicSkillNames" :key="skill" class="row align-items-center flex-nowrap mb-1 border-bottom border-dark pb-1">
                                 <div class="col-4 small text-truncate" :class="isUnlockedSkill(skill) ? 'unlocked-skill' : ''" style="padding-right:0; color: #e0e0e0;">
                                     {{ skill }}

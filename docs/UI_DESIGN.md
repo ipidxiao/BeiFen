@@ -6,7 +6,7 @@ Design improvements follow patterns from [VoltAgent/awesome-design-md](https://g
 
 **Source:** [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) — a Cursor/Claude Agent Skill with 67 UI styles, 161 product-type reasoning rules, 99 UX guidelines, and stack-specific recommendations (HTML+Tailwind, Vue, React, etc.).
 
-CoC Engine does **not** vendor the skill into this repo. Use it as an external design-intelligence reference alongside this document and `css/style.css` tokens.
+CoC Engine **vendors the skill in-repo** at `.cursor/skills/ui-ux-pro-max/`. Use it alongside this document and `css/style.css` tokens — do not replace Bootstrap with Tailwind.
 
 ### Recommended style profile (Gaming / TRPG)
 
@@ -44,41 +44,54 @@ CoC Engine does **not** vendor the skill into this repo. Use it as an external d
 | Sub-panels | `.coc-panel-card`, `.coc-section-title` | Layout tokens, card elevation |
 | Settings / creator | `.nav-tabs`, `.form-control` | Form labels, focus states |
 
-### Install ui-ux-pro-max-skill for Cursor (alongside this project)
+### Install ui-ux-pro-max-skill for Cursor
 
-The skill is installed **outside** the repo — globally or per-project — and auto-activates on UI/UX tasks.
+The skill is **already in this repo** at `.cursor/skills/ui-ux-pro-max/` (commit ba4b118). Cursor auto-activates it on UI/UX tasks when present.
 
-**Option 1 — CLI (recommended):**
-
-```bash
-npm install -g ui-ux-pro-max-cli
-cd /path/to/CoC_Engine_V17.2_CCGS
-uipro init --ai cursor          # project: .cursor/skills/ui-ux-pro-max/
-# or, all projects:
-uipro init --ai cursor --global # user:   ~/.cursor/skills/ui-ux-pro-max/
-```
-
-Requires **Python 3.x** for the bundled design-system search script.
-
-**Option 2 — npx (no global install):**
-
-```bash
-npx ui-ux-pro-max-cli init --ai cursor
-```
-
-**Update / remove:**
+**To update from upstream:**
 
 ```bash
 uipro update
-uipro uninstall --ai cursor
+# or re-init:
+npx ui-ux-pro-max-cli init --ai cursor
 ```
+
+**Workflow guide:** see `docs/UI_SKILL_WORKFLOW.md`.
 
 **Using with CoC Engine:** When prompting Cursor for UI work, mention `docs/UI_DESIGN.md` and `css/style.css` tokens so generated code extends existing conventions instead of replacing them with Tailwind defaults.
 
 **Advanced — generate a design-system brief:**
 
 ```bash
-python .cursor/skills/ui-ux-pro-max/scripts/search.py "horror TRPG dark dashboard" --design-system -p "CoC Engine"
+python .cursor/skills/ui-ux-pro-max/scripts/search.py "horror TRPG dark dashboard gaming storytelling" --design-system -p "CoC Engine"
+```
+
+## Design system (ui-ux-pro-max generated)
+
+Generated via `search.py --design-system` (query: `horror TRPG dark dashboard gaming storytelling`). **Adapted for CoC Engine** — we reject heavy 3D/WebGL and keep readable system fonts for PWA offline.
+
+| Recommendation | Skill output | CoC mapping / decision |
+|----------------|--------------|------------------------|
+| **Pattern** | Horizontal Scroll Journey — immersive discovery, sticky CTA | Story toolbar horizontal scroll + chat-centric narrative; lobby hero as vertical intro |
+| **Style** | 3D & Hyperrealism (gaming) | **Rejected** — use dark cinematic HUD via CSS tokens, not WebGL/parallax |
+| **Background** | `#020617` | Maps to `--bg-dark` / `--bg-surface-canvas` family |
+| **Foreground** | `#F8FAFC` | Maps to `--text-primary` |
+| **Accent (positive)** | `#22C55E` green CTA | Maps to `--success-green`; primary CTA stays `--accent-gold` for horror brand |
+| **Typography** | Orbitron + JetBrains Mono | **Skipped CDN** — `--font-display-fallback` / `--font-mono-fallback` in `:root`; body keeps system + Noto Sans SC |
+| **Effects** | WebGL, parallax, 3D shadows | **Rejected** — `body::after` ambient breathe + `--shadow-panel` only |
+| **Anti-patterns** | Minimalism, static assets | We are content-dense TRPG dashboard; SVG sprite icons are intentional |
+| **Pre-delivery** | SVG icons, cursor-pointer, 150–300ms hover, focus rings, reduced-motion, 375–1440px | See checklist table above + `docs/UI_SKILL_WORKFLOW.md` |
+
+Re-run after major UI pivots:
+
+```powershell
+python .cursor/skills/ui-ux-pro-max/scripts/search.py "<keywords>" --design-system -p "CoC Engine" -f markdown
+```
+
+Optional UX validation pass:
+
+```powershell
+python .cursor/skills/ui-ux-pro-max/scripts/search.py "animation accessibility z-index loading" --domain ux
 ```
 
 ## Inspiration applied
