@@ -149,7 +149,7 @@ export const ViewCreator = {
                     <div class="border border-warning rounded p-2 mb-3 bg-dark shadow-sm">
                         <h6 class="text-warning mb-2 border-bottom border-warning pb-1">💼 选择职业</h6>
                         <label class="sheet-label text-light mb-1">根据上述属性，为你挑选最合适的行当：</label>
-                        <select class="form-select form-select-sm bg-dark text-light border-warning" v-model="draftChar.job">
+                        <select class="form-select form-select-sm bg-dark text-light border-warning" v-model="draftChar.job" @change="handleOccupationChange(draftChar.name)">
                             <option :value="null" disabled>请选择职业以解锁本职技能点</option>
                             <option v-for="(job, idx) in availableJobs" :key="idx" :value="job">{{ job.name }}</option>
                         </select>

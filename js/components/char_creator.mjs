@@ -134,8 +134,18 @@ window.CoCCreator = (function(State, Engine, Vue) {
         }
     };
 
+    const handleOccupationChange = (nameBefore = draftChar.name) => {
+        if (nameBefore && draftChar.name !== nameBefore) draftChar.name = nameBefore;
+        if (draftChar.attrs.STR > 0) renderRadarChart();
+    };
+
     watch(() => draftChar.job ? draftChar.job.name : null, (newJobName, oldJobName) => {
         if (newJobName !== oldJobName) clearOccupationAllocations();
+        handleOccupationChange();
+    });
+
+    watch(() => gameState.currentScreen, (screen) => {
+        if (screen === 'creator' && draftChar.attrs.STR > 0) renderRadarChart();
     });
 
     const pointStats = computed(() => {
@@ -397,8 +407,9 @@ window.CoCCreator = (function(State, Engine, Vue) {
         derived.maxHp = derived.maxHp || derived.hp;
         derived.hp = derived.maxHp;
         const job = resolveOccupation(preset.job);
+        const investigatorName = (draftChar.name || '').trim() || preset.name;
         gameState.roster.push({
-            name: preset.name,
+            name: investigatorName,
             jobName: job ? job.name : (preset.job ? preset.job.name : '无业'),
             hp: derived.maxHp,
             sanity: derived.san,
@@ -418,10 +429,10 @@ window.CoCCreator = (function(State, Engine, Vue) {
         });
         const activeCount = gameState.roster.filter((c) => c.isActive).length;
         gameState.selectedCharIndex = Math.max(0, activeCount - 1);
-        gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `调查员【${preset.name}】已登入。` });
+        gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `调查员【${investigatorName}】已登入。` });
         resetDraftChar();
         if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
-        notify(`✅ ${preset.name} 已就绪！可直接开始冒险。`, 'success');
+        notify(`✅ ${investigatorName} 已就绪！可直接开始冒险。`, 'success');
         const pendingScenarioId = gameState.scenarioRunner && gameState.scenarioRunner.pendingScenarioId;
         if (pendingScenarioId && window.CoCScenarioRunner && window.CoCScenarioRunner.startScenario) {
             if (window.CoCScenarioRunner.startScenario(pendingScenarioId)) {
@@ -485,6 +496,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
         getSkillTotal, addSkillPoint, startAutoAdd, stopAutoAdd, removeSkillPoint, getSkillOcc, getSkillPer, 
         applyExperience, isUnlockedSkill, isClassSkill, rollAllStats, saveDraftCharacter,
         showSTImport, importSTData, confirmImport, cancelImport, importPreview, goBack,
+        handleOccupationChange,
         getAttrEvaluation: Engine.getAttrEvaluation,
         CHARACTER_PRESETS, applyPreset,
         chartUnavailable

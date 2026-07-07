@@ -131,7 +131,19 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   State.draftChar.skillAllocations = {};
   assert.strictEqual(Creator.pointStats.value.occRemain, 250, 'acrobat occupation starts with valid remaining points');
 
+  // BUG-009/010/011: occupation selection preserves the typed name and keeps radar alive.
+  State.draftChar.name = '林若水';
+  const updatesBeforeOccupation = sandbox.__chartUpdates;
+  State.draftChar.job = acrobatJob;
+  Creator.handleOccupationChange('林若水');
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.strictEqual(State.draftChar.name, '林若水', 'occupation selection does not clobber typed name');
+  assert(sandbox.__chartUpdates > updatesBeforeOccupation, 'occupation selection repaints existing radar chart');
+  assert.strictEqual(State.draftChar.job.name, '杂技演员', 'draft keeps selected occupation');
+
   // BUG-006: preset quick start commits, resumes pending local scenario, and persists immediately.
+  State.draftChar.name = '';
   State.gameState.roster.splice(0);
   State.gameState.scenarioRunner.pendingScenarioId = 'tutorial';
   State.saveGame = (slot, name) => {
@@ -174,6 +186,11 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   assert(/commitPresetToRoster/.test(charCreatorSrc), 'char_creator has commitPresetToRoster');
   assert(/paint\(retriesLeft/.test(charCreatorSrc), 'renderRadarChart retries canvas mount');
   assert(/saveGame\('auto', '自动存档'\)/.test(charCreatorSrc), 'preset commit persists immediately');
+  assert(/handleOccupationChange/.test(charCreatorSrc), 'occupation select preserves name and repaints radar');
+
+  const lobbyView = fs.readFileSync(path.join(root, 'js/views/lobby_view.mjs'), 'utf8');
+  assert(/hasDraftInvestigator/.test(lobbyView), 'lobby shows in-progress draft investigator');
+  assert(/draftJobName/.test(lobbyView), 'lobby draft preview shows selected occupation');
 
   const storyChar = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
   const storyView = fs.readFileSync(path.join(root, 'js/views/story_view.mjs'), 'utf8');
@@ -183,7 +200,7 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   assert(/管理\/启用调查员/.test(storyChar), 'story_char empty state clarifies inactive roster action');
   assert(/@switch-tab="activeStoryTab = \$event"/.test(storyView), 'story_view handles story_char back event');
 
-  console.log('char_creator_flow_smoke: preset + radar + hold-repeat + scenario resume + story character sheet OK');
+  console.log('char_creator_flow_smoke: preset + draft occupation + name/radar preservation OK');
 })().catch((err) => {
   console.error(err);
   process.exit(1);

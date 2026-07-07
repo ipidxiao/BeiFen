@@ -338,11 +338,24 @@ window.ViewLobby = {
                       <button class="btn btn-warning btn-sm fw-bold" @click="switchScreen('story')" :disabled="gameState.roster.length === 0">进入剧情 ▶</button>
                   </div>
                   <ul class="list-group list-group-flush mb-4">
-                      <li v-if="gameState.roster.length === 0" class="list-group-item bg-dark border-secondary">
+                      <li v-if="gameState.roster.length === 0 && !hasDraftInvestigator" class="list-group-item bg-dark border-secondary">
                           <div class="empty-state empty-state-compact">
                               <coc-icon name="character" :size="36" class="empty-state-icon"></coc-icon>
                               <div class="empty-state-title">尚无调查员</div>
                               <div class="empty-state-hint">创建至少一名调查员后方可进入剧情</div>
+                          </div>
+                      </li>
+                      <li v-if="hasDraftInvestigator" class="list-group-item bg-dark text-light border-warning">
+                          <div class="d-flex justify-content-between align-items-start">
+                              <div>
+                                  <strong class="text-warning">{{ draftDisplayName }}</strong>
+                                  <span v-if="draftJobName" class="badge ms-1 badge-job">{{ draftJobName }}</span>
+                                  <span class="badge bg-secondary ms-1">编辑中</span><br>
+                                  <span v-if="draftChar.derived.hp" class="badge badge-hp me-1">HP: {{ draftChar.derived.hp }}</span>
+                                  <span v-if="draftChar.derived.san" class="badge badge-san me-1">SAN: {{ draftChar.derived.san }}</span>
+                                  <span v-if="draftChar.attrs.STR > 0" class="badge" style="background:#3a3a4a; color:#cccccc;">STR: {{ draftChar.attrs.STR }}</span>
+                              </div>
+                              <button class="btn btn-sm btn-outline-warning" @click="switchScreen('creator')">继续编辑</button>
                           </div>
                       </li>
                       <li v-for="(char, index) in gameState.roster" :key="index" class="list-group-item bg-dark text-light border-secondary">
@@ -404,6 +417,19 @@ window.ViewLobby = {
                   items = items.filter((i) => (i.tags || []).includes(this.storeTagFilter));
               }
               return items;
+          },
+          hasDraftInvestigator() {
+              const draft = this.draftChar || {};
+              const attrs = draft.attrs || {};
+              return !!((draft.name || '').trim() || draft.job || Number(attrs.STR) > 0);
+          },
+          draftDisplayName() {
+              const name = this.draftChar && (this.draftChar.name || '').trim();
+              return name || '未命名调查员';
+          },
+          draftJobName() {
+              const job = this.draftChar && this.draftChar.job;
+              return job && job.name ? job.name : '';
           },
           storeUsesFallback() {
               return window.CoCScenarioStore && window.CoCScenarioStore.usesLocalStorageFallback && window.CoCScenarioStore.usesLocalStorageFallback();

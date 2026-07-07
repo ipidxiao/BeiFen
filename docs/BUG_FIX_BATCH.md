@@ -113,3 +113,27 @@ npm run ci:smoke
 ```
 
 `tests/char_creator_flow_smoke.js` 新增覆盖：杂技演员本职剩余非负、超支单独追踪；剧情人物页能从 roster 渲染预置调查员属性与技能摘要。
+
+## 复审补丁 3（2026-07-07 夜）
+
+| ID | Severity | Area | Description | Status |
+|----|----------|------|-------------|--------|
+| BUG-009 | P1 | `lobby_view` / `draftChar` | 创建页选定职业后返回调查员小队，未归档草稿没有队伍预览，表现为职业信息丢失 | **fixed** |
+| BUG-010 | P1 | `char_creator` | 职业选择/预置提交路径可能覆盖已有姓名，用户输入的调查员姓名未被显式保护 | **fixed** |
+| BUG-011 | P1 | `char_creator` | 掷骰后再选职业或重新进入创建页时，雷达图缺少补绘触发，可能保持空白 | **fixed** |
+
+### 修复摘要
+
+- **BUG-009**：调查员小队页增加“编辑中”草稿预览，展示 `draftChar.name`、已选职业、HP/SAN/STR，并提供继续编辑入口；空队伍提示不会遮住草稿。
+- **BUG-010**：职业选择统一走 `handleOccupationChange`，只清理职业点并保留已有姓名；预置提交在存在草稿姓名时优先使用用户姓名。
+- **BUG-011**：职业变化和重新进入创建页都会在已有属性时触发 `renderRadarChart`，保证掷骰 → 选职业 → 返回/重进路径仍有雷达图。
+
+### 验证
+
+```bash
+npm run build:js
+npm test
+npm run ci:smoke
+```
+
+`tests/char_creator_flow_smoke.js` 新增覆盖：选职业不覆盖姓名、职业选择后雷达图更新、队伍页草稿预览展示已选职业。
