@@ -180,7 +180,11 @@ function mjsToBrowserJs(src, relPath) {
 
     if (relPath.endsWith('campaign/london_kp_engine.mjs')) {
         const banner = `// GENERATED from ${relPath.replace(/\\/g, '/')} — do not edit; run: npm run build:js\n`;
-        return `${banner}window.CoCLondonKpEngine = window.KpExecutionEngine;\n`;
+        return `${banner}if (!window.__cocLondonKpAliasWarned) {
+    window.__cocLondonKpAliasWarned = true;
+    console.warn('[CoC DEPRECATED] CoCLondonKpEngine is an alias of KpExecutionEngine — prefer KpExecutionEngine.');
+}
+window.CoCLondonKpEngine = window.KpExecutionEngine;\n`;
     }
 
     if (relPath.includes('js/engines/') && relPath.endsWith('.mjs') && !relPath.endsWith('index.mjs')) {

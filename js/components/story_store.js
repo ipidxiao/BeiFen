@@ -5,7 +5,18 @@
 // 修改后放入 roles/programmer/ 运行 merge.py 合并
 // ===============================================
 
+/** OPT-030 pilot: prefer injected stateApi / CoCStateAccessor over window.CoCState. */
+function resolveStateApi(props) {
+    if (props && props.stateApi) return props.stateApi;
+    if (typeof window !== 'undefined' && window.CoCStateAccessor) return window.CoCStateAccessor;
+    if (typeof window !== 'undefined' && window.CoCState) return window.CoCState;
+    return null;
+}
+
 window.StoryStore = {
+    props: {
+        stateApi: { type: Object, default: null },
+    },
     template: `
         <div class="flex-grow-1 overflow-auto p-3 bg-dark">
             <h5 class="text-center mb-3" style="color:#c0a060;">📦 安全屋仓库</h5>
@@ -18,9 +29,9 @@ window.StoryStore = {
             </ul>
         </div>
     `,
-    setup() {
-        const state = window.CoCState;
-        const gameState = state.gameState;
+    setup(props) {
+        const api = resolveStateApi(props);
+        const gameState = api && typeof api.getGameState === 'function' ? api.getGameState() : api.gameState;
         const moveToInventory = (item, idx) => { gameState.inventory.push(item); gameState.storage.splice(idx, 1); };
         return { moveToInventory, gameState };
     }

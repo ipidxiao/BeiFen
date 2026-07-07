@@ -454,8 +454,13 @@ export const KpExecutionEngine = {
 
     /** @deprecated use isEnabled — kept for backward compat with CoCLondonKpEngine */
     isActive(gameState) {
+        if (!KpExecutionEngine._deprecatedIsActiveWarned) {
+            KpExecutionEngine._deprecatedIsActiveWarned = true;
+            console.warn('[CoC DEPRECATED] KpExecutionEngine.isActive() — use isEnabled() instead.');
+        }
         return this.isEnabled(gameState);
     },
+    _deprecatedIsActiveWarned: false,
 
     ensureKpEngine,
     loadLondonRulesPreset,

@@ -44,7 +44,13 @@ function applyKpPreferenceToGameState(gameState) {
 function getKpEngine() {
     if (typeof window !== 'undefined') {
         if (window.KpExecutionEngine) return window.KpExecutionEngine;
-        if (window.CoCLondonKpEngine) return window.CoCLondonKpEngine;
+        if (window.CoCLondonKpEngine) {
+            if (!window.__cocLondonKpFallbackWarned) {
+                window.__cocLondonKpFallbackWarned = true;
+                console.warn('[CoC DEPRECATED] getKpEngine() fell back to CoCLondonKpEngine — use KpExecutionEngine.');
+            }
+            return window.CoCLondonKpEngine;
+        }
     }
     return null;
 }

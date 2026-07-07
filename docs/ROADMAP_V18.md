@@ -50,8 +50,15 @@
 |------|------|
 | story_equip.js 不再直接修改 CoCItemDB | ✅ V17.1 |
 | EQUIP_SLOTS/getSlotForItem/canReplace → data layer | ✅ V17.1 |
-| items.js + items_db.js 合并 | 🔄 进行中 |
-| char_creator.js → components/ | 🔄 进行中 |
+| items.js + items_db.js 合并 | ✅ shim 已加（`items_db.mjs/js` 弃用警告） |
+| char_creator.js → components/ | ✅ 已在 `js/components/` |
+| CoCState IState 契约 | 🔄 `state_contract.mjs` JSDoc 首片 |
+| 组件解耦 window.CoCState | 🔄 `StoryStore` 注入试点 |
+| coc.js 引擎拆分 | 🔄 薄装配 + `js/engines/*` 已就位 |
+| ESM Phase 2 | 🔄 `ESM_PHASE2_NEXT.md` + boot smoke 扩展 |
+| Playwright E2E | 🔄 配置脚手架（未入默认 CI） |
+| KP 别名收敛 | 🔄 `console.warn` 弃用提示 |
+| window.* 注册表 | 🔄 `globals_registry.mjs` |
 
 ---
 

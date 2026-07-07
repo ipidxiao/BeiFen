@@ -8,8 +8,8 @@
  * CoC Tool Handlers: Mythos domain — 典籍研读与法术施放
  */
 export function mythos(ctx) {
-    var gameState = ctx.gameState;
-    var addJournalEntry = ctx.addJournalEntry;
+    const gameState = ctx.gameState;
+    const addJournalEntry = ctx.addJournalEntry;
 
     const getKpEng = () => {
         const cfg = typeof window !== 'undefined' && window.CoCKpConfig;
@@ -20,12 +20,12 @@ export function mythos(ctx) {
 
     return {
         study_tome: (args) => {
-            var Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
-            var c = gameState.roster.find(function(r) { return r.name === args.target_name; });
+            const Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
+            const c = gameState.roster.find(function(r) { return r.name === args.target_name; });
             if (!c) return '错误：找不到调查员 ' + args.target_name;
             if (!Engine || !Engine.MythosEngine) return '错误：神话引擎未加载。';
-            var tomes = window.CoCMythosTomes || {};
-            var tome = tomes[args.tome_name];
+            const tomes = window.CoCMythosTomes || {};
+            const tome = tomes[args.tome_name];
             if (!tome) return '错误：未知典籍 ' + args.tome_name;
             const inv = [...(gameState.inventory || []), ...(c.equipment ? Object.values(c.equipment).filter(Boolean) : [])];
             const hasTome = inv.some((item) => {
@@ -37,7 +37,7 @@ export function mythos(ctx) {
             });
             if (!hasTome) return '错误：' + c.name + ' 背包/装备中未持有典籍「' + (tome.title || args.tome_name) + '」。';
             // Full study if weeks provided; otherwise initial browse
-            var result;
+            let result;
             if (args.weeks && Number(args.weeks) > 0) {
                 result = Engine.MythosEngine.fullStudy(c, args.tome_name, Number(args.weeks));
             } else {
@@ -57,17 +57,17 @@ export function mythos(ctx) {
             return result.description;
         },
         cast_spell: (args) => {
-            var Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
-            var c = gameState.roster.find(function(r) { return r.name === args.caster_name; });
+            const Engine = ctx.Engine || (typeof window !== 'undefined' && window.CoCEngine);
+            const c = gameState.roster.find(function(r) { return r.name === args.caster_name; });
             if (!c) return '错误：找不到施法者 ' + args.caster_name;
-            var target = args.target_name ? gameState.roster.find(function(r) { return r.name === args.target_name; }) : null;
+            let target = args.target_name ? gameState.roster.find(function(r) { return r.name === args.target_name; }) : null;
             if (!target && args.target_name) target = gameState.combat.enemies ? gameState.combat.enemies.find(function(e) { return e.name === args.target_name; }) : null;
             if (!Engine || !Engine.MythosEngine) return '错误：神话引擎未加载。';
-            var result = Engine.MythosEngine.castSpell(c, args.spell_name, target);
+            const result = Engine.MythosEngine.castSpell(c, args.spell_name, target);
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: result.description });
             addJournalEntry({ type: 'spell_cast', charName: c.name, summary: '施放了' + args.spell_name + '。' + result.description });
             if (result.success && result.spellType === 'damage' && target) {
-                var dmg = 0;
+                let dmg = 0;
                 if (result.powOpposed === 'caster') dmg = Engine.parseDice('2D6');
                 else dmg = Engine.parseDice('1D3');
                 if (target.isEnemy) {

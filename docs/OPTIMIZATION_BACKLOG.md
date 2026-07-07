@@ -95,16 +95,31 @@
 
 | ID | 模块 | 描述 | 来源文档 | 工作量 |
 |----|------|------|----------|:---:|
-| OPT-027 | 数据层 | `items.js` + `items_db.js` 合并为单一数据源，消除双 DB 冲突风险 | ROADMAP_V18 Phase1.1 | 中 |
-| OPT-028 | 分层 | `char_creator.js` 归位到 `components/` | ROADMAP_V18 Phase1.3 | 小 |
-| OPT-029 | 状态层 | 提取 `CoCState` 显式接口（IState）契约 | ROADMAP_V18 Phase2.1 | 中 |
-| OPT-030 | 组件层 | 组件不再直接读 `window.CoCState`；`CoCItemDB` 改只读访问 | ROADMAP_V18 Phase2.2/2.3 | 大 |
-| OPT-031 | 引擎 | 拆分 `coc.js`：Sanity/Combat/Mythos/MajorWound 各成独立引擎文件（1665→~300 行） | ROADMAP_V18 Phase3 | 大 |
-| OPT-032 | 代码质量 | `var → const/let` 全量迁移（coc.js、handlers） | ROADMAP_V18 Phase4.1 | 中 |
-| OPT-033 | 架构 | IIFE → ESM 渐进迁移；ESM Phase 2 完全脱离 `window.*`；最终废弃 `.mjs/.js` 双轨 | ROADMAP_V18 Phase4 / ROADMAP / MODULE_REVIEW 长期 | 大 |
-| OPT-034 | 测试/CI | 引入 Playwright 真浏览器 E2E，替代/补充现有 Node VM `flow_lobby_combat_smoke` | ROADMAP / MODULE_REVIEW 长期 | 大 |
-| OPT-035 | KP 引擎 | 收敛遗留别名 `isActive`/`CoCLondonKpEngine` 到单一 `KpExecutionEngine` 命名 | MODULE_REVIEW §6 / 长期 | 中 |
-| OPT-036 | 全局 | `window.*` 全局命名统一 | ROADMAP_V18 Phase2–4 / MODULE_REVIEW 长期 | 大 |
+| ~~OPT-027~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-028~~ | — | *已完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-029~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-030~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-031~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-032~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-033~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-034~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-035~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-036~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+
+## P4 架构切片（OPT-027–036）
+
+| ID | 模块 | 切片状态 | 说明 |
+|----|------|----------|------|
+| [~] OPT-027 | 数据层 | **部分完成** | `items.mjs` 已为单一权威源；新增 `items_db.mjs` ESM 弃用 shim（不接入 index 加载链） |
+| [x] OPT-028 | 分层 | **完成** | `char_creator` 已在 `js/components/` |
+| [~] OPT-029 | 状态层 | **部分完成** | 新增 `js/state/state_contract.mjs` JSDoc 契约，无破坏性重构 |
+| [~] OPT-030 | 组件层 | **部分完成** | `StoryStore` 试点 `stateApi`/`CoCStateAccessor` 注入，其余组件待迁移 |
+| [~] OPT-031 | 引擎 | **部分完成** | `coc.js` 已为薄装配层；Sanity/MajorWound 等已在 `js/engines/` |
+| [~] OPT-032 | 代码质量 | **部分完成** | `handlers/mythos.mjs` `var→const/let` 试点 |
+| [~] OPT-033 | 架构 | **部分完成** | `tests/ESM_PHASE2_NEXT.md` 记录下一步；`esm_phase2_boot_smoke` 扩展引擎/注册表断言 |
+| [~] OPT-034 | 测试/CI | **部分完成** | `playwright.config.mjs` + `tests/playwright/` 脚手架；默认 CI 仍用 Node smoke |
+| [~] OPT-035 | KP 引擎 | **部分完成** | `isActive`/`CoCLondonKpEngine` 首次调用 `console.warn`；别名保留 |
+| [~] OPT-036 | 全局 | **部分完成** | `js/core/globals_registry.mjs` 集中登记 `window.*` 名称（shim，未批量重命名） |
 
 ## 已明确 wontfix（非优化项）
 

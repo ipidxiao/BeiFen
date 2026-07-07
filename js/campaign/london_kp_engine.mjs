@@ -11,5 +11,9 @@ export const CoCLondonKpEngine = KpExecutionEngine;
 export { KpExecutionEngine, ensureKpEngine, loadLondonRulesPreset, setKpEngineEnabled };
 
 if (typeof window !== 'undefined') {
+    if (!window.__cocLondonKpAliasWarned) {
+        window.__cocLondonKpAliasWarned = true;
+        console.warn('[CoC DEPRECATED] CoCLondonKpEngine is an alias of KpExecutionEngine — prefer KpExecutionEngine.');
+    }
     window.CoCLondonKpEngine = CoCLondonKpEngine;
 }
