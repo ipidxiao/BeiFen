@@ -4,6 +4,7 @@
   "scripts": {
     "test": "node tests/run_all_smoke.js",
     "test:e2e": "node tests/flow_lobby_combat_smoke.js",
+    "test:playwright": "playwright test",
     "test:deep": "node tests/deep_verify.mjs",
     "test:gap": "node tests/coverage_gap_smoke.js",
     "stats:readme": "node scripts/generate_readme_stats.mjs",
@@ -19,6 +20,7 @@
     "serve": "python -m http.server 8080"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "jsdom": "^29.1.1",
     "sharp": "^0.35.3"
   }

@@ -35,6 +35,7 @@ import { CoCStatePersistence } from './state/persistence.mjs';
 import { CoCState } from './state/state.mjs';
 
 import { CoCAI } from './ai_logic.mjs';
+import { GLOBALS_REGISTRY, listDeprecatedGlobals } from './core/globals_registry.mjs';
 
 // Backward-compat: expose on window.* for legacy component access
 window.CoCBaseSkills = CoCBaseSkills;
@@ -53,6 +54,8 @@ window.CoCStateGameplay = CoCStateGameplay;
 window.CoCStatePersistence = CoCStatePersistence;
 window.CoCState = CoCState;
 window.CoCAI = CoCAI;
+window.CoCGlobalsRegistry = GLOBALS_REGISTRY;
+window.listDeprecatedGlobals = listDeprecatedGlobals;
 
 // Bootstrap Vue application (same as legacy app.js)
 const { createApp } = window.Vue;

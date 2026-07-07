@@ -1129,7 +1129,7 @@ const KpExecutionEngine = {
     }
 };
 
-/** Backward-compatible alias */
+/** @deprecated Use KpExecutionEngine — legacy alias kept for backward compatibility. */
 const CoCLondonKpEngine = KpExecutionEngine;
 
 if (typeof window !== 'undefined') {

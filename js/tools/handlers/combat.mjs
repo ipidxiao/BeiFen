@@ -274,13 +274,13 @@ export function combat(ctx) {
             return result.msg;
         },
         spawn_npc: (args) => {
-            var tmpl = args.template || '邪教徒';
-            var overrides = {};
+            const tmpl = args.template || '邪教徒';
+            const overrides = {};
             if (args.name) overrides.name = args.name;
             if (args.hp) overrides.hp = args.hp;
             if (args.armor != null) overrides.armor = args.armor;
             if (args.description) overrides.description = args.description;
-            var npc = window.generateNpcFromTemplate(tmpl, overrides);
+            const npc = window.generateNpcFromTemplate(tmpl, overrides);
             if (!npc) return '错误：未找到模板 ' + tmpl + '。可用模板：' + Object.keys(window.CoCNpcTemplates || {}).join('、');
             gameState.combat.enemies = gameState.combat.enemies || [];
             npc.id = 'npc_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
@@ -299,21 +299,21 @@ export function combat(ctx) {
             return npc.name + ' 已生成（模板:' + tmpl + ' HP:' + npc.hp + ' 护甲:' + npc.armor + '）。';
         },
         burst_fire: (args) => {
-            var c = gameState.roster.find(function(r) { return r.name === (args.shooter_name || args.target_name); }) || gameState.roster.find(function(r) { return r.isActive; });
+            const c = gameState.roster.find(function(r) { return r.name === (args.shooter_name || args.target_name); }) || gameState.roster.find(function(r) { return r.isActive; });
             if (!c) return '错误：找不到该角色';
-            var namedEnemy = args.enemy_name ? gameState.combat.enemies.find(function(e) { return e.name === args.enemy_name && !e.isDefeated; }) : null;
+            const namedEnemy = args.enemy_name ? gameState.combat.enemies.find(function(e) { return e.name === args.enemy_name && !e.isDefeated; }) : null;
             if (args.enemy_name && !namedEnemy) return '找不到敌人: ' + args.enemy_name;
-            var enemy = namedEnemy || gameState.combat.enemies.find(function(e) { return !e.isDefeated; }) || { name: '未知敌人', hp: 10, maxHp: 10, isEnemy: true };
+            const enemy = namedEnemy || gameState.combat.enemies.find(function(e) { return !e.isDefeated; }) || { name: '未知敌人', hp: 10, maxHp: 10, isEnemy: true };
 
-            var weaponStr = (c.equipment || {}).weapon || '';
-            var weaponBase = weaponStr.split('[')[0].trim();
-            var kpEngAmmo = getKpEng();
-            var inferredAmmoType = (kpEngAmmo && kpEngAmmo.inferAmmoType) ? kpEngAmmo.inferAmmoType(weaponStr) : null;
-            var backpackAmmo = readBackpackAmmo(weaponStr);
-            var ammo = backpackAmmo ? backpackAmmo.count : readAmmo(c);
-            var ammoType = backpackAmmo ? backpackAmmo.ammoType : inferredAmmoType;
-            var rounds = Math.max(1, Math.min(Number(args.rounds) || 3, ammo, 30));
-            var isFirearm = !!inferredAmmoType;
+            const weaponStr = (c.equipment || {}).weapon || '';
+            const weaponBase = weaponStr.split('[')[0].trim();
+            const kpEngAmmo = getKpEng();
+            const inferredAmmoType = (kpEngAmmo && kpEngAmmo.inferAmmoType) ? kpEngAmmo.inferAmmoType(weaponStr) : null;
+            const backpackAmmo = readBackpackAmmo(weaponStr);
+            let ammo = backpackAmmo ? backpackAmmo.count : readAmmo(c);
+            const ammoType = backpackAmmo ? backpackAmmo.ammoType : inferredAmmoType;
+            const rounds = Math.max(1, Math.min(Number(args.rounds) || 3, ammo, 30));
+            const isFirearm = !!inferredAmmoType;
 
             if (isFirearm && ammo <= 0) {
                 gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '⚠️ 背包中没有匹配「' + (ammoType || '该枪型') + '」的弹药！' });
@@ -325,23 +325,23 @@ export function combat(ctx) {
                 return '开火失败：弹药不足。';
             }
 
-            var weaponObj = { skill: '手枪', damage: args.damage || '1D6' };
+            const weaponObj = { skill: '手枪', damage: args.damage || '1D6' };
             if (weaponStr.includes('步枪')) weaponObj.skill = '步枪';
             else if (weaponStr.includes('霰弹')) weaponObj.skill = '霰弹枪';
             else if (weaponStr.includes('冲锋')) weaponObj.skill = '冲锋枪';
             else if (weaponStr.includes('机枪')) weaponObj.skill = '机枪';
 
-            var mode = args.mode || 'burst';
-            var kpEng = getKpEng();
+            const mode = args.mode || 'burst';
+            const kpEng = getKpEng();
             if (kpEng && kpEng.isEnabled && kpEng.isEnabled(gameState) && kpEng.handleFirearmAttempt) {
-                var firearmCheck = kpEng.handleFirearmAttempt({ gameState });
-                var blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
+                const firearmCheck = kpEng.handleFirearmAttempt({ gameState });
+                const blockedMsg = applyFirearmRealityBlock(firearmCheck, c, enemy.name);
                 if (blockedMsg) {
                     advanceTurn();
                     return blockedMsg;
                 }
             }
-            var remaining = spendAmmo(weaponStr, rounds, ammoType);
+            const remaining = spendAmmo(weaponStr, rounds, ammoType);
             if (remaining != null) ammo = remaining;
             else {
                 ammo -= rounds;
@@ -349,11 +349,11 @@ export function combat(ctx) {
             }
             gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🔫 ' + c.name + ' 连射 [' + rounds + ' 发] [背包剩余弹药:' + ammo + ']' });
 
-            var result = Engine.CombatEngine.resolveBurstFire(c, enemy, weaponObj, rounds, mode);
+            const result = Engine.CombatEngine.resolveBurstFire(c, enemy, weaponObj, rounds, mode);
             recordKpCombatAction('attack:fire_weapon:tactical');
 
             if (result.totalDamage > 0) {
-                var dmgOutcome = applyEnemyDamageWithKp(enemy.name, -result.totalDamage, result.description, null, { skipArmor: true });
+                const dmgOutcome = applyEnemyDamageWithKp(enemy.name, -result.totalDamage, result.description, null, { skipArmor: true });
                 if (dmgOutcome && dmgOutcome.blocked) {
                     gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: '🛡️ [KP引擎] 纯伤害策略触发敌人免疫，连射伤害无效化。' });
                 }

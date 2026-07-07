@@ -114,6 +114,23 @@ if (typeof CoCAI.processTools === 'function') {
     check(aiMsg.tool_calls[0].isResolved === true, 'processTools resolves system_alert');
     check(aiMsg.isResolved === true, 'processTools marks aiMsg resolved');
     check(window.CoCState.gameState.chatHistory.some(m => String(m.content || '').includes('processTools smoke')), 'processTools alert in chat');
+
+    // OPT-019: second tool dispatch (record_engine_log)
+    window.DevLogs = window.DevLogs || [];
+    const aiMsg2 = {
+        role: 'assistant',
+        tool_calls: [{
+            id: 'call_opt19_2',
+            type: 'function',
+            function: { name: 'record_engine_log', arguments: '{"version":"18.1.0","title":"OPT-019 smoke","changes":["processTools multi-tool"]}' },
+            isResolved: false
+        }],
+        isResolved: false,
+        _toolRound: 0
+    };
+    await CoCAI.processTools(aiMsg2, 0);
+    check(aiMsg2.tool_calls[0].isResolved === true, 'processTools resolves record_engine_log');
+    check(window.DevLogs.some(l => l.title === 'OPT-019 smoke'), 'processTools record_engine_log writes DevLogs');
 }
 
 console.log(`ESM ai: ALL ${passed} assertions PASSED`);

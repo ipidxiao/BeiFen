@@ -32,8 +32,8 @@ window.CoCToolHandlerModules.character = function(ctx) {
                     let halfHp = Math.floor(maxHp / 2);
                     c.hp += args.hp_change;
                     const statusAlert = { kind: 'hp_damage', name: c.name, dmg, hp: c.hp, maxHp, lines: [] };
-                    var triggeredMajorWound = false;
-                    var wound = null;
+                    let triggeredMajorWound = false;
+                    let wound = null;
                     if (window.CoCEngine && window.CoCEngine.MajorWoundEngine) {
                         wound = window.CoCEngine.MajorWoundEngine.checkMajorWound(c, dmg);
                     }
@@ -62,7 +62,7 @@ window.CoCToolHandlerModules.character = function(ctx) {
                         c.hp = 0;
                         if (c.status && c.status.hasMajorWound) {
                             if (!c.status) c.status = {}; c.status.isDying = true;
-                            var dc = window.CoCEngine && window.CoCEngine.MajorWoundEngine ? window.CoCEngine.MajorWoundEngine.dyingCheck(c) : null;
+                            const dc = window.CoCEngine && window.CoCEngine.MajorWoundEngine ? window.CoCEngine.MajorWoundEngine.dyingCheck(c) : null;
                             statusAlert.dying = { description: dc ? dc.description : '玩家倒在血泊中，离死亡仅一步之遥。' };
                             statusAlert.lines.push('💀 【濒死】' + statusAlert.dying.description);
                             if (dc && !dc.passed) { c.status.isDead = true; c.isActive = false; resultMsg += '玩家死亡。'; }
@@ -97,11 +97,11 @@ window.CoCToolHandlerModules.character = function(ctx) {
                 // Sync sanity to derived.sanity for SanityEngine compatibility
                 if (c.derived && c.derived.sanity == null) c.derived.sanity = c.sanity || 0;
                 if (c.sanity == null) c.sanity = c.derived ? c.derived.sanity : 0;
-                var sanLoss = args.san_change < 0 ? -args.san_change : 0;
+                const sanLoss = args.san_change < 0 ? -args.san_change : 0;
 
                 if (sanLoss > 0 && window.CoCEngine && window.CoCEngine.SanityEngine) {
                     // Use full sanity engine for losses
-                    var sanityResult = window.CoCEngine.SanityEngine.applySanLoss(c, sanLoss, args.note || 'SAN损失');
+                    const sanityResult = window.CoCEngine.SanityEngine.applySanLoss(c, sanLoss, args.note || 'SAN损失');
                     c.sanity = sanityResult.newSan;
                     if (c.derived) c.derived.sanity = sanityResult.newSan;
                     if (sanityResult.tempInsanity || sanityResult.indefInsanity) {
@@ -133,11 +133,11 @@ window.CoCToolHandlerModules.character = function(ctx) {
             return resultMsg + " 绝对禁止反悔！";
         },
         spend_luck: (args) => {
-            var c = gameState.roster.find(function(r) { return r.name === args.target_name; });
+            const c = gameState.roster.find(function(r) { return r.name === args.target_name; });
             if (!c) return '错误：找不到调查员 ' + args.target_name;
-            var Engine = window.CoCEngine;
+            const Engine = window.CoCEngine;
             if (!Engine || !Engine.spendLuck) return '错误：引擎未加载。';
-            var result = Engine.spendLuck(c, Number(args.amount) || 0);
+            const result = Engine.spendLuck(c, Number(args.amount) || 0);
             if (result.success) {
                 gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isAlert: true, content: '🍀 ' + result.message });
                 addJournalEntry({ type: 'luck_spend', charName: c.name, summary: result.message });

@@ -22,6 +22,7 @@
             document.head.appendChild(s);
         }
         // ESM Phase 2 opt-in: ?esm=1 skips IIFE app.js mount; app.mjs loads at end of body
+        // Next slices: tests/ESM_PHASE2_NEXT.md (boot module, state ESM entry, component barrel)
         if (new URLSearchParams(location.search).get('esm') === '1') window.__COC_ESM_BOOT__ = true;
     </script>
     <script src="./vendor/vue.global.prod.js"></script>

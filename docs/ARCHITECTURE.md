@@ -14,6 +14,12 @@
 
 The engine is a **no-bundler** static site: `index.html` loads many `<script>` tags. Modules expose APIs on `window` for cross-script access.
 
+**Registry (OPT-036):** `js/core/globals_registry.mjs` centralizes known `window.*` export names. Loaded via `globals_registry.js` in `index.html`; also imported in `app.mjs` for ESM boot. Use `window.CoCGlobalsRegistry` or `listDeprecatedGlobals()` for audits.
+
+**State contract (OPT-029):** `js/state/state_contract.mjs` documents `ICoCState` / `ICoCStateAccessor` JSDoc types and exports `STATE_CONTRACT_VERSION` + `STATE_CONTRACT_SUMMARY`. No runtime refactor — import for IDE hints and future DI.
+
+**Item data (OPT-027):** `js/data/items.mjs` is the **single authoritative** item DB. `items_db.mjs` is a deprecated re-export shim (console.warn once); `index.html` loads only `items.js`.
+
 **Pattern:**
 
 ```js
@@ -88,6 +94,7 @@ Visual tokens, chat/combat/lobby patterns, and awesome-design-md inspiration are
 |-------|---------|
 | `npm test` | `tests/run_all_smoke.js` — all VM/ESM smoke suites |
 | `npm run test:e2e` | `tests/flow_lobby_combat_smoke.js` — lobby → enterModule → start_combat → save → load (Node VM, no Playwright) |
+| `npm run test:playwright` | Optional real-browser E2E via `@playwright/test` (not in default CI; see `tests/playwright/README.md`) |
 | `tests/save_migration_smoke.js` | v1–v7 JSON fixtures under `tests/fixtures/saves/` |
 | `tests/ui/component_helpers_smoke.mjs` | Pure UI helpers (combat quick actions, toast/chat formatters) |
 | `npm run stats:readme` | Regenerate README package stats |

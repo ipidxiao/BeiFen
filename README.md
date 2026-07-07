@@ -43,6 +43,23 @@ npm run build         # 打包 ZIP（内部自动 build:js）
 npm run serve         # 本地开发服务器 :8080
 ```
 
+### 数据层：物品 DB（OPT-027）
+
+- **权威源**：`js/data/items.mjs` → `npm run build:js` 生成 `items.js`；`index.html` 仅加载 `items.js`。
+- **弃用 shim**：`items_db.mjs` / `items_db.js` 仅作向后兼容重导出（首次 import 会 `console.warn`），勿在新代码中引用。
+
+### 可选 Playwright E2E（OPT-034）
+
+默认 CI 仍用 Node VM smoke（`npm test` / `npm run ci:smoke`）。真实浏览器 E2E 脚手架已就绪：
+
+```bash
+npm install          # 含 @playwright/test devDep
+npx playwright install chromium
+npm run test:playwright
+```
+
+详见 `tests/playwright/README.md`。`playwright_setup_smoke.mjs` 验证配置存在，不要求安装浏览器。
+
 ## 📴 离线单机运行
 
 引擎可在**无网络**环境下使用除 AI 守秘人以外的全部功能（骰子、战斗、角色卡、存档、手册等）。**本地剧本模式**可在完全离线时体验结构化剧情（见大厅「📜 本地剧本模式」）。

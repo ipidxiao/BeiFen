@@ -1,6 +1,21 @@
 // GENERATED from js/components/story_chat.mjs — do not edit; run: npm run build:js
 
+/** OPT-030 pilot #2: prefer injected stateApi / CoCStateAccessor over window.CoCState. */
+function resolveStateRoot(props) {
+    if (props && props.stateApi) {
+        return typeof props.stateApi.getState === 'function' ? props.stateApi.getState() : props.stateApi;
+    }
+    if (typeof window !== 'undefined' && window.CoCStateAccessor && typeof window.CoCStateAccessor.getState === 'function') {
+        return window.CoCStateAccessor.getState();
+    }
+    if (typeof window !== 'undefined' && window.CoCState) return window.CoCState;
+    return null;
+}
+
 window.StoryChat = {
+    props: {
+        stateApi: { type: Object, default: null },
+    },
     data() {
         return {
             _vStart: 0,
@@ -173,7 +188,7 @@ window.StoryChat = {
         });
     },
     setup(props, context) {
-        const state = window.CoCState;
+        const state = resolveStateRoot(props);
         const ai = window.CoCAI;
         const gameState = state.gameState;
 

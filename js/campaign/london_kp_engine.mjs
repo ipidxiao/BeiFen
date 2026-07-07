@@ -7,6 +7,7 @@ import {
     setKpEngineEnabled
 } from './kp_execution_engine.mjs';
 
+/** @deprecated Use KpExecutionEngine — legacy alias kept for backward compatibility. */
 export const CoCLondonKpEngine = KpExecutionEngine;
 export { KpExecutionEngine, ensureKpEngine, loadLondonRulesPreset, setKpEngineEnabled };
 

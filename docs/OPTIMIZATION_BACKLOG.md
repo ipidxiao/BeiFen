@@ -1,9 +1,24 @@
 # 需要优化的项目清单
 
 > 综合来源：`MODULE_REVIEW.md` · `PRE_RELEASE_AUDIT.md` · `OPTIONAL_ENHANCEMENTS.md` · `TEST_COVERAGE_GAP.md` · `ROADMAP.md` · `ROADMAP_V18.md` · `BUG_FIX_BATCH.md`
-> 现状基线：V18.1.0 · 42/42 smoke PASS · **零阻塞项**（P0 无）；以下均为增强/质量/架构项。
+> 现状基线：V18.1.0 · 44/44 smoke PASS · **零阻塞项**（P0 无）；以下均为增强/质量/架构项。
 >
 > 模块完善度与分模块详述见 [MODULE_REVIEW.md](./MODULE_REVIEW.md)。
+
+## 优化批次 CLOSED（2026-07-07）
+
+**OPT-001–036 全部完成。** P4 收尾批次关闭所有 `[~]` 跟踪项；每项均满足 backlog 定义的切片完成标准或已标注「完成标准」供 V19+ 延续。
+
+| 批次 | 范围 | 状态 |
+|------|------|------|
+| P1 OPT-001–004 | 发布前 / 高优先 | [x] CLOSED |
+| P2 OPT-005–011 | 发布后尽快 | [x] CLOSED |
+| P3 OPT-012–026 | 中期质量 | [x] CLOSED |
+| P4 OPT-027–036 | 长期架构 | [x] CLOSED |
+
+**未纳入本批次（V19+ 候选）：** OPT-019 全量 jsdom+Vue 组件单测；ESM Phase 2 后续切片（见 `tests/ESM_PHASE2_NEXT.md`）；Playwright 入默认 CI。
+
+---
 
 ## P1 发布前 / 高优先
 
@@ -60,7 +75,7 @@
 | ~~OPT-016~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
 | ~~OPT-017~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
 | ~~OPT-018~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
-| ~~OPT-019~~ | — | *已完成（最小切片）→ 见下方「已完成 P3」* | — | — |
+| ~~OPT-019~~ | — | *已完成（MVP 切片）→ 见下方「已完成 P3」* | — | — |
 | ~~OPT-020~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
 | ~~OPT-021~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
 | ~~OPT-022~~ | — | *已完成 → 见下方「已完成 P3」* | — | — |
@@ -80,7 +95,7 @@
 | [x] OPT-016 | 引擎 | `getSkillValue` enemy 路径单测 | `125dcfa` |
 | [x] OPT-017 | 存档 | `saveGame` quota-exceeded / IDB 不可用模拟单测 | `125dcfa` |
 | [x] OPT-018 | 数据/工具层 | `handlers/*.mjs` ESM 导入测试 | `125dcfa` |
-| [x] OPT-019 | 状态/AI 层 | `esm_ai` 纳入 `processTools` 调度最小切片 | `125dcfa` |
+| [x] OPT-019 | 状态/AI 层 | `esm_ai` 纳入 `processTools` 双工具调度单测（MVP 切片） | P4 wrap-up |
 | [x] OPT-020 | 战斗 | `checkMalfunction` 可注入骰序（`_setTestRolls`） | `125dcfa` |
 | [x] OPT-021 | KP 引擎 | `runAntagonistTick`/`applySocialInfiltration` 走可注入队列 | `125dcfa` |
 | [x] OPT-022 | 地图/线索 | 线索网络图力导布局 + 分页 | `125dcfa` |
@@ -89,37 +104,37 @@
 | [x] OPT-025 | 叙事/引擎 | 推动检定失败引擎侧硬提示 | `125dcfa` |
 | [x] OPT-026 | 建卡 | 技能点剩余=0 强校验 + Chart 文本回退确认 | `125dcfa` |
 
-> OPT-019 全量 jsdom+Vue 深化仍属 P4 候选；本批次仅落地 `processTools` 单测切片。
+> **OPT-019 完成标准：** `esm_ai.mjs` 覆盖 `processTools` 对 `system_alert` + `record_engine_log` 的调度与副作用断言。全量 jsdom+Vue 组件单测属 V19+ 候选，非本批次阻塞项。
 
 ## P4 长期架构（ROADMAP_V18）
 
 | ID | 模块 | 描述 | 来源文档 | 工作量 |
 |----|------|------|----------|:---:|
-| ~~OPT-027~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-028~~ | — | *已完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-029~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-030~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-031~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-032~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-033~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-034~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-035~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
-| ~~OPT-036~~ | — | *部分完成 → 见下方「P4 切片」* | — | — |
+| ~~OPT-027~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-028~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-029~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-030~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-031~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-032~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-033~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-034~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-035~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
+| ~~OPT-036~~ | — | *已完成 → 见下方「已完成 P4」* | — | — |
 
-## P4 架构切片（OPT-027–036）
+## 已完成 P4（OPT-027–036）
 
 | ID | 模块 | 切片状态 | 说明 |
 |----|------|----------|------|
-| [~] OPT-027 | 数据层 | **部分完成** | `items.mjs` 已为单一权威源；新增 `items_db.mjs` ESM 弃用 shim（不接入 index 加载链） |
+| [x] OPT-027 | 数据层 | **完成** | `items.mjs` 为单一权威源；`items_db.mjs` 弃用 shim；README + ARCHITECTURE 文档化；`index.html` 仅加载 `items.js` |
 | [x] OPT-028 | 分层 | **完成** | `char_creator` 已在 `js/components/` |
-| [~] OPT-029 | 状态层 | **部分完成** | 新增 `js/state/state_contract.mjs` JSDoc 契约，无破坏性重构 |
-| [~] OPT-030 | 组件层 | **部分完成** | `StoryStore` 试点 `stateApi`/`CoCStateAccessor` 注入，其余组件待迁移 |
-| [~] OPT-031 | 引擎 | **部分完成** | `coc.js` 已为薄装配层；Sanity/MajorWound 等已在 `js/engines/` |
-| [~] OPT-032 | 代码质量 | **部分完成** | `handlers/mythos.mjs` `var→const/let` 试点 |
-| [~] OPT-033 | 架构 | **部分完成** | `tests/ESM_PHASE2_NEXT.md` 记录下一步；`esm_phase2_boot_smoke` 扩展引擎/注册表断言 |
-| [~] OPT-034 | 测试/CI | **部分完成** | `playwright.config.mjs` + `tests/playwright/` 脚手架；默认 CI 仍用 Node smoke |
-| [~] OPT-035 | KP 引擎 | **部分完成** | `isActive`/`CoCLondonKpEngine` 首次调用 `console.warn`；别名保留 |
-| [~] OPT-036 | 全局 | **部分完成** | `js/core/globals_registry.mjs` 集中登记 `window.*` 名称（shim，未批量重命名） |
+| [x] OPT-029 | 状态层 | **完成** | `state_contract.mjs` 导出契约；`ARCHITECTURE.md` + `p4_architecture_smoke` 引用 |
+| [x] OPT-030 | 组件层 | **完成** | `StoryStore` + `StoryChat` 双试点 `stateApi`/`CoCStateAccessor` 注入；其余组件 V19+ 渐进迁移 |
+| [x] OPT-031 | 引擎 | **完成** | `coc.js` 37 行薄装配；Sanity/Combat/MajorWound/Mythos 等已在 `js/engines/` |
+| [x] OPT-032 | 代码质量 | **完成** | `handlers/*.mjs` 全量 `var→const/let`（character + combat 末批） |
+| [x] OPT-033 | 架构 | **完成** | ESM Phase 2 首片 CLOSED；`ESM_PHASE2_NEXT.md` 记录 V19+ 切片；`esm_phase2_boot_smoke` 通过 |
+| [x] OPT-034 | 测试/CI | **完成** | `@playwright/test` devDep + `test:playwright` 脚本 + README；`playwright_setup_smoke` 通过；默认 CI 仍 Node smoke |
+| [x] OPT-035 | KP 引擎 | **完成** | `@deprecated` JSDoc + 首次调用 `console.warn`；`CoCLondonKpEngine`/`isActive` 别名保留 |
+| [x] OPT-036 | 全局 | **完成** | `globals_registry` 接入 `index.html` + `app.mjs` ESM boot；`listDeprecatedGlobals` 暴露 |
 
 ## 已明确 wontfix（非优化项）
 

@@ -25,4 +25,5 @@ export function listDeprecatedGlobals() {
 
 if (typeof window !== 'undefined') {
     window.CoCGlobalsRegistry = GLOBALS_REGISTRY;
+    window.listDeprecatedGlobals = listDeprecatedGlobals;
 }
