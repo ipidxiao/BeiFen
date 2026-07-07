@@ -191,6 +191,21 @@ window.ViewStory = {
           if (gs && gs.kpEngine && gs.kpEngine.enabled && window.KpGameLoop) {
               window.KpGameLoop.register(gs);
           }
+          this.applyPendingStoryTab();
+      },
+      watch: {
+          'gameState.currentScreen'(screen) {
+              if (screen === 'story') this.applyPendingStoryTab();
+          }
+      },
+      methods: {
+          applyPendingStoryTab() {
+              const gs = window.CoCState && window.CoCState.gameState;
+              const tab = gs && gs.ui && gs.ui.openStoryTab;
+              if (!tab) return;
+              this.activeStoryTab = tab;
+              gs.ui.openStoryTab = null;
+          }
       },
       unmounted() {
           window._refreshStorySaveSlots = null;

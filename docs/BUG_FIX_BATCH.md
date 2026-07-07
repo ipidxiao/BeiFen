@@ -136,4 +136,26 @@ npm test
 npm run ci:smoke
 ```
 
-`tests/char_creator_flow_smoke.js` 新增覆盖：选职业不覆盖姓名、职业选择后雷达图更新、队伍页草稿预览展示已选职业。
+`tests/char_creator_flow_smoke.js` 新增覆盖：杂技演员本职剩余非负、超支单独追踪；剧情人物页能从 roster 渲染预置调查员属性与技能摘要。
+
+## 复审补丁 4（2026-07-08）
+
+| ID | Severity | Area | Description | Status |
+|----|----------|------|-------------|--------|
+| BUG-012 | P1 | `story_char` | 剧情「人物」页仍嵌入小队管理入口（加入/创建/管理调查员），与「人物卡仅显示属性」要求冲突 | **fixed** |
+| BUG-013 | P1 | `lobby_view` / `char_creator` / `story_view` | 教程快速开始预置调查员未稳定出现在小队管理列表；预置后未直达人物卡 | **fixed** |
+
+### 修复摘要
+
+- **BUG-012**：`story_char` 移除全部小队管理 CTA（`+ 加入`、空态创建/管理/返回大厅、`switchScreen('character'|'creator'|'lobby')`）；仅保留人物属性面板与「返回剧情」。
+- **BUG-013**：`startLocalScenario` 无角色时直达创建页并保留 `pendingScenarioId`；`commitPresetToRoster` 写入完整 roster 后设置 `ui.openStoryTab='character'` 并立即 clamp 选中索引；`story_view` 进入剧情时自动打开人物 Tab；小队管理列表展示 DEX 与技能数量。
+
+### 验证
+
+```bash
+npm run build:js
+npm test
+npm run ci:smoke
+```
+
+`tests/char_creator_flow_smoke.js` 新增断言：人物页模板无「管理小队」/小队跳转；预置提交后 `openStoryTab` 与 roster 职业/技能完整。

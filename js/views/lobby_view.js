@@ -366,7 +366,9 @@ window.ViewLobby = {
                                   <span v-if="char.isInsane" class="badge bg-danger ms-1">疯狂</span><br>
                                   <span class="badge badge-hp me-1">HP: {{ char.hp }}</span>
                                   <span class="badge badge-san me-1">SAN: {{ char.sanity }}</span>
-                                  <span class="badge" style="background:#3a3a4a; color:#cccccc;">STR: {{ char.attrs.STR }}</span>
+                                  <span v-if="char.attrs" class="badge me-1" style="background:#3a3a4a; color:#cccccc;">STR: {{ char.attrs.STR }}</span>
+                                  <span v-if="char.attrs" class="badge me-1" style="background:#3a3a4a; color:#cccccc;">DEX: {{ char.attrs.DEX }}</span>
+                                  <span v-if="char.skills" class="badge bg-secondary">{{ Object.keys(char.skills).length }} 项技能</span>
                               </div>
                               <div class="d-flex flex-column align-items-end gap-1">
                                   <div class="form-check form-switch">
@@ -706,10 +708,10 @@ window.ViewLobby = {
           },
           startLocalScenario(scenarioId) {
               if (window.CoCState.gameState.roster.length === 0) {
-                  window.CoCState.showToast && window.CoCState.showToast('请先创建至少一名调查员。', 'warning');
+                  window.CoCState.showToast && window.CoCState.showToast('请先创建至少一名调查员，已打开创建页面。', 'warning');
                   this.pendingScenarioId = scenarioId;
                   window.CoCState.gameState.scenarioRunner.pendingScenarioId = scenarioId;
-                  CoCStateAccessor.switchScreen('character');
+                  CoCStateAccessor.switchScreen('creator');
                   return;
               }
               const runner = window.CoCScenarioRunner;

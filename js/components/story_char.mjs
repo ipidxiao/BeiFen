@@ -12,14 +12,13 @@ export const StoryChar = {
                 <button class="btn btn-outline-secondary btn-sm" @click="emitSwitchTab('chat')">← 返回剧情</button>
             </div>
             <div v-if="activeRoster.length > 0">
-                <div class="d-flex gap-1 mb-3 overflow-auto pb-2 border-bottom border-secondary no-scrollbar">
+                <div v-if="activeRoster.length > 1" class="d-flex gap-1 mb-3 overflow-auto pb-2 border-bottom border-secondary no-scrollbar">
                     <button v-for="(entry, idx) in activeRoster" :key="entry.rosterIndex" 
                         class="btn btn-sm text-nowrap" 
                         :class="selectedActiveIndex === idx ? 'btn-warning' : 'btn-outline-secondary'"
                         @click="selectedActiveIndex = idx">
                         {{ entry.char.name }}
                     </button>
-                    <button class="btn btn-sm btn-outline-success text-nowrap" @click="switchScreen('creator')">+ 加入</button>
                 </div>
 
                 <div v-if="currentChar">
@@ -84,12 +83,8 @@ export const StoryChar = {
                 </div>
             </div>
             <div v-else class="text-center py-5">
-                <p class="text-muted">当前小队中没有活跃调查员。</p>
-                <div class="d-flex flex-column gap-2 align-items-center">
-                    <button class="btn btn-success" @click="switchScreen('creator')">+ 创建调查员</button>
-                    <button class="btn btn-outline-secondary" @click="switchScreen('character')">管理/启用调查员</button>
-                    <button class="btn btn-outline-warning btn-sm" @click="switchScreen('lobby')">返回大厅</button>
-                </div>
+                <p class="text-muted mb-3">当前没有可展示的调查员档案。</p>
+                <button class="btn btn-outline-secondary btn-sm" @click="emitSwitchTab('chat')">← 返回剧情</button>
             </div>
         </div>
     `,
@@ -107,20 +102,18 @@ export const StoryChar = {
         const selectedActiveIndex = computed({
             get: () => {
                 state.clampSelectedCharIndex(gameState);
-                const idx = activeRoster.value.findIndex(entry => entry.rosterIndex === gameState.selectedCharIndex);
-                return idx >= 0 ? idx : 0;
+                return gameState.selectedCharIndex;
             },
             set: (val) => {
-                const idx = Number.isFinite(+val) ? +val : 0;
-                const entry = activeRoster.value[idx] || activeRoster.value[0];
-                gameState.selectedCharIndex = entry ? entry.rosterIndex : 0;
+                const max = Math.max(0, activeRoster.value.length - 1);
+                const idx = Number.isFinite(+val) ? Math.max(0, Math.min(+val, max)) : 0;
+                gameState.selectedCharIndex = idx;
                 state.clampSelectedCharIndex(gameState);
             }
         });
         const currentChar = computed(() => {
             state.clampSelectedCharIndex(gameState);
-            const entry = activeRoster.value[selectedActiveIndex.value] || activeRoster.value[0] || null;
-            if (entry && gameState.selectedCharIndex !== entry.rosterIndex) gameState.selectedCharIndex = entry.rosterIndex;
+            const entry = activeRoster.value[gameState.selectedCharIndex] || activeRoster.value[0] || null;
             return entry ? entry.char : null;
         });
 
@@ -176,7 +169,7 @@ export const StoryChar = {
             isNotableSkill, notableSkills, unequip, gameState,
             activeRoster, currentChar, selectedActiveIndex, attrOrder,
             displayAttr, displayDerived, displayCurrentHp, displayMaxHp, displaySan, half, fifth,
-            switchScreen: state.switchScreen, emitSwitchTab
+            emitSwitchTab
         };
     }
 };

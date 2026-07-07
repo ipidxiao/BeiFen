@@ -428,8 +428,9 @@ window.CoCCreator = (function(State, Engine, Vue) {
             hasMajorWound: false, isDying: false, isUnconscious: false,
             equipment: { head: null, acc1: null, acc2: null, hands: null, feet: null, weapon: null }
         });
-        const activeCount = gameState.roster.filter((c) => c.isActive).length;
+        const activeCount = gameState.roster.filter((c) => c && c.isActive).length;
         gameState.selectedCharIndex = Math.max(0, activeCount - 1);
+        if (State.clampSelectedCharIndex) State.clampSelectedCharIndex(gameState);
         gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `调查员【${investigatorName}】已登入。` });
         resetDraftChar();
         if (radarChartInstance) { radarChartInstance.destroy(); radarChartInstance = null; }
@@ -442,6 +443,7 @@ window.CoCCreator = (function(State, Engine, Vue) {
                 notify('剧本加载失败，请从本地剧本模式重新开始。', 'danger');
             }
         }
+        gameState.ui.openStoryTab = 'character';
         switchScreen('story');
         if (State.saveGame) {
             const ok = State.saveGame('auto', '自动存档');

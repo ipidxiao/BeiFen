@@ -163,10 +163,12 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
 
   assert.strictEqual(State.gameState.roster.length, 1, 'applyPreset commits to roster');
   assert.strictEqual(State.gameState.roster[0].name, preset.name, 'roster entry name matches preset');
-  assert(State.gameState.roster[0].attrs.STR > 0, 'roster entry has attrs');
+  assert.strictEqual(State.gameState.roster[0].jobName, preset.job.name, 'roster entry occupation matches preset');
+  assert(Object.keys(State.gameState.roster[0].skills).length > 0, 'roster entry has skills for squad list');
   assert.strictEqual(sandbox.__scenarioStarted, 'tutorial', 'applyPreset resumes pending scenario');
   assert.strictEqual(State.gameState.scenarioRunner.pendingScenarioId, null, 'pending scenario is cleared');
   assert.strictEqual(switchedTo, 'story', 'applyPreset navigates to story');
+  assert.strictEqual(State.gameState.ui.openStoryTab, 'character', 'applyPreset opens character sheet tab');
   assert.deepStrictEqual(sandbox.__saved[0], { slot: 'auto', name: '自动存档', roster: 1 }, 'applyPreset writes immediate autosave');
 
   // BUG-007: the story character tab renders a real sheet for roster entries, including presets.
@@ -191,13 +193,20 @@ const acrobatJob = sandbox.window.CoCEngine.Occupations.find((job) => job.name =
   const lobbyView = fs.readFileSync(path.join(root, 'js/views/lobby_view.mjs'), 'utf8');
   assert(/hasDraftInvestigator/.test(lobbyView), 'lobby shows in-progress draft investigator');
   assert(/draftJobName/.test(lobbyView), 'lobby draft preview shows selected occupation');
+  assert(/Object\.keys\(char\.skills\)\.length/.test(lobbyView), 'lobby roster list shows skill count for committed investigators');
 
   const storyChar = fs.readFileSync(path.join(root, 'js/components/story_char.mjs'), 'utf8');
   const storyView = fs.readFileSync(path.join(root, 'js/views/story_view.mjs'), 'utf8');
   assert(/emitSwitchTab\('chat'\)/.test(storyChar), 'story_char has back-to-story action');
   assert(/技能摘要/.test(storyChar), 'story_char renders a character sheet skill summary');
-  assert(/selectedActiveIndex/.test(storyChar), 'story_char maps active roster selection to roster index');
-  assert(/管理\/启用调查员/.test(storyChar), 'story_char empty state clarifies inactive roster action');
+  assert(!/管理小队/.test(storyChar), 'story_char must not expose squad management label');
+  assert(!/管理\/启用调查员/.test(storyChar), 'story_char must not link to squad management screen');
+  assert(!/switchScreen\('character'\)/.test(storyChar), 'story_char must not navigate to squad management');
+  assert(!/switchScreen\('creator'\)/.test(storyChar), 'story_char must not navigate to character creator');
+  assert(!/switchScreen\('lobby'\)/.test(storyChar), 'story_char must not navigate to lobby');
+  assert(/applyPendingStoryTab/.test(storyView), 'story_view applies pending character tab after preset');
+  assert(/switchScreen\('creator'\)/.test(lobbyView), 'tutorial flow opens creator when roster is empty');
+  assert(!/请先创建至少一名调查员。/.test(lobbyView), 'empty-roster scenario start uses creator redirect copy');
   assert(/@switch-tab="activeStoryTab = \$event"/.test(storyView), 'story_view handles story_char back event');
 
   console.log('char_creator_flow_smoke: preset + draft occupation + name/radar preservation OK');
