@@ -162,11 +162,24 @@ flowchart LR
 
 ---
 
-## 7. 相关文档
+## 7. API 限额时的第二套方案
+
+Task 子代理因 Cursor API 用量触顶失败时，**不要**反复 spawn 大子代理。改由父 Agent 小步直修：
+
+→ **[API 限额时的第二套执行方案（Tier 2）](API_LIMIT_FALLBACK.md)**
+
+规则：`.cursor/rules/api-limit-fallback.mdc`（`alwaysApply: true`）  
+快检：`npm run quick:fix`（Creator smoke + build 漂移，<30s；推送前仍须 `npm run ci:smoke`）
+
+---
+
+## 8. 相关文档
 
 | 文档 | 用途 |
 |------|------|
 | `.cursor/rules/ai-model-routing.mdc` | Agent 自动遵循的路由规则 |
+| [`docs/API_LIMIT_FALLBACK.md`](API_LIMIT_FALLBACK.md) | API 限额 Tier 2 快读执行方案 |
+| `.cursor/rules/api-limit-fallback.mdc` | Tier 2 自动遵循规则 |
 | `docs/ARCHITECTURE.md` | `.mjs` 权威源与 `window.*` 约定 |
 | `docs/UI_SKILL_WORKFLOW.md` | UI 技能与 `ui-ux-pro-max` |
 | `docs/ENGINEERING.md` | 变更与测试规范 |

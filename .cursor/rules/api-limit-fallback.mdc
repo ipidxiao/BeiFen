@@ -1,0 +1,19 @@
+---
+description: Tier-2 fallback when Task subagents hit Cursor API usage limits
+alwaysApply: true
+---
+
+# API Limit Fallback (Tier 2)
+
+**Scope:** Cursor **development-time** only — when Task subagents fail with API / usage limit errors.
+
+Full playbook: [`docs/API_LIMIT_FALLBACK.md`](../../docs/API_LIMIT_FALLBACK.md).
+
+## On subagent API limit failure
+
+1. **Stop spawning** large `generalPurpose` subagents; do not retry the same prompt.
+2. **Parent agent fixes directly** — narrow to 1–3 files, `rg` first, single-file edits preferred.
+3. **Build after `.mjs` changes** — run `npm run build:js`.
+4. **Test narrowly** — related smoke only under time pressure; run full `npm run ci:smoke` before push/CI.
+5. **Model downgrade** — e.g. failed `gpt-5.5-medium` subagent → parent uses `composer-2.5-fast` inline; split big work into ≤3 micro-steps in one conversation.
+6. **Tell the user briefly** — subagent limit hit; parent is applying Tier 2 direct fix.
